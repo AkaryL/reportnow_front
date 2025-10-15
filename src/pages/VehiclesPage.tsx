@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { vehiclesApi } from '../features/vehicles/api';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -19,6 +20,7 @@ export function VehiclesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Get vehicles based on user role
   const { data: vehicles, isLoading } = useQuery({
@@ -53,6 +55,24 @@ export function VehiclesPage() {
     vehicle.plate.toLowerCase().includes(searchQuery.toLowerCase()) ||
     vehicle.driver.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+
+  const handleViewOnMap = () => {
+    if (!selectedVehicle) return;
+    // Navigate to home page (which has the map) with vehicle filter
+    navigate('/', { state: { selectedVehicleId: selectedVehicle.id } });
+  };
+
+  const handleViewRouteHistory = () => {
+    if (!selectedVehicle) return;
+    // Navegar a la página de detalles del vehículo
+    navigate(`/vehiculos/${selectedVehicle.id}`);
+  };
+
+  const handleViewAlerts = () => {
+    if (!selectedVehicle) return;
+    // Navegar a la página de detalles del vehículo
+    navigate(`/vehiculos/${selectedVehicle.id}`);
+  };
 
   if (isLoading) {
     return (
@@ -263,15 +283,15 @@ export function VehiclesPage() {
           </DrawerSection>
 
           <div className="mt-6 space-y-3">
-            <Button className="w-full" variant="primary">
+            <Button className="w-full" variant="primary" onClick={handleViewOnMap}>
               <Navigation className="w-4 h-4" />
               Ver en mapa
             </Button>
-            <Button className="w-full" variant="outline">
+            <Button className="w-full" variant="outline" onClick={handleViewRouteHistory}>
               <Clock className="w-4 h-4" />
               Ver historial de ruta
             </Button>
-            <Button className="w-full" variant="outline">
+            <Button className="w-full" variant="outline" onClick={handleViewAlerts}>
               <AlertTriangle className="w-4 h-4" />
               Ver alertas del vehículo
             </Button>

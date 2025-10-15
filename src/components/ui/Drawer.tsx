@@ -61,7 +61,7 @@ export function Drawer({
       {/* Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity',
+          'fixed inset-0 bg-black/50 backdrop-blur-sm z-[1100] transition-opacity',
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
         onClick={onClose}
@@ -71,7 +71,7 @@ export function Drawer({
       {/* Drawer */}
       <div
         className={cn(
-          'fixed top-0 bottom-0 z-50 w-full sm:w-96 bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col',
+          'fixed top-0 bottom-0 z-[1200] w-full sm:w-96 bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col',
           positionStyles[position].container,
           positionStyles[position].translate,
           className

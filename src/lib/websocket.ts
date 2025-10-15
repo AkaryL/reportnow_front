@@ -6,26 +6,29 @@ class WebSocketClient {
   private socket: Socket | null = null;
 
   connect(): void {
-    if (this.socket?.connected) {
-      return;
-    }
+    // WebSocket disabled to prevent auto-reload
+    return;
 
-    this.socket = io(SOCKET_URL, {
-      transports: ['websocket'],
-      autoConnect: true,
-    });
+    // if (this.socket?.connected) {
+    //   return;
+    // }
 
-    this.socket.on('connect', () => {
-      console.log('✅ WebSocket connected');
-    });
+    // this.socket = io(SOCKET_URL, {
+    //   transports: ['websocket'],
+    //   autoConnect: true,
+    // });
 
-    this.socket.on('disconnect', () => {
-      console.log('❌ WebSocket disconnected');
-    });
+    // this.socket.on('connect', () => {
+    //   console.log('✅ WebSocket connected');
+    // });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
-    });
+    // this.socket.on('disconnect', () => {
+    //   console.log('❌ WebSocket disconnected');
+    // });
+
+    // this.socket.on('connect_error', (error) => {
+    //   console.error('WebSocket connection error:', error);
+    // });
   }
 
   disconnect(): void {
