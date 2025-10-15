@@ -6,14 +6,22 @@ import db from './database.js';
 
 const app = express();
 const httpServer = createServer(app);
+
+// CORS origins configuration
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178'];
+
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 });
 
-app.use(cors());
+app.use(cors({
+  origin: allowedOrigins,
+}));
 app.use(express.json());
 
 // ==================== AUTH ====================
@@ -260,6 +268,15 @@ app.put('/api/vehicles/:id', (req, res) => {
       return res.status(404).json({ error: 'Vehicle not found' });
     }
 
+    // Save position to history if lat/lng changed
+    if (lat !== undefined && lng !== undefined) {
+      const historyStmt = db.prepare(`
+        INSERT INTO vehicle_history (vehicle_id, lat, lng, speed, fuel, temp)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      historyStmt.run(req.params.id, lat, lng, speed || 0, fuel || 0, temp || null);
+    }
+
     const updatedVehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(req.params.id);
 
     // Emit to all connected clients
@@ -283,6 +300,118 @@ app.delete('/api/vehicles/:id', (req, res) => {
   io.emit('vehicle:deleted', req.params.id);
 
   res.status(204).send();
+});
+
+// ==================== VEHICLE HISTORY ====================
+app.get('/api/vehicles/:id/history', (req, res) => {
+  const { from, to, limit } = req.query;
+
+  let query = 'SELECT * FROM vehicle_history WHERE vehicle_id = ?';
+  const params: any[] = [req.params.id];
+
+  // Add time range filters if provided
+  if (from) {
+    query += ' AND ts >= ?';
+    params.push(from);
+  }
+  if (to) {
+    query += ' AND ts <= ?';
+    params.push(to);
+  }
+
+  query += ' ORDER BY ts DESC';
+
+  // Add limit if provided
+  if (limit) {
+    query += ' LIMIT ?';
+    params.push(parseInt(limit as string));
+  }
+
+  const stmt = db.prepare(query);
+  const history = stmt.all(...params);
+
+  res.json(history);
+});
+
+// Add a single position to vehicle history
+app.post('/api/vehicles/:id/history', (req, res) => {
+  const { lat, lng, speed, fuel, temp } = req.body;
+
+  const stmt = db.prepare(`
+    INSERT INTO vehicle_history (vehicle_id, lat, lng, speed, fuel, temp)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  try {
+    stmt.run(req.params.id, lat, lng, speed || 0, fuel || 0, temp || null);
+    res.status(201).json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get vehicle history statistics
+app.get('/api/vehicles/:id/history/stats', (req, res) => {
+  const { from, to } = req.query;
+
+  let query = `
+    SELECT
+      COUNT(*) as total_points,
+      AVG(speed) as avg_speed,
+      MAX(speed) as max_speed,
+      MIN(fuel) as min_fuel,
+      MAX(fuel) as max_fuel,
+      AVG(temp) as avg_temp,
+      MAX(temp) as max_temp,
+      MIN(ts) as first_timestamp,
+      MAX(ts) as last_timestamp
+    FROM vehicle_history
+    WHERE vehicle_id = ?
+  `;
+  const params: any[] = [req.params.id];
+
+  if (from) {
+    query += ' AND ts >= ?';
+    params.push(from);
+  }
+  if (to) {
+    query += ' AND ts <= ?';
+    params.push(to);
+  }
+
+  const stmt = db.prepare(query);
+  const stats = stmt.get(...params);
+
+  res.json(stats);
+});
+
+// Get available dates with history for a vehicle
+app.get('/api/vehicles/:id/history/dates', (req, res) => {
+  const stmt = db.prepare(`
+    SELECT DISTINCT DATE(ts) as date, COUNT(*) as points
+    FROM vehicle_history
+    WHERE vehicle_id = ?
+    GROUP BY DATE(ts)
+    ORDER BY date DESC
+  `);
+  const dates = stmt.all(req.params.id);
+  res.json(dates);
+});
+
+// Get vehicle history for a specific date (day)
+app.get('/api/vehicles/:id/history/date/:date', (req, res) => {
+  const { date } = req.params;
+
+  // Get all records for the specified date (from 00:00:00 to 23:59:59)
+  const stmt = db.prepare(`
+    SELECT * FROM vehicle_history
+    WHERE vehicle_id = ?
+    AND DATE(ts) = ?
+    ORDER BY ts ASC
+  `);
+
+  const history = stmt.all(req.params.id, date);
+  res.json(history);
 });
 
 // ==================== CLIENTS ====================
@@ -466,40 +595,93 @@ io.on('connection', (socket) => {
   });
 });
 
-// Simulate real-time vehicle updates
-setInterval(() => {
-  const vehicles = db.prepare("SELECT * FROM vehicles WHERE status IN ('moving', 'stopped')").all() as any[];
+// Vehicle movement simulation data
+const vehicleRoutes = new Map<string, {
+  targetLat: number;
+  targetLng: number;
+  speed: number;
+}>();
 
-  vehicles.forEach((vehicle) => {
-    // Random chance to update
-    if (Math.random() > 0.7) {
-      const updates: any = {
-        last_seen_min: 0,
-      };
+// Simulate real-time vehicle updates with more realistic movement - DISABLED
+// setInterval(() => {
+//   const vehicles = db.prepare("SELECT * FROM vehicles WHERE status IN ('moving', 'stopped')").all() as any[];
 
-      // Update position for moving vehicles
-      if (vehicle.status === 'moving') {
-        updates.lat = vehicle.lat + (Math.random() - 0.5) * 0.005;
-        updates.lng = vehicle.lng + (Math.random() - 0.5) * 0.005;
-        updates.speed = Math.max(0, vehicle.speed + (Math.random() - 0.5) * 10);
-        updates.fuel = Math.max(0, vehicle.fuel - Math.random() * 0.5);
-      }
+//   vehicles.forEach((vehicle) => {
+//     const updates: any = {
+//       last_seen_min: 0,
+//     };
 
-      // Build update query
-      const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-      const values = Object.values(updates);
+//     // Update position for moving vehicles
+//     if (vehicle.status === 'moving') {
+//       let route = vehicleRoutes.get(vehicle.id);
 
-      const stmt = db.prepare(`UPDATE vehicles SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`);
-      stmt.run(...values, vehicle.id);
+//       // If no route exists or vehicle is close to target, generate a new target
+//       if (!route) {
+//         // Generate a random target within ~5km radius (approx 0.045 degrees)
+//         const angle = Math.random() * Math.PI * 2;
+//         const distance = Math.random() * 0.045;
+//         route = {
+//           targetLat: vehicle.lat + Math.cos(angle) * distance,
+//           targetLng: vehicle.lng + Math.sin(angle) * distance,
+//           speed: 30 + Math.random() * 40, // 30-70 km/h
+//         };
+//         vehicleRoutes.set(vehicle.id, route);
+//       }
 
-      const updatedVehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(vehicle.id);
-      io.emit('vehicle:updated', updatedVehicle);
-    }
-  });
-}, 5000); // Update every 5 seconds
+//       // Calculate distance to target
+//       const latDiff = route.targetLat - vehicle.lat;
+//       const lngDiff = route.targetLng - vehicle.lng;
+//       const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
 
-const PORT = 3000;
+//       // If close to target (within ~100m), generate new target
+//       if (distance < 0.001) {
+//         vehicleRoutes.delete(vehicle.id);
+//         return;
+//       }
+
+//       // Move towards target
+//       // Speed in km/h converted to degrees per update (rough approximation)
+//       // At ~20°N/S, 1 degree ≈ 111 km
+//       const stepSize = (route.speed / 111) / (3600 / 2); // 2 second updates
+
+//       const normalizedLat = latDiff / distance;
+//       const normalizedLng = lngDiff / distance;
+
+//       updates.lat = vehicle.lat + normalizedLat * stepSize;
+//       updates.lng = vehicle.lng + normalizedLng * stepSize;
+//       updates.speed = Math.round(route.speed + (Math.random() - 0.5) * 5);
+//       updates.fuel = Math.max(5, vehicle.fuel - Math.random() * 0.3);
+
+//       // Randomly change status
+//       if (Math.random() > 0.98) {
+//         updates.status = 'stopped';
+//         vehicleRoutes.delete(vehicle.id);
+//       }
+//     } else if (vehicle.status === 'stopped') {
+//       // Stopped vehicles might start moving
+//       if (Math.random() > 0.95) {
+//         updates.status = 'moving';
+//         updates.speed = 0;
+//       }
+//     }
+
+//     // Build update query if there are updates
+//     if (Object.keys(updates).length > 1) { // More than just last_seen_min
+//       const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+//       const values = Object.values(updates);
+
+//       const stmt = db.prepare(`UPDATE vehicles SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`);
+//       stmt.run(...values, vehicle.id);
+
+//       const updatedVehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(vehicle.id);
+//       io.emit('vehicle:updated', updatedVehicle);
+//     }
+//   });
+// }, 2000); // Update every 2 seconds for smoother animation
+
+const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📡 WebSocket server ready`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

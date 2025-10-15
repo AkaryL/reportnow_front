@@ -5,7 +5,9 @@ import { ROUTES } from '../lib/constants';
 import { Layout } from '../components/Layout';
 import { HomePage } from '../pages/HomePage';
 import { VehiclesPage } from '../pages/VehiclesPage';
+import { VehicleDetailPage } from '../pages/VehicleDetailPage';
 import { ClientsPage } from '../pages/ClientsPage';
+import { GeofencesPage } from '../pages/GeofencesPage';
 import { ReportsPage } from '../pages/ReportsPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
 import { RolesPage } from '../pages/RolesPage';
@@ -25,6 +27,8 @@ export function AppRoutes() {
       >
         <Route index element={<HomePage />} />
         <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
+        <Route path={ROUTES.VEHICLE_DETAIL} element={<VehicleDetailPage />} />
+        <Route path={ROUTES.GEOFENCES} element={<GeofencesPage />} />
 
         <Route
           path={ROUTES.CLIENTS}

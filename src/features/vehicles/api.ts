@@ -108,4 +108,25 @@ export const vehiclesApi = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/api/vehicles/${id}`);
   },
+
+  // History endpoints
+  getHistoryDates: async (id: string): Promise<{ date: string; points: number }[]> => {
+    const response = await apiClient.get<{ date: string; points: number }[]>(`/api/vehicles/${id}/history/dates`);
+    return response.data;
+  },
+
+  getHistoryByDate: async (id: string, date: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>(`/api/vehicles/${id}/history/date/${date}`);
+    return response.data;
+  },
+
+  getHistory: async (id: string, params?: { from?: string; to?: string; limit?: number }): Promise<any[]> => {
+    const queryParams = new URLSearchParams();
+    if (params?.from) queryParams.append('from', params.from);
+    if (params?.to) queryParams.append('to', params.to);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await apiClient.get<any[]>(`/api/vehicles/${id}/history?${queryParams.toString()}`);
+    return response.data;
+  },
 };

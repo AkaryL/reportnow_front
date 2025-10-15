@@ -93,6 +93,7 @@ export const ROUTES = {
   HOME: '/',
   VEHICLES: '/vehiculos',
   VEHICLE_DETAIL: '/vehiculos/:id',
+  GEOFENCES: '/geocercas',
   CLIENTS: '/clientes',
   REPORTS: '/reportes',
   NOTIFICATIONS: '/notificaciones',

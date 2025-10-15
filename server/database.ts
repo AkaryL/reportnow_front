@@ -257,6 +257,111 @@ const notifications = [
 
 notifications.forEach(notification => insertNotification.run(...notification));
 
+// Insert vehicle history data (last week with ~10 stops per day)
+const insertHistory = db.prepare(`
+  INSERT OR IGNORE INTO vehicle_history (vehicle_id, lat, lng, speed, fuel, temp, ts)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+
+// Generate realistic route history with stops for a single day
+const generateDayRouteWithStops = (vehicleId: string, startLat: number, startLng: number, date: Date) => {
+  const history: any[] = [];
+  const numStops = 8 + Math.floor(Math.random() * 5); // 8-12 stops per day
+
+  // Start at 8 AM
+  const startHour = 8;
+  const endHour = 18; // End at 6 PM
+  const totalMinutes = (endHour - startHour) * 60;
+  const minutesPerStop = totalMinutes / numStops;
+
+  let currentLat = startLat;
+  let currentLng = startLng;
+  let currentFuel = 85 + Math.random() * 10; // Start with 85-95% fuel
+
+  for (let stopIndex = 0; stopIndex < numStops; stopIndex++) {
+    const stopStartMinutes = startHour * 60 + stopIndex * minutesPerStop;
+    const stopEndMinutes = stopStartMinutes + 15 + Math.random() * 20; // Stop duration: 15-35 minutes
+
+    // Move to new location (if not first stop)
+    if (stopIndex > 0) {
+      const travelMinutes = 10 + Math.random() * 20; // 10-30 minutes travel
+      const pointsInTravel = 3 + Math.floor(Math.random() * 4); // 3-6 points during travel
+
+      // Generate destination
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 0.01 + Math.random() * 0.02; // 1-3 km
+      const destLat = currentLat + Math.cos(angle) * distance;
+      const destLng = currentLng + Math.sin(angle) * distance;
+
+      // Generate points during travel
+      for (let j = 0; j < pointsInTravel; j++) {
+        const progress = (j + 1) / pointsInTravel;
+        const travelLat = currentLat + (destLat - currentLat) * progress;
+        const travelLng = currentLng + (destLng - currentLng) * progress;
+        const travelTime = stopStartMinutes - travelMinutes + (travelMinutes * progress);
+
+        const timestamp = new Date(date);
+        timestamp.setHours(0, travelTime, 0, 0);
+
+        const speed = 30 + Math.random() * 40; // 30-70 km/h
+        currentFuel = Math.max(15, currentFuel - 0.5);
+        const temp = 22 + Math.random() * 8;
+
+        history.push([vehicleId, travelLat, travelLng, speed, currentFuel, temp, timestamp.toISOString()]);
+      }
+
+      currentLat = destLat;
+      currentLng = destLng;
+    }
+
+    // Add stop point (speed = 0)
+    const stopTime = new Date(date);
+    stopTime.setHours(0, stopStartMinutes, 0, 0);
+
+    const temp = 20 + Math.random() * 6;
+    history.push([vehicleId, currentLat, currentLng, 0, currentFuel, temp, stopTime.toISOString()]);
+
+    // Add another point at end of stop
+    const stopEndTime = new Date(date);
+    stopEndTime.setHours(0, stopEndMinutes, 0, 0);
+    history.push([vehicleId, currentLat, currentLng, 0, currentFuel, temp, stopEndTime.toISOString()]);
+  }
+
+  return history;
+};
+
+// Generate history for last 7 days for active vehicles
+const vehicleHistories: any[] = [];
+const activeVehicles = [
+  { id: '1', lat: 20.7214, lng: -103.3918 },  // JLS-1234
+  { id: '2', lat: 20.6597, lng: -103.3494 },  // JLS-5678
+  { id: '3', lat: 20.7350, lng: -103.4622 },  // JLS-9012
+  { id: '6', lat: 20.6889, lng: -103.3983 },  // JLS-2468
+  { id: '8', lat: 20.7456, lng: -103.3789 },  // JLS-8024
+  { id: '9', lat: 20.6945, lng: -103.4267 },  // JLS-9753
+  { id: '11', lat: 20.7123, lng: -103.4089 }, // JLS-3691
+  { id: '13', lat: 20.7389, lng: -103.3912 }, // JLS-7531
+];
+
+// Generate for last 7 days
+for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  date.setHours(0, 0, 0, 0);
+
+  // Skip weekends (Saturday = 6, Sunday = 0)
+  if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+  activeVehicles.forEach(vehicle => {
+    // Add some randomness - not all vehicles work every day
+    if (Math.random() > 0.15) { // 85% chance vehicle worked that day
+      vehicleHistories.push(...generateDayRouteWithStops(vehicle.id, vehicle.lat, vehicle.lng, date));
+    }
+  });
+}
+
+vehicleHistories.forEach(record => insertHistory.run(...record));
+
 console.log('✅ Database initialized with seed data');
 
 export default db;

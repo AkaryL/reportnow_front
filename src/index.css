@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
 
 * {
   border-color: #e6ebf5;
@@ -25,4 +26,89 @@ html, body, #root {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Vehicle Marker Styles */
+.vehicle-marker {
+  will-change: transform;
+  transform-origin: center center;
+}
+
+.vehicle-marker:hover {
+  transform: scale(1.1);
+  z-index: 1000;
+}
+
+.vehicle-marker svg {
+  transition: filter 0.2s ease;
+}
+
+.vehicle-marker:hover svg {
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) !important;
+}
+
+/* Maplibre popup customization */
+.maplibregl-popup-content {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
+}
+
+.maplibregl-popup-close-button {
+  font-size: 18px;
+  padding: 8px;
+  color: #6b7280;
+}
+
+.maplibregl-popup-close-button:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: white;
+}
+
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: white;
+}
+
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: white;
+}
+
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: white;
+}
+
+/* Leaflet styles */
+.leaflet-container {
+  font-family: Inter, system-ui, sans-serif;
+  border-radius: 0.5rem;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  min-width: 200px;
+}
+
+.leaflet-popup-close-button {
+  font-size: 18px;
+  padding: 8px;
+  color: #6b7280;
+}
+
+.leaflet-popup-close-button:hover {
+  background-color: #f3f4f6;
+  color: #111827;
 }

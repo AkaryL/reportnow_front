@@ -192,11 +192,23 @@ VITE_API_URL=https://tu-api.com
 ## 📝 Scripts Disponibles
 
 ```bash
-# Desarrollo
+# Desarrollo (frontend + backend)
 npm run dev
 
-# Build para producción
+# Solo frontend
+npm run dev:client
+
+# Solo backend
+npm run dev:server
+
+# Build frontend para producción
 npm run build
+
+# Build backend para producción
+npm run build:server
+
+# Iniciar servidor en producción
+npm start
 
 # Preview de build
 npm run preview
@@ -204,6 +216,108 @@ npm run preview
 # Lint
 npm run lint
 ```
+
+## 🚀 Deployment en Railway
+
+### 1. Crear cuenta en Railway
+
+Ve a [railway.app](https://railway.app) y crea una cuenta (puedes usar GitHub).
+
+### 2. Preparar el proyecto
+
+Ya está preparado con:
+- ✅ Script `start` en `package.json`
+- ✅ Variables de entorno configuradas
+- ✅ `.gitignore` actualizado
+- ✅ CORS configurado dinámicamente
+
+### 3. Subir a GitHub
+
+```bash
+# Inicializar git si no lo has hecho
+git init
+git add .
+git commit -m "Deploy: preparar proyecto para Railway"
+
+# Crear repositorio en GitHub y conectarlo
+git remote add origin https://github.com/tu-usuario/fleetwatch.git
+git branch -M main
+git push -u origin main
+```
+
+### 4. Desplegar en Railway
+
+1. **Crear nuevo proyecto**:
+   - Click en "New Project" → "Deploy from GitHub repo"
+   - Selecciona tu repositorio `fleetwatch`
+
+2. **Configurar variables de entorno**:
+   En el dashboard de Railway, ve a "Variables" y agrega:
+   ```
+   NODE_ENV=production
+   PORT=3000
+   FRONTEND_URL=https://tu-frontend.vercel.app
+   ```
+
+3. **Configurar el comando de inicio**:
+   Railway detectará automáticamente el `start` script, pero si necesitas ajustarlo:
+   - Ve a "Settings" → "Deploy"
+   - Start Command: `npm start`
+   - Build Command: `npm run build:server && npm run build`
+
+4. **Deploy**:
+   - Railway desplegará automáticamente
+   - Obtendrás una URL como: `https://tu-proyecto.up.railway.app`
+
+### 5. Desplegar Frontend (Vercel - Recomendado)
+
+El frontend debe desplegarse por separado:
+
+```bash
+# Instalar Vercel CLI
+npm i -g vercel
+
+# Deploy
+cd fleetwatch
+vercel
+```
+
+Configurar variables de entorno en Vercel:
+```
+VITE_API_URL=https://tu-backend.up.railway.app
+VITE_WS_URL=wss://tu-backend.up.railway.app
+VITE_APP_NAME=FleetWatch
+```
+
+### 6. Actualizar CORS
+
+Una vez tengas la URL del frontend, actualiza en Railway:
+```
+FRONTEND_URL=https://tu-frontend.vercel.app
+```
+
+## 🌍 URLs de Producción
+
+Después del deployment:
+- **Backend**: `https://tu-proyecto.up.railway.app`
+- **Frontend**: `https://tu-proyecto.vercel.app`
+- **API Docs**: `https://tu-proyecto.up.railway.app/api/`
+
+## ⚠️ Notas Importantes para Producción
+
+### Base de Datos
+- Actualmente usa SQLite (archivo local)
+- Para producción seria, considera migrar a PostgreSQL:
+  ```bash
+  # En Railway, agregar PostgreSQL
+  # Actualizar código para usar pg en lugar de better-sqlite3
+  ```
+
+### Seguridad
+- Cambiar autenticación mock por JWT real
+- Implementar rate limiting
+- Agregar helmet.js para seguridad HTTP
+- Usar HTTPS en producción (Railway lo provee automáticamente)
 
 ## 🤝 Contribuir
 
