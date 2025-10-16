@@ -17,6 +17,7 @@ declare global {
       user?: {
         id: string;
         username: string;
+        name: string;
         role: 'superuser' | 'admin' | 'client';
         client_id?: string;
       };
@@ -44,7 +45,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
     // Buscar usuario en la base de datos
     const user = db.prepare(`
-      SELECT id, username, role, client_id
+      SELECT id, username, name, role, client_id
       FROM users
       WHERE id = ?
     `).get(decoded.userId);

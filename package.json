@@ -9,7 +9,8 @@
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
     "build:server": "tsc --project tsconfig.server.json",
-    "start": "node dist/server/index.js",
+    "start": "NODE_ENV=production node dist/server/index.js",
+    "start:dev": "tsx server/index.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
