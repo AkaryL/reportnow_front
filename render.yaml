@@ -4,6 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
+    rootDir: fleetwatch
     buildCommand: npm install && npm run build:server
     startCommand: node dist/server/index.js
     envVars:
