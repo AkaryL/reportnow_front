@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: fleetwatch
     buildCommand: npm install && npm run build:server
-    startCommand: node dist/server/index.js
+    startCommand: cd fleetwatch && node dist/server/index.js
     envVars:
       - key: NODE_ENV
         value: production
