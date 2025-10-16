@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -11,7 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "outDir": "./dist/server",
-    "rootDir": "./server"
+    "rootDir": "./server",
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["server/**/*"],
   "exclude": ["node_modules", "dist"]
