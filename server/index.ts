@@ -112,7 +112,7 @@ app.get('/api/users/:id', (req, res) => {
   `);
   const vehicles = vehiclesStmt.all(req.params.id);
 
-  res.json({ ...user, vehicles });
+  res.json(Object.assign({}, user, { vehicles }));
 });
 
 app.post('/api/users', (req, res) => {
