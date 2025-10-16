@@ -1,18 +1,85 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { clientsApi } from '../features/clients/api';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Eye, Mail, Phone, Plus, Building2 } from 'lucide-react';
+import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2 } from 'lucide-react';
 import { formatDate } from '../lib/utils';
+import { ClientFormModal } from '../components/clients/ClientFormModal';
+import type { Client } from '../lib/types';
 
 export function ClientsPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const { data: clients = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.CLIENTS,
     queryFn: clientsApi.getAll,
   });
+
+  const createMutation = useMutation({
+    mutationFn: clientsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+      setIsModalOpen(false);
+      setSelectedClient(null);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => clientsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+      setIsModalOpen(false);
+      setSelectedClient(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: clientsApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+    },
+  });
+
+  const handleCreateClient = () => {
+    setSelectedClient(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setSelectedClient(client);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = (data: any) => {
+    if (selectedClient) {
+      // Don't send empty password when editing
+      const updateData = { ...data };
+      if (!updateData.password || updateData.password.trim() === '') {
+        delete updateData.password;
+      }
+      updateMutation.mutate({ id: selectedClient.id, data: updateData });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleDeleteClient = (id: string) => {
+    if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleViewClient = (id: string) => {
+    navigate(`/clientes/${id}`);
+  };
 
   if (isLoading) {
     return (
@@ -31,7 +98,7 @@ export function ClientsPage() {
             Gestión de clientes y asignaciones • {clients.length} clientes activos
           </p>
         </div>
-        <Button variant="primary">
+        <Button variant="primary" onClick={handleCreateClient}>
           <Plus className="w-4 h-4" />
           Nuevo Cliente
         </Button>
@@ -85,10 +152,31 @@ export function ClientsPage() {
                     {formatDate(client.lastActivity || new Date().toISOString())}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="w-4 h-4" />
-                      Ver
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewClient(client.id)}
+                      >
+                        <Eye className="w-4 h-4" />
+                        Ver
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditClient(client)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClient(client.id)}
+                        className="text-crit-600 hover:text-crit-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -145,6 +233,17 @@ export function ClientsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ClientFormModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedClient(null);
+        }}
+        onSubmit={handleSubmit}
+        client={selectedClient}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
     </div>
   );
 }

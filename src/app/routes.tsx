@@ -7,10 +7,12 @@ import { HomePage } from '../pages/HomePage';
 import { VehiclesPage } from '../pages/VehiclesPage';
 import { VehicleDetailPage } from '../pages/VehicleDetailPage';
 import { ClientsPage } from '../pages/ClientsPage';
+import { ClientDetailPage } from '../pages/ClientDetailPage';
 import { GeofencesPage } from '../pages/GeofencesPage';
 import { ReportsPage } from '../pages/ReportsPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
 import { RolesPage } from '../pages/RolesPage';
+import { AccountPage } from '../pages/AccountPage';
 
 export function AppRoutes() {
   return (
@@ -39,8 +41,18 @@ export function AppRoutes() {
           }
         />
 
+        <Route
+          path={ROUTES.CLIENT_DETAIL}
+          element={
+            <RequireRole allowedRoles={['admin', 'superuser']}>
+              <ClientDetailPage />
+            </RequireRole>
+          }
+        />
+
         <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
         <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
+        <Route path={ROUTES.ACCOUNT} element={<AccountPage />} />
 
         <Route
           path={ROUTES.ROLES}

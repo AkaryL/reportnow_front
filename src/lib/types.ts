@@ -44,6 +44,7 @@ export interface Client {
   name: string;
   email: string;
   phone: string;
+  whatsapp?: string;
   vehicles: number; // count of assigned vehicles
   lastActivity?: string; // ISO date
   organizationId?: string;

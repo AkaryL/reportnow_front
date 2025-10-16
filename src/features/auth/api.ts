@@ -1,60 +1,24 @@
-// import { apiClient } from '../../lib/apiClient';
+import { apiClient } from '../../lib/apiClient';
 import type { AuthResponse, LoginCredentials, User } from '../../lib/types';
 import { LS_TOKEN_KEY, LS_USER_KEY } from '../../lib/constants';
 
-// Mock users for development
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'julio@fleetwatch.com',
-    password: 'julio123',
-    name: 'Julio González',
-    role: 'superuser' as const,
-  },
-  {
-    id: '2',
-    email: 'admin@fleetwatch.com',
-    password: 'admin123',
-    name: 'Admin FleetWatch',
-    role: 'admin' as const,
-    organizationId: 'org-1',
-  },
-  {
-    id: '3',
-    email: 'cliente@fleetwatch.com',
-    password: 'cliente123',
-    name: 'Cliente Demo',
-    role: 'cliente' as const,
-    organizationId: 'org-1',
-  },
-];
-
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    // Mock API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const user = MOCK_USERS.find(
-          (u) => u.email === credentials.email && u.password === credentials.password
-        );
+    console.log('🔄 authApi.login called with:', credentials);
 
-        if (!user) {
-          reject(new Error('Credenciales inválidas'));
-          return;
-        }
+    try {
+      // Backend expects 'username' not 'email'
+      const response = await apiClient.post<AuthResponse>('/api/auth/login', {
+        username: credentials.email, // Using email as username
+        password: credentials.password,
+      });
 
-        const { password, ...userData } = user;
-        const token = `mock-jwt-token-${user.id}`;
-
-        resolve({
-          token,
-          user: userData,
-        });
-      }, 500);
-    });
-
-    // Real API call (commented for later)
-    // return apiClient.post<AuthResponse>('/auth/login', credentials);
+      console.log('✅ Login response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+      throw new Error(error.response?.data?.error || 'Credenciales inválidas');
+    }
   },
 
   getMe: async (): Promise<User> => {

@@ -14,6 +14,7 @@ export function LoginPage() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('🔐 Login form submitted:', { email, password });
     login({ email, password });
   };
 
@@ -34,19 +35,19 @@ export function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Correo electrónico
+                Usuario
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="tu@email.com"
+                  type="text"
+                  placeholder="usuario"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -92,13 +93,13 @@ export function LoginPage() {
             <p className="text-xs text-gray-600 font-semibold mb-2">Usuarios de prueba:</p>
             <div className="space-y-1 text-xs text-gray-600">
               <div>
-                <strong>Superuser:</strong> julio@fleetwatch.com / julio123
+                <strong>Superuser:</strong> julio / admin123
               </div>
               <div>
-                <strong>Admin:</strong> admin@fleetwatch.com / admin123
+                <strong>Admin:</strong> admin / admin123
               </div>
               <div>
-                <strong>Cliente:</strong> cliente@fleetwatch.com / cliente123
+                <strong>Cliente:</strong> cliente / cliente123
               </div>
             </div>
           </div>

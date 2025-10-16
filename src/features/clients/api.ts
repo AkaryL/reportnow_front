@@ -9,6 +9,7 @@ export const clientsApi = {
       name: c.name,
       email: c.email,
       phone: c.phone,
+      whatsapp: c.whatsapp,
       vehicles: c.vehicles || 0,
       lastActivity: c.last_activity,
     }));
@@ -23,6 +24,7 @@ export const clientsApi = {
         name: c.name,
         email: c.email,
         phone: c.phone,
+        whatsapp: c.whatsapp,
         vehicles: c.vehicles || 0,
         lastActivity: c.last_activity,
       };
@@ -31,7 +33,7 @@ export const clientsApi = {
     }
   },
 
-  create: async (data: Omit<Client, 'id' | 'vehicles'>): Promise<Client> => {
+  create: async (data: any): Promise<Client> => {
     const response = await apiClient.post<any>('/api/clients', data);
     const c = response.data;
     return {
@@ -39,23 +41,21 @@ export const clientsApi = {
       name: c.name,
       email: c.email,
       phone: c.phone,
+      whatsapp: c.whatsapp,
       vehicles: 0,
       lastActivity: c.last_activity,
     };
   },
 
-  update: async (id: string, data: Partial<Client>): Promise<Client> => {
-    const response = await apiClient.put<any>(`/api/clients/${id}`, {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-    });
+  update: async (id: string, data: any): Promise<Client> => {
+    const response = await apiClient.put<any>(`/api/clients/${id}`, data);
     const c = response.data;
     return {
       id: c.id,
       name: c.name,
       email: c.email,
       phone: c.phone,
+      whatsapp: c.whatsapp,
       vehicles: c.vehicles || 0,
       lastActivity: c.last_activity,
     };
@@ -63,5 +63,20 @@ export const clientsApi = {
 
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/api/clients/${id}`);
+  },
+
+  getVehicles: async (id: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>(`/api/clients/${id}/vehicles`);
+    return response.data;
+  },
+
+  getGeofences: async (id: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>(`/api/clients/${id}/geofences`);
+    return response.data;
+  },
+
+  sendAlert: async (id: string, message: string): Promise<any> => {
+    const response = await apiClient.post<any>(`/api/clients/${id}/send-alert`, { message });
+    return response.data;
   },
 };

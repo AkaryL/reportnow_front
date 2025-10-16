@@ -4,6 +4,14 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import db from './database.js';
 
+// Import route modules
+import geofencesRouter from './routes/geofences.js';
+import recipientsRouter from './routes/recipients.js';
+import auditRouter from './routes/audit.js';
+import tracksRouter from './routes/tracks.js';
+import { generateToken, authenticate } from './middleware/auth.js';
+import { AuditService, AUDIT_ACTIONS } from './services/audit.js';
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -32,14 +40,45 @@ app.post('/api/auth/login', (req, res) => {
   const user = stmt.get(username, password) as any;
 
   if (!user) {
+    // Log failed login attempt
+    if (username) {
+      try {
+        const failedUser = db.prepare('SELECT id FROM users WHERE username = ?').get(username) as any;
+        if (failedUser) {
+          AuditService.log({
+            user_id: failedUser.id,
+            action: AUDIT_ACTIONS.LOGIN_FAILED,
+            resource_type: 'auth',
+            details: { username },
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent']
+          });
+        }
+      } catch (e) {
+        // Ignore audit errors
+      }
+    }
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+
+  // Generate real JWT token
+  const token = generateToken(user.id);
+
+  // Log successful login
+  AuditService.log({
+    user_id: user.id,
+    action: AUDIT_ACTIONS.LOGIN,
+    resource_type: 'auth',
+    details: { username: user.username, role: user.role },
+    ip_address: req.ip,
+    user_agent: req.headers['user-agent']
+  });
 
   const { password: _, ...userWithoutPassword } = user;
 
   res.json({
     user: userWithoutPassword,
-    token: `mock-jwt-token-${user.id}`,
+    token,
   });
 });
 
@@ -177,12 +216,30 @@ app.delete('/api/users/:id', (req, res) => {
 
 // ==================== USER VEHICLE ASSIGNMENTS ====================
 app.get('/api/users/:id/vehicles', (req, res) => {
-  const stmt = db.prepare(`
-    SELECT v.* FROM vehicles v
-    INNER JOIN user_vehicles uv ON v.id = uv.vehicle_id
-    WHERE uv.user_id = ?
-  `);
-  const vehicles = stmt.all(req.params.id);
+  // First check if the user is a client
+  const userStmt = db.prepare('SELECT id, role, client_id FROM users WHERE id = ?');
+  const user = userStmt.get(req.params.id) as any;
+
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  let vehicles;
+
+  if (user.role === 'client' && user.client_id) {
+    // For client users, get vehicles from their client_id
+    const clientVehiclesStmt = db.prepare('SELECT * FROM vehicles WHERE client_id = ? ORDER BY updated_at DESC');
+    vehicles = clientVehiclesStmt.all(user.client_id);
+  } else {
+    // For admin/superuser, get vehicles from user_vehicles junction table
+    const userVehiclesStmt = db.prepare(`
+      SELECT v.* FROM vehicles v
+      INNER JOIN user_vehicles uv ON v.id = uv.vehicle_id
+      WHERE uv.user_id = ?
+    `);
+    vehicles = userVehiclesStmt.all(req.params.id);
+  }
+
   res.json(vehicles);
 });
 
@@ -212,8 +269,35 @@ app.delete('/api/users/:userId/vehicles/:vehicleId', (req, res) => {
 
 // ==================== VEHICLES ====================
 app.get('/api/vehicles', (req, res) => {
-  const stmt = db.prepare('SELECT * FROM vehicles ORDER BY updated_at DESC');
-  const vehicles = stmt.all();
+  let stmt;
+  let vehicles;
+
+  // Try to get user from token (optional authentication)
+  const authHeader = req.headers.authorization;
+  let user: any = null;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.substring(7);
+      const jwt = require('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      user = db.prepare('SELECT id, username, role, client_id FROM users WHERE id = ?').get(decoded.userId);
+    } catch (e) {
+      // Invalid token, continue without user
+    }
+  }
+
+  // If user is a client, filter by their client_id
+  if (user?.role === 'client' && user?.client_id) {
+    stmt = db.prepare('SELECT * FROM vehicles WHERE client_id = ? ORDER BY updated_at DESC');
+    vehicles = stmt.all(user.client_id);
+  } else {
+    // Admin, superuser, or no auth can see all vehicles
+    stmt = db.prepare('SELECT * FROM vehicles ORDER BY updated_at DESC');
+    vehicles = stmt.all();
+  }
+
   res.json(vehicles);
 });
 
@@ -439,18 +523,36 @@ app.get('/api/clients/:id', (req, res) => {
 });
 
 app.post('/api/clients', (req, res) => {
-  const { name, email, phone } = req.body;
+  const { name, email, phone, whatsapp, password, vehicle_ids } = req.body;
 
-  const id = `c-${Date.now()}`;
-  const stmt = db.prepare(`
-    INSERT INTO clients (id, name, email, phone)
-    VALUES (?, ?, ?, ?)
-  `);
+  const clientId = `c-${Date.now()}`;
+  const userId = `u-${Date.now()}-client`;
 
   try {
-    stmt.run(id, name, email, phone);
+    // Create client
+    const clientStmt = db.prepare(`
+      INSERT INTO clients (id, name, email, phone, whatsapp)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    clientStmt.run(clientId, name, email, phone, whatsapp || null);
 
-    const newClient = db.prepare('SELECT * FROM clients WHERE id = ?').get(id);
+    // Create associated user with client role
+    const userStmt = db.prepare(`
+      INSERT INTO users (id, username, password, name, role, email, client_id)
+      VALUES (?, ?, ?, ?, 'client', ?, ?)
+    `);
+    const username = email.split('@')[0]; // Use email prefix as username
+    userStmt.run(userId, username, password || '123', name, email, clientId);
+
+    // Assign vehicles if provided
+    if (vehicle_ids && vehicle_ids.length > 0) {
+      const updateVehicleStmt = db.prepare('UPDATE vehicles SET client_id = ? WHERE id = ?');
+      vehicle_ids.forEach((vehicleId: string) => {
+        updateVehicleStmt.run(clientId, vehicleId);
+      });
+    }
+
+    const newClient = db.prepare('SELECT * FROM clients WHERE id = ?').get(clientId);
 
     io.emit('client:created', newClient);
 
@@ -461,19 +563,55 @@ app.post('/api/clients', (req, res) => {
 });
 
 app.put('/api/clients/:id', (req, res) => {
-  const { name, email, phone } = req.body;
+  const { name, email, phone, whatsapp, password, vehicle_ids } = req.body;
 
   const stmt = db.prepare(`
     UPDATE clients
-    SET name = ?, email = ?, phone = ?
+    SET name = ?, email = ?, phone = ?, whatsapp = ?
     WHERE id = ?
   `);
 
   try {
-    const result = stmt.run(name, email, phone, req.params.id);
+    const result = stmt.run(name, email, phone, whatsapp || null, req.params.id);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Client not found' });
+    }
+
+    // Update associated user if exists
+    const user = db.prepare('SELECT id FROM users WHERE client_id = ? AND role = ?').get(req.params.id, 'client') as any;
+    if (user) {
+      const updates: string[] = [];
+      const values: any[] = [];
+
+      if (name) { updates.push('name = ?'); values.push(name); }
+      if (email) {
+        updates.push('email = ?');
+        updates.push('username = ?');
+        values.push(email);
+        values.push(email.split('@')[0]);
+      }
+      if (password) { updates.push('password = ?'); values.push(password); }
+
+      if (updates.length > 0) {
+        values.push(user.id);
+        const updateUserStmt = db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`);
+        updateUserStmt.run(...values);
+      }
+    }
+
+    // Update vehicle assignments if provided
+    if (vehicle_ids !== undefined) {
+      // Remove client_id from vehicles that are no longer assigned
+      db.prepare('UPDATE vehicles SET client_id = NULL WHERE client_id = ?').run(req.params.id);
+
+      // Assign new vehicles
+      if (vehicle_ids.length > 0) {
+        const updateVehicleStmt = db.prepare('UPDATE vehicles SET client_id = ? WHERE id = ?');
+        vehicle_ids.forEach((vehicleId: string) => {
+          updateVehicleStmt.run(req.params.id, vehicleId);
+        });
+      }
     }
 
     const updatedClient = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
@@ -495,6 +633,9 @@ app.delete('/api/clients/:id', (req, res) => {
     return res.status(400).json({ error: 'Cannot delete client with assigned vehicles' });
   }
 
+  // Delete associated user
+  db.prepare('DELETE FROM users WHERE client_id = ? AND role = ?').run(req.params.id, 'client');
+
   const stmt = db.prepare('DELETE FROM clients WHERE id = ?');
   const deleteResult = stmt.run(req.params.id);
 
@@ -507,53 +648,67 @@ app.delete('/api/clients/:id', (req, res) => {
   res.status(204).send();
 });
 
-// ==================== GEOFENCES ====================
-app.get('/api/geofences', (req, res) => {
-  const stmt = db.prepare('SELECT * FROM geofences ORDER BY created_at DESC');
-  const geofences = stmt.all().map((g: any) => ({
-    ...g,
-    geom: {
-      type: g.geom_type,
-      coordinates: JSON.parse(g.coordinates),
-    },
-  }));
+// Get vehicles for a specific client
+app.get('/api/clients/:id/vehicles', (req, res) => {
+  const stmt = db.prepare('SELECT * FROM vehicles WHERE client_id = ? ORDER BY updated_at DESC');
+  const vehicles = stmt.all(req.params.id);
+  res.json(vehicles);
+});
+
+// Get geofences for a specific client
+app.get('/api/clients/:id/geofences', (req, res) => {
+  const stmt = db.prepare(`
+    SELECT * FROM geofences
+    WHERE (client_id = ? OR is_global = 1)
+    AND deleted_at IS NULL
+    ORDER BY created_at DESC
+  `);
+  const geofences = stmt.all(req.params.id);
   res.json(geofences);
 });
 
-app.post('/api/geofences', (req, res) => {
-  const { name, type, color, geom } = req.body;
+// Send WhatsApp alert to client
+app.post('/api/clients/:id/send-alert', (req, res) => {
+  const { message } = req.body;
 
-  const id = `g-${Date.now()}`;
-  const stmt = db.prepare(`
-    INSERT INTO geofences (id, name, type, color, geom_type, coordinates)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id) as any;
 
-  try {
-    stmt.run(id, name, type, color, geom.type, JSON.stringify(geom.coordinates));
-
-    const newGeofence = db.prepare('SELECT * FROM geofences WHERE id = ?').get(id);
-
-    io.emit('geofence:created', newGeofence);
-
-    res.status(201).json(newGeofence);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.delete('/api/geofences/:id', (req, res) => {
-  const stmt = db.prepare('DELETE FROM geofences WHERE id = ?');
-  const result = stmt.run(req.params.id);
-
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'Geofence not found' });
+  if (!client) {
+    return res.status(404).json({ error: 'Client not found' });
   }
 
-  io.emit('geofence:deleted', req.params.id);
+  if (!client.whatsapp) {
+    return res.status(400).json({ error: 'Client does not have WhatsApp number' });
+  }
 
-  res.status(204).send();
+  // TODO: Integrate with WhatsApp API (Twilio, WhatsApp Business API, etc.)
+  // For now, we'll just log the message and return success
+  console.log(`📱 WhatsApp alert to ${client.whatsapp}:`, message);
+
+  // In a real implementation, you would send the message via WhatsApp API:
+  // const response = await whatsappAPI.sendMessage(client.whatsapp, message);
+
+  res.json({
+    success: true,
+    recipient: client.whatsapp,
+    message: message,
+    timestamp: new Date().toISOString()
+  });
 });
+
+// ==================== GEOFENCES (Multi-tenant with permissions) ====================
+// Note: Old simple geofences routes replaced with multi-tenant version
+// See server/routes/geofences.ts for full implementation
+app.use('/api', geofencesRouter);
+
+// ==================== RECIPIENTS (Notification configuration) ====================
+app.use('/api', recipientsRouter);
+
+// ==================== AUDIT (Audit log query API) ====================
+app.use('/api', auditRouter);
+
+// ==================== TRACKS (Vehicle route history) ====================
+app.use('/api', tracksRouter);
 
 // ==================== NOTIFICATIONS ====================
 app.get('/api/notifications', (req, res) => {

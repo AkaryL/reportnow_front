@@ -17,7 +17,8 @@ export function VehicleDetailPage() {
   const navigate = useNavigate();
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [routeHistory, setRouteHistory] = useState<Array<{ lat: number; lng: number }>>([]);
+  const [routeHistory, setRouteHistory] = useState<Array<{ lat: number; lng: number; ts?: string }>>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Obtener todos los vehículos
   const { data: vehicles, isLoading } = useQuery({
@@ -28,22 +29,43 @@ export function VehicleDetailPage() {
   // Encontrar el vehículo específico
   const vehicle = vehicles?.find((v) => v.id === id);
 
-  // Obtener fechas disponibles con historial
-  const { data: availableDates } = useQuery({
-    queryKey: ['vehicle-history-dates', id],
-    queryFn: () => vehiclesApi.getHistoryDates(id!),
+  // Obtener fechas disponibles con tracks
+  const { data: availableDates, refetch: refetchDates } = useQuery({
+    queryKey: ['vehicle-track-dates', id],
+    queryFn: () => vehiclesApi.getTrackDates(id!),
     enabled: !!id,
   });
 
-  // Obtener historial del día seleccionado
+  // Auto-generar tracks para los últimos 7 días al montar el componente
+  useEffect(() => {
+    if (id && availableDates !== undefined && availableDates.length === 0) {
+      setIsGenerating(true);
+      vehiclesApi.generateWeekTracks(id)
+        .then(() => {
+          console.log('✅ Generated week tracks for vehicle', id);
+          refetchDates();
+        })
+        .catch((error) => {
+          console.error('Error generating week tracks:', error);
+        })
+        .finally(() => {
+          setIsGenerating(false);
+        });
+    }
+  }, [id, availableDates, refetchDates]);
+
+  // Obtener track del día seleccionado
   useEffect(() => {
     if (!id || !selectedDate) {
       setRouteHistory([]);
       return;
     }
 
-    vehiclesApi.getHistoryByDate(id, selectedDate).then((history) => {
-      setRouteHistory(history.map(h => ({ lat: h.lat, lng: h.lng })));
+    vehiclesApi.getTrack(id, selectedDate).then((track) => {
+      setRouteHistory(track.points.map(p => ({ lat: p.lat, lng: p.lng, ts: p.ts })));
+    }).catch((error) => {
+      console.error('Error fetching track:', error);
+      setRouteHistory([]);
     });
   }, [id, selectedDate]);
 
@@ -52,6 +74,13 @@ export function VehicleDetailPage() {
       setSelectedVehicle(vehicle);
     }
   }, [vehicle]);
+
+  // Funciones de filtro rápido
+  const handleQuickFilter = (days: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    setSelectedDate(date.toISOString().split('T')[0]);
+  };
 
   if (isLoading) {
     return (
@@ -113,36 +142,83 @@ export function VehicleDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          {/* Selector de fecha */}
-          <div className="mb-4 flex gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          {/* Selector de fecha con filtros rápidos */}
+          <div className="mb-4 space-y-4">
+            {/* Botones de filtro rápido */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Seleccionar día para ver recorrido
+                Filtros rápidos
               </label>
-              <input
-                type="date"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={selectedDate || ''}
-                onChange={(e) => setSelectedDate(e.target.value || null)}
-                max={new Date().toISOString().split('T')[0]}
-                min={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-              />
-              {selectedDate && availableDates?.find(d => d.date === selectedDate) && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {availableDates.find(d => d.date === selectedDate)?.points} puntos registrados
-                </p>
-              )}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={selectedDate === new Date().toISOString().split('T')[0] ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => handleQuickFilter(0)}
+                  disabled={isGenerating}
+                >
+                  Hoy
+                </Button>
+                <Button
+                  variant={selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => handleQuickFilter(1)}
+                  disabled={isGenerating}
+                >
+                  Ayer
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Mostrar mensaje o implementar vista de 7 días
+                    handleQuickFilter(1); // Por ahora muestra ayer
+                  }}
+                  disabled={isGenerating}
+                >
+                  Últimos 7 días
+                </Button>
+                {selectedDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedDate(null)}
+                    disabled={isGenerating}
+                  >
+                    Limpiar
+                  </Button>
+                )}
+              </div>
             </div>
-            {selectedDate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedDate(null)}
-              >
-                Limpiar
-              </Button>
-            )}
+
+            {/* Date picker */}
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  O selecciona una fecha específica
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  value={selectedDate || ''}
+                  onChange={(e) => setSelectedDate(e.target.value || null)}
+                  max={new Date().toISOString().split('T')[0]}
+                  min={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                  disabled={isGenerating}
+                />
+                {selectedDate && availableDates?.find(d => d.date === selectedDate) && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {availableDates.find(d => d.date === selectedDate)?.points} puntos registrados
+                  </p>
+                )}
+                {isGenerating && (
+                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                    <span className="animate-spin">⏳</span>
+                    Generando datos históricos...
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="h-[500px] rounded-xl overflow-hidden shadow-md border border-gray-200">

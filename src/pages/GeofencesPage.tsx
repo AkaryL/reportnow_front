@@ -7,8 +7,9 @@ import { Button } from '../components/ui/Button';
 import { Topbar } from '../components/Topbar';
 import { GeofenceModal } from '../components/GeofenceModal';
 import { LeafletMap } from '../components/map/LeafletMap';
-import { MapPin, Trash2, Edit, Plus, Navigation } from 'lucide-react';
+import { MapPin, Trash2, Edit, Plus, Navigation, Filter } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
+import { useAuth } from '../features/auth/hooks';
 
 interface Geofence {
   id: string;
@@ -20,18 +21,41 @@ interface Geofence {
     coordinates: number[][][];
   };
   created_at: string;
+  permission?: string;
 }
 
 export function GeofencesPage() {
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
   const [selectedGeofence, setSelectedGeofence] = useState<Geofence | null>(null);
   const [focusedGeofenceId, setFocusedGeofenceId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'own' | 'assigned' | 'all'>('own');
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
   const queryClient = useQueryClient();
 
+  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
+
+  // Obtener lista de clientes (solo para admin/superuser)
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/clients');
+      return response.data;
+    },
+    enabled: isAdmin,
+  });
+
   const { data: geofences = [], isLoading } = useQuery({
-    queryKey: QUERY_KEYS.GEOFENCES,
-    queryFn: geofencesApi.getAll,
+    queryKey: ['geofences', filter, selectedClientId],
+    queryFn: async () => {
+      let url = `/api/geofences?filter=${filter}`;
+      if (selectedClientId) {
+        url += `&clientId=${selectedClientId}`;
+      }
+      const response = await apiClient.get(url);
+      return response.data;
+    },
   });
 
   const deleteMutation = useMutation({
@@ -45,42 +69,40 @@ export function GeofencesPage() {
     },
   });
 
-  const handleSaveGeofence = async (geofenceData: { name: string; color: string; center: [number, number]; radius: number }) => {
+  const handleSaveGeofence = async (geofenceData: {
+    name: string;
+    color: string;
+    center: [number, number];
+    radius: number;
+    alert_type: 'entry' | 'exit' | 'both';
+    is_global?: boolean;
+    client_id?: string;
+  }) => {
     try {
-      // Convertir el círculo a un polígono aproximado para el backend
-      const numPoints = 32;
-      const coordinates: [number, number][] = [];
       const [lat, lng] = geofenceData.center;
-
-      const latRadius = geofenceData.radius / 111320;
-      const lngRadius = geofenceData.radius / (111320 * Math.cos(lat * Math.PI / 180));
-
-      for (let i = 0; i < numPoints; i++) {
-        const angle = (i / numPoints) * 2 * Math.PI;
-        const pointLat = lat + latRadius * Math.sin(angle);
-        const pointLng = lng + lngRadius * Math.cos(angle);
-        coordinates.push([pointLng, pointLat]); // GeoJSON format [lng, lat]
-      }
-
-      coordinates.push(coordinates[0]);
 
       const payload = {
         name: geofenceData.name,
-        type: 'zone',
+        type: 'zona-permitida',
         color: geofenceData.color,
-        geom: {
-          type: 'Polygon',
-          coordinates: [coordinates],
-        },
+        geom_type: 'Circle',
+        coordinates: JSON.stringify({
+          center: [lng, lat], // GeoJSON format [lng, lat]
+          radius: geofenceData.radius
+        }),
+        alert_type: geofenceData.alert_type,
+        is_global: geofenceData.is_global,
+        client_id: geofenceData.client_id,
       };
 
       await apiClient.post('/api/geofences', payload);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
       alert('Geocerca creada exitosamente');
       setIsModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al crear geocerca:', error);
-      alert('Error al crear la geocerca');
+      const errorMessage = error.response?.data?.error || 'Error al crear la geocerca';
+      alert(errorMessage);
     }
   };
 
@@ -115,24 +137,103 @@ export function GeofencesPage() {
 
       <div className="pt-6 space-y-5">
         {/* Header con botón de crear */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Geocercas</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {geofences.length} geocerca{geofences.length !== 1 ? 's' : ''} registrada{geofences.length !== 1 ? 's' : ''}
-            </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Geocercas</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {geofences.length} geocerca{geofences.length !== 1 ? 's' : ''} registrada{geofences.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingGeofence(null);
+                setIsModalOpen(true);
+              }}
+              variant="primary"
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Geocerca
+            </Button>
           </div>
-          <Button
-            onClick={() => {
-              setEditingGeofence(null);
-              setIsModalOpen(true);
-            }}
-            variant="primary"
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Geocerca
-          </Button>
+
+          {/* Filtros */}
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Filtros</span>
+            </div>
+
+            <div className="space-y-3">
+              {/* Filtro de tipo */}
+              {!isAdmin ? (
+                <div className="flex gap-2">
+                  <Button
+                    variant={filter === 'own' ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('own')}
+                  >
+                    Propias
+                  </Button>
+                  <Button
+                    variant={filter === 'assigned' ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('assigned')}
+                  >
+                    Asignadas
+                  </Button>
+                  <Button
+                    variant={filter === 'all' ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('all')}
+                  >
+                    Todas
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Selector de cliente para admin */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ver geocercas de:
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedClientId}
+                        onChange={(e) => {
+                          setSelectedClientId(e.target.value);
+                          setFilter('all');
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      >
+                        <option value="">Solo geocercas globales</option>
+                        {clients.map((client: any) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedClientId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedClientId('')}
+                        >
+                          Limpiar
+                        </Button>
+                      )}
+                    </div>
+                    {selectedClientId && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Mostrando geocercas del cliente seleccionado + geocercas globales
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
 
         {/* Grid: Mapa + Lista */}

@@ -10,7 +10,7 @@ interface LeafletMapProps {
   zoom?: number;
   showGeofences?: boolean;
   focusGeofenceId?: string | null;
-  routeHistory?: Array<{ lat: number; lng: number }>;
+  routeHistory?: Array<{ lat: number; lng: number; ts?: string }>;
   showRoute?: boolean;
 }
 
@@ -171,10 +171,47 @@ export function LeafletMap({
     // Clear existing geofences
     geofencesLayerRef.current.clearLayers();
 
+    // Parse color with alpha
+    const hexToRgba = (hex: string, alpha: number = 0.18) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    };
+
     // Add geofences from database
     geofences.forEach((geofence: any) => {
-      if (geofence.geom?.type === 'Polygon' && geofence.geom.coordinates) {
-        // Extract coordinates from GeoJSON format
+      const color = geofence.color || '#3BA2E8';
+
+      // Handle Circle geofences
+      if (geofence.geom_type === 'Circle') {
+        try {
+          const data = typeof geofence.coordinates === 'string'
+            ? JSON.parse(geofence.coordinates)
+            : geofence.coordinates;
+
+          if (data.center && data.radius) {
+            const [lng, lat] = data.center;
+            const circle = L.circle([lat, lng], {
+              radius: data.radius,
+              color: color,
+              fillColor: hexToRgba(color),
+              fillOpacity: 1,
+              weight: 2,
+            }).addTo(geofencesLayerRef.current!);
+
+            circle.bindPopup(`<div class="p-3">
+              <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
+              <p class="text-xs text-gray-600 mt-1">Tipo: ${geofence.type}</p>
+              <p class="text-xs text-gray-600">Radio: ${data.radius}m</p>
+            </div>`);
+          }
+        } catch (error) {
+          console.error('Error parsing circle geofence:', error);
+        }
+      }
+      // Handle Polygon geofences (legacy support)
+      else if (geofence.geom?.type === 'Polygon' && geofence.geom.coordinates) {
         const coordinates = geofence.geom.coordinates[0];
 
         if (coordinates && coordinates.length > 0) {
@@ -185,16 +222,6 @@ export function LeafletMap({
           const leafletCoords = isLatLngFormat
             ? coordinates.map((coord: number[]) => [coord[0], coord[1]] as [number, number])
             : coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number]);
-
-          // Parse color with alpha
-          const hexToRgba = (hex: string, alpha: number = 0.18) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return `rgba(${r},${g},${b},${alpha})`;
-          };
-
-          const color = geofence.color || '#3BA2E8';
 
           const polygon = L.polygon(leafletCoords, {
             color: color,
@@ -228,13 +255,45 @@ export function LeafletMap({
     if (!mapRef.current || !focusGeofenceId) return;
 
     const geofence = geofences.find((g: any) => g.id === focusGeofenceId);
-    if (!geofence || !geofence.geom?.coordinates) {
-      console.log('❌ Geocerca no encontrada o sin coordenadas:', focusGeofenceId);
+    if (!geofence) {
+      console.log('❌ Geocerca no encontrada:', focusGeofenceId);
       return;
     }
 
     console.log('🎯 Enfocando geocerca:', geofence.name);
     console.log('📊 Datos de la geocerca:', geofence);
+
+    // Handle Circle geofences
+    if (geofence.geom_type === 'Circle') {
+      try {
+        const data = typeof geofence.coordinates === 'string'
+          ? JSON.parse(geofence.coordinates)
+          : geofence.coordinates;
+
+        if (data.center && data.radius) {
+          const [lng, lat] = data.center;
+          const radiusInDegrees = data.radius / 111000; // Approximate conversion
+
+          // Create bounds around the circle
+          const bounds = L.latLngBounds(
+            [lat - radiusInDegrees, lng - radiusInDegrees],
+            [lat + radiusInDegrees, lng + radiusInDegrees]
+          );
+
+          mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+          console.log('✅ Mapa centrado en geocerca circular');
+        }
+      } catch (error) {
+        console.error('Error focusing circle geofence:', error);
+      }
+      return;
+    }
+
+    // Handle Polygon geofences (legacy support)
+    if (!geofence.geom?.coordinates) {
+      console.log('❌ Geocerca sin coordenadas:', focusGeofenceId);
+      return;
+    }
 
     const coordinates = geofence.geom.coordinates[0];
     if (!coordinates || coordinates.length === 0) {
@@ -298,6 +357,13 @@ export function LeafletMap({
 
       // Add markers for all points in the route
       if (latLngs.length > 0) {
+        // Helper function to format timestamp
+        const formatTime = (ts?: string) => {
+          if (!ts) return '';
+          const date = new Date(ts);
+          return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        };
+
         // Start marker (green, larger)
         const startIcon = L.divIcon({
           html: '<div style="width: 16px; height: 16px; background-color: #10b981; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>',
@@ -305,8 +371,9 @@ export function LeafletMap({
           iconSize: [16, 16],
           iconAnchor: [8, 8],
         });
+        const startTime = routeHistory[0]?.ts ? `<div class="text-xs text-gray-600 mt-1">⏱️ ${formatTime(routeHistory[0].ts)}</div>` : '';
         L.marker(latLngs[0], { icon: startIcon })
-          .bindPopup('<div class="text-sm font-semibold">Inicio del recorrido</div>')
+          .bindPopup(`<div class="p-2"><div class="text-sm font-semibold">🟢 Inicio del recorrido</div>${startTime}</div>`)
           .addTo(mapRef.current);
 
         // Intermediate points (blue, small)
@@ -318,8 +385,9 @@ export function LeafletMap({
         });
 
         for (let i = 1; i < latLngs.length - 1; i++) {
+          const timestamp = routeHistory[i]?.ts ? `<div class="text-xs text-gray-600">⏱️ ${formatTime(routeHistory[i].ts)}</div>` : '';
           L.marker(latLngs[i], { icon: pointIcon })
-            .bindPopup(`<div class="text-xs">Punto ${i} de ${latLngs.length}</div>`)
+            .bindPopup(`<div class="p-2"><div class="text-xs font-medium">Punto ${i} de ${latLngs.length}</div>${timestamp}</div>`)
             .addTo(mapRef.current);
         }
 
@@ -330,8 +398,9 @@ export function LeafletMap({
           iconSize: [16, 16],
           iconAnchor: [8, 8],
         });
+        const endTime = routeHistory[routeHistory.length - 1]?.ts ? `<div class="text-xs text-gray-600 mt-1">⏱️ ${formatTime(routeHistory[routeHistory.length - 1].ts)}</div>` : '';
         L.marker(latLngs[latLngs.length - 1], { icon: endIcon })
-          .bindPopup('<div class="text-sm font-semibold">Fin del recorrido</div>')
+          .bindPopup(`<div class="p-2"><div class="text-sm font-semibold">🔴 Fin del recorrido</div>${endTime}</div>`)
           .addTo(mapRef.current);
       }
 

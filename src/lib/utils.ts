@@ -109,7 +109,7 @@ export function exportToCSV<T extends Record<string, any>>(
  * Get layout storage key for user and route
  */
 export function getLayoutKey(userId: string, route: string): string {
-  return `fleetwatch:layout:${userId}:${route}`;
+  return `reportnow:layout:${userId}:${route}`;
 }
 
 /**

@@ -10,7 +10,7 @@ const db = new Database(join(__dirname, 'fleetwatch.db'));
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
-// Migration: Add client_id column if it doesn't exist
+// Migration: Add client_id column to users if it doesn't exist
 try {
   db.exec(`ALTER TABLE users ADD COLUMN client_id TEXT REFERENCES clients(id)`);
   console.log('✅ Added client_id column to users table');
@@ -20,6 +20,38 @@ try {
     console.log('ℹ️ client_id column already exists');
   }
 }
+
+// Migration: Add whatsapp column to clients if it doesn't exist
+try {
+  db.exec(`ALTER TABLE clients ADD COLUMN whatsapp TEXT`);
+  console.log('✅ Added whatsapp column to clients table');
+} catch (error: any) {
+  // Column already exists, ignore
+  if (!error.message.includes('duplicate column')) {
+    console.log('ℹ️ whatsapp column already exists');
+  }
+}
+
+// Migrations for geofences table (new permission system)
+const geofenceMigrations = [
+  { name: 'alert_type', sql: `ALTER TABLE geofences ADD COLUMN alert_type TEXT DEFAULT 'both' CHECK(alert_type IN ('entry', 'exit', 'both'))` },
+  { name: 'created_by_role', sql: `ALTER TABLE geofences ADD COLUMN created_by_role TEXT DEFAULT 'admin' CHECK(created_by_role IN ('superuser', 'admin', 'client'))` },
+  { name: 'created_by_user_id', sql: `ALTER TABLE geofences ADD COLUMN created_by_user_id TEXT DEFAULT '1' REFERENCES users(id)` },
+  { name: 'client_id', sql: `ALTER TABLE geofences ADD COLUMN client_id TEXT REFERENCES clients(id)` },
+  { name: 'is_global', sql: `ALTER TABLE geofences ADD COLUMN is_global INTEGER DEFAULT 0` },
+  { name: 'deleted_at', sql: `ALTER TABLE geofences ADD COLUMN deleted_at DATETIME` },
+];
+
+geofenceMigrations.forEach(migration => {
+  try {
+    db.exec(migration.sql);
+    console.log(`✅ Added ${migration.name} column to geofences table`);
+  } catch (error: any) {
+    if (!error.message.includes('duplicate column')) {
+      console.log(`ℹ️ ${migration.name} column already exists in geofences`);
+    }
+  }
+});
 
 // Create tables
 db.exec(`
@@ -50,6 +82,7 @@ db.exec(`
     name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone TEXT NOT NULL,
+    whatsapp TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_activity DATETIME
   );
@@ -79,7 +112,15 @@ db.exec(`
     color TEXT NOT NULL,
     geom_type TEXT NOT NULL,
     coordinates TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    alert_type TEXT DEFAULT 'both' CHECK(alert_type IN ('entry', 'exit', 'both')),
+    created_by_role TEXT NOT NULL CHECK(created_by_role IN ('superuser', 'admin', 'client')),
+    created_by_user_id TEXT NOT NULL,
+    client_id TEXT,
+    is_global INTEGER DEFAULT 0,
+    deleted_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id),
+    FOREIGN KEY (client_id) REFERENCES clients(id)
   );
 
   CREATE TABLE IF NOT EXISTS notifications (
@@ -120,16 +161,16 @@ const users = [
 users.forEach(user => insertUser.run(...user));
 
 const insertClient = db.prepare(`
-  INSERT OR IGNORE INTO clients (id, name, email, phone, last_activity)
-  VALUES (?, ?, ?, ?, ?)
+  INSERT OR IGNORE INTO clients (id, name, email, phone, whatsapp, last_activity)
+  VALUES (?, ?, ?, ?, ?, ?)
 `);
 
 const clients = [
-  ['1', 'Transportes del Valle', 'contacto@transportesvalle.com', '+52 33 1234 5678', new Date().toISOString()],
-  ['2', 'Logística Zapopan', 'info@logisticazapopan.com', '+52 33 8765 4321', new Date().toISOString()],
-  ['3', 'Distribuidora Jalisco', 'ventas@distribuidorajalisco.com', '+52 33 5555 1234', new Date().toISOString()],
-  ['4', 'Entregas Rápidas SA', 'servicio@entregasrapidas.com', '+52 33 9876 5432', new Date().toISOString()],
-  ['5', 'Mensajería Express', 'contacto@mensajeriaexpress.com', '+52 33 4444 7777', new Date().toISOString()],
+  ['1', 'Transportes del Valle', 'contacto@transportesvalle.com', '+52 33 1234 5678', '+5233123456 78', new Date().toISOString()],
+  ['2', 'Logística Zapopan', 'info@logisticazapopan.com', '+52 33 8765 4321', '+523387654321', new Date().toISOString()],
+  ['3', 'Distribuidora Jalisco', 'ventas@distribuidorajalisco.com', '+52 33 5555 1234', '+523355551234', new Date().toISOString()],
+  ['4', 'Entregas Rápidas SA', 'servicio@entregasrapidas.com', '+52 33 9876 5432', '+523398765432', new Date().toISOString()],
+  ['5', 'Mensajería Express', 'contacto@mensajeriaexpress.com', '+52 33 4444 7777', '+523344447777', new Date().toISOString()],
 ];
 
 clients.forEach(client => insertClient.run(...client));
@@ -160,8 +201,8 @@ const vehicles = [
 vehicles.forEach(vehicle => insertVehicle.run(...vehicle));
 
 const insertGeofence = db.prepare(`
-  INSERT OR IGNORE INTO geofences (id, name, type, color, geom_type, coordinates)
-  VALUES (?, ?, ?, ?, ?, ?)
+  INSERT OR IGNORE INTO geofences (id, name, type, color, geom_type, coordinates, alert_type, created_by_role, created_by_user_id, client_id, is_global)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const geofences = [
@@ -170,70 +211,65 @@ const geofences = [
     'Centro Zapopan',
     'zona-permitida',
     '#10b981',
-    'Polygon',
-    JSON.stringify([[
-      [-103.3950, 20.7250],
-      [-103.3880, 20.7250],
-      [-103.3880, 20.7180],
-      [-103.3950, 20.7180],
-      [-103.3950, 20.7250],
-    ]]),
+    'Circle',
+    JSON.stringify({ center: [-103.3915, 20.7215], radius: 400 }),
+    'both', // alert_type
+    'admin', // created_by_role
+    '1', // created_by_user_id (julio)
+    null, // client_id (global)
+    1, // is_global
   ],
   [
     '2',
     'Andares',
     'punto-interes',
     '#1fb6aa',
-    'Polygon',
-    JSON.stringify([[
-      [-103.4650, 20.7370],
-      [-103.4590, 20.7370],
-      [-103.4590, 20.7320],
-      [-103.4650, 20.7320],
-      [-103.4650, 20.7370],
-    ]]),
+    'Circle',
+    JSON.stringify({ center: [-103.4620, 20.7345], radius: 350 }),
+    'entry', // alert_type
+    'admin', // created_by_role
+    '2', // created_by_user_id (admin)
+    '1', // client_id (Transportes del Valle)
+    0, // is_global
   ],
   [
     '3',
     'Plaza del Sol',
     'punto-interes',
     '#1fb6aa',
-    'Polygon',
-    JSON.stringify([[
-      [-103.4020, 20.6620],
-      [-103.3960, 20.6620],
-      [-103.3960, 20.6570],
-      [-103.4020, 20.6570],
-      [-103.4020, 20.6620],
-    ]]),
+    'Circle',
+    JSON.stringify({ center: [-103.3990, 20.6595], radius: 300 }),
+    'exit', // alert_type
+    'admin', // created_by_role
+    '1', // created_by_user_id (julio)
+    null, // client_id (global)
+    1, // is_global
   ],
   [
     '4',
     'Zona Restringida Norte',
     'zona-restringida',
     '#ef4444',
-    'Polygon',
-    JSON.stringify([[
-      [-103.3800, 20.7550],
-      [-103.3650, 20.7550],
-      [-103.3650, 20.7450],
-      [-103.3800, 20.7450],
-      [-103.3800, 20.7550],
-    ]]),
+    'Circle',
+    JSON.stringify({ center: [-103.3725, 20.7500], radius: 500 }),
+    'both', // alert_type
+    'admin', // created_by_role
+    '2', // created_by_user_id (admin)
+    '2', // client_id (Logística Zapopan)
+    0, // is_global
   ],
   [
     '5',
     'Base de Operaciones',
     'punto-interes',
     '#1fb6aa',
-    'Polygon',
-    JSON.stringify([[
-      [-103.4210, 20.7100],
-      [-103.4150, 20.7100],
-      [-103.4150, 20.7050],
-      [-103.4210, 20.7050],
-      [-103.4210, 20.7100],
-    ]]),
+    'Circle',
+    JSON.stringify({ center: [-103.4180, 20.7075], radius: 300 }),
+    'both', // alert_type
+    'client', // created_by_role
+    '3', // created_by_user_id (cliente)
+    '3', // client_id (Distribuidora Jalisco)
+    0, // is_global
   ],
 ];
 

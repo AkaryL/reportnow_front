@@ -129,4 +129,25 @@ export const vehiclesApi = {
     const response = await apiClient.get<any[]>(`/api/vehicles/${id}/history?${queryParams.toString()}`);
     return response.data;
   },
+
+  // Track endpoints (new system)
+  getTrack: async (id: string, date: string): Promise<{ vehicleId: string; date: string; points: Array<{ ts: string; lat: number; lng: number; speedKmh: number }> }> => {
+    const response = await apiClient.get(`/api/vehicles/${id}/tracks?date=${date}`);
+    return response.data;
+  },
+
+  simulateTrack: async (id: string, params: { date: string; count?: number }): Promise<any> => {
+    const response = await apiClient.post(`/api/vehicles/${id}/tracks/simulate`, params);
+    return response.data;
+  },
+
+  getTrackDates: async (id: string): Promise<{ date: string; points: number }[]> => {
+    const response = await apiClient.get(`/api/vehicles/${id}/tracks/dates`);
+    return response.data;
+  },
+
+  generateWeekTracks: async (id: string): Promise<any> => {
+    const response = await apiClient.post(`/api/vehicles/${id}/tracks/generate-week`, {});
+    return response.data;
+  },
 };

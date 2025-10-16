@@ -1,14 +1,14 @@
 import type { VehicleStatus, NotificationType } from './types';
 
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'FleetWatch';
+export const APP_NAME = import.meta.env.VITE_APP_NAME || 'ReportNow';
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 export const MAP_STYLE = import.meta.env.VITE_MAP_STYLE || 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 // Local Storage Keys
-export const LS_TOKEN_KEY = 'fleetwatch:token';
-export const LS_USER_KEY = 'fleetwatch:user';
-export const LS_LAYOUT_PREFIX = 'fleetwatch:layout';
+export const LS_TOKEN_KEY = 'reportnow:token';
+export const LS_USER_KEY = 'reportnow:user';
+export const LS_LAYOUT_PREFIX = 'reportnow:layout';
 
 // Vehicle Status Configuration
 export const VEHICLE_STATUS_CONFIG: Record<VehicleStatus, {
@@ -95,9 +95,11 @@ export const ROUTES = {
   VEHICLE_DETAIL: '/vehiculos/:id',
   GEOFENCES: '/geocercas',
   CLIENTS: '/clientes',
+  CLIENT_DETAIL: '/clientes/:id',
   REPORTS: '/reportes',
   NOTIFICATIONS: '/notificaciones',
   ROLES: '/roles',
+  ACCOUNT: '/mi-cuenta',
 } as const;
 
 // Query Keys

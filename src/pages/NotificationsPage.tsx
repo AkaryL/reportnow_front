@@ -4,15 +4,33 @@ import { notificationsApi } from '../features/notifications/api';
 import { wsClient } from '../lib/websocket';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import { ClientCard } from '../components/ui/ClientCard';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { ClientTable, ClientTableHeader, ClientTableBody, ClientTableRow, ClientTableHead, ClientTableCell } from '../components/ui/ClientTable';
 import { Button } from '../components/ui/Button';
+import { ClientButton } from '../components/ui/ClientButton';
 import { Badge } from '../components/ui/Badge';
+import { ClientBadge } from '../components/ui/ClientBadge';
 import { Check, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 import { formatDate } from '../lib/utils';
+import { useAuth } from '../features/auth/hooks';
 import type { Notification } from '../lib/types';
 
 export function NotificationsPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Determine if current user is a client for conditional styling
+  const isClient = user?.role === 'client';
+  const CardComponent = isClient ? ClientCard : Card;
+  const ButtonComponent = isClient ? ClientButton : Button;
+  const BadgeComponent = isClient ? ClientBadge : Badge;
+  const TableComponent = isClient ? ClientTable : Table;
+  const TableHeaderComponent = isClient ? ClientTableHeader : TableHeader;
+  const TableBodyComponent = isClient ? ClientTableBody : TableBody;
+  const TableRowComponent = isClient ? ClientTableRow : TableRow;
+  const TableHeadComponent = isClient ? ClientTableHead : TableHead;
+  const TableCellComponent = isClient ? ClientTableCell : TableCell;
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.NOTIFICATIONS,
@@ -64,11 +82,11 @@ export function NotificationsPage() {
   const getIcon = (type: Notification['type']) => {
     switch (type) {
       case 'crit':
-        return <AlertCircle className="w-5 h-5 text-crit-600" />;
+        return <AlertCircle className={`w-5 h-5 ${isClient ? 'text-red-400' : 'text-crit-600'}`} />;
       case 'warn':
-        return <AlertTriangle className="w-5 h-5 text-warn-600" />;
+        return <AlertTriangle className={`w-5 h-5 ${isClient ? 'text-orange-400' : 'text-warn-600'}`} />;
       case 'info':
-        return <Info className="w-5 h-5 text-info-600" />;
+        return <Info className={`w-5 h-5 ${isClient ? 'text-cyan-400' : 'text-info-600'}`} />;
     }
   };
 
@@ -84,126 +102,134 @@ export function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className={`text-2xl font-bold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Notificaciones</h1>
+          <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
             Alertas y notificaciones del sistema • {unreadCount} sin leer
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead}>
+          <ButtonComponent variant={isClient ? 'secondary' : 'outline'} onClick={markAllAsRead}>
             <Check className="w-4 h-4" />
             Marcar todas como leídas
-          </Button>
+          </ButtonComponent>
         )}
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{notifications.length}</p>
-              </div>
-              <Info className="w-6 h-6 text-gray-400" />
+        <CardComponent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Total</p>
+              <p className={`text-2xl font-bold mt-1 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
+                {notifications.length}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <Info className={`w-6 h-6 ${isClient ? 'text-cyan-400' : 'text-gray-400'}`} />
+          </div>
+        </CardComponent>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Sin leer</p>
-                <p className="text-2xl font-bold text-warn-600 mt-1">{unreadCount}</p>
-              </div>
-              <AlertCircle className="w-6 h-6 text-warn-600" />
+        <CardComponent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Sin leer</p>
+              <p className={`text-2xl font-bold mt-1 ${isClient ? 'text-orange-400' : 'text-warn-600'}`}>
+                {unreadCount}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <AlertCircle className={`w-6 h-6 ${isClient ? 'text-orange-400' : 'text-warn-600'}`} />
+          </div>
+        </CardComponent>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Críticas</p>
-                <p className="text-2xl font-bold text-crit-600 mt-1">
-                  {notifications.filter((n) => n.type === 'crit').length}
-                </p>
-              </div>
-              <AlertTriangle className="w-6 h-6 text-crit-600" />
+        <CardComponent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Críticas</p>
+              <p className={`text-2xl font-bold mt-1 ${isClient ? 'text-red-400' : 'text-crit-600'}`}>
+                {notifications.filter((n) => n.type === 'crit').length}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <AlertTriangle className={`w-6 h-6 ${isClient ? 'text-red-400' : 'text-crit-600'}`} />
+          </div>
+        </CardComponent>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Historial de notificaciones</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Vehículo</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Mensaje</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <CardComponent>
+        {!isClient && (
+          <CardHeader>
+            <CardTitle>Historial de notificaciones</CardTitle>
+          </CardHeader>
+        )}
+        {isClient && (
+          <div className="p-6 border-b border-white/8">
+            <h3 className="client-heading text-xl">Historial de notificaciones</h3>
+          </div>
+        )}
+        <div className={isClient ? 'p-0' : ''}>
+          {!isClient && <CardContent className="p-0" />}
+          <TableComponent>
+            <TableHeaderComponent>
+              <TableRowComponent>
+                <TableHeadComponent>Fecha</TableHeadComponent>
+                <TableHeadComponent>Vehículo</TableHeadComponent>
+                <TableHeadComponent>Tipo</TableHeadComponent>
+                <TableHeadComponent>Mensaje</TableHeadComponent>
+                <TableHeadComponent>Estado</TableHeadComponent>
+                <TableHeadComponent className="text-right">Acciones</TableHeadComponent>
+              </TableRowComponent>
+            </TableHeaderComponent>
+            <TableBodyComponent>
               {notifications.map((notification) => (
-                <TableRow
+                <TableRowComponent
                   key={notification.id}
-                  className={!notification.read ? 'bg-blue-50/50' : ''}
+                  className={!notification.read && !isClient ? 'bg-blue-50/50' : ''}
                 >
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCellComponent className={`text-sm ${isClient ? '' : 'text-gray-600'}`}>
                     {formatDate(notification.ts)}
-                  </TableCell>
-                  <TableCell className="font-medium">{notification.vehiclePlate}</TableCell>
-                  <TableCell>
+                  </TableCellComponent>
+                  <TableCellComponent className={isClient ? '' : 'font-medium'}>
+                    {notification.vehiclePlate}
+                  </TableCellComponent>
+                  <TableCellComponent>
                     <div className="flex items-center gap-2">
                       {getIcon(notification.type)}
-                      <Badge variant={notification.type}>
+                      <BadgeComponent variant={notification.type}>
                         {notification.type === 'crit'
                           ? 'Crítico'
                           : notification.type === 'warn'
                           ? 'Advertencia'
                           : 'Información'}
-                      </Badge>
+                      </BadgeComponent>
                     </div>
-                  </TableCell>
-                  <TableCell className="max-w-md">
-                    <p className="text-sm text-gray-900 truncate">{notification.text}</p>
-                  </TableCell>
-                  <TableCell>
+                  </TableCellComponent>
+                  <TableCellComponent className="max-w-md">
+                    <p className={`text-sm truncate ${isClient ? '' : 'text-gray-900'}`}>{notification.text}</p>
+                  </TableCellComponent>
+                  <TableCellComponent>
                     {notification.read ? (
-                      <Badge variant="default">Leída</Badge>
+                      <BadgeComponent variant="default">Leída</BadgeComponent>
                     ) : (
-                      <Badge variant="warning">Pendiente</Badge>
+                      <BadgeComponent variant={isClient ? 'default' : 'warning'}>Pendiente</BadgeComponent>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </TableCellComponent>
+                  <TableCellComponent className="text-right">
                     {!notification.read && (
-                      <Button
+                      <ButtonComponent
                         variant="ghost"
                         size="sm"
                         onClick={() => markAsRead(notification.id)}
                       >
                         <Check className="w-4 h-4" />
                         Marcar leída
-                      </Button>
+                      </ButtonComponent>
                     )}
-                  </TableCell>
-                </TableRow>
+                  </TableCellComponent>
+                </TableRowComponent>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </TableBodyComponent>
+          </TableComponent>
+        </div>
+      </CardComponent>
     </div>
   );
 }

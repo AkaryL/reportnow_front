@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, MapPin, Search } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useAuth } from '../features/auth/hooks';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../lib/apiClient';
 
 interface GeofenceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (geofence: { name: string; color: string; center: [number, number]; radius: number }) => void;
+  onSave: (geofence: {
+    name: string;
+    color: string;
+    center: [number, number];
+    radius: number;
+    alert_type: 'entry' | 'exit' | 'both';
+    is_global?: boolean;
+    client_id?: string;
+  }) => void;
 }
 
 export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3BA2E8');
   const [latitude, setLatitude] = useState('');
@@ -18,6 +30,21 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [useAddress, setUseAddress] = useState(true);
+  const [alertType, setAlertType] = useState<'entry' | 'exit' | 'both'>('both');
+  const [assignmentType, setAssignmentType] = useState<'global' | 'client'>('global');
+  const [selectedClientId, setSelectedClientId] = useState('');
+
+  // Obtener lista de clientes (solo para admin/superuser)
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/clients');
+      return response.data;
+    },
+    enabled: isOpen && (user?.role === 'admin' || user?.role === 'superuser'),
+  });
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
 
   if (!isOpen) return null;
 
@@ -31,12 +58,11 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
     setSearchError('');
 
     try {
-      // Usar Nominatim de OpenStreetMap para geocodificación
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
         {
           headers: {
-            'User-Agent': 'FleetWatch App',
+            'User-Agent': 'ReportNow App',
           },
         }
       );
@@ -48,7 +74,6 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
         setLatitude(location.lat);
         setLongitude(location.lon);
         setSearchError('');
-        alert(`📍 Ubicación encontrada: ${location.display_name}`);
       } else {
         setSearchError('No se encontró la dirección. Intenta ser más específico.');
       }
@@ -89,12 +114,25 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
       return;
     }
 
-    onSave({
+    const geofenceData: any = {
       name,
       color,
-      center: [lat, lng],
+      center: [lat, lng] as [number, number],
       radius: rad,
-    });
+      alert_type: alertType,
+    };
+
+    // Solo admin/superuser puede asignar
+    if (isAdmin) {
+      if (assignmentType === 'global') {
+        geofenceData.is_global = true;
+      } else if (assignmentType === 'client' && selectedClientId) {
+        geofenceData.client_id = selectedClientId;
+        geofenceData.is_global = false;
+      }
+    }
+
+    onSave(geofenceData);
 
     // Limpiar formulario
     setName('');
@@ -104,6 +142,9 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
     setRadius('500');
     setAddress('');
     setSearchError('');
+    setAlertType('both');
+    setAssignmentType('global');
+    setSelectedClientId('');
     onClose();
   };
 
@@ -115,6 +156,9 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
     setRadius('500');
     setAddress('');
     setSearchError('');
+    setAlertType('both');
+    setAssignmentType('global');
+    setSelectedClientId('');
     onClose();
   };
 
@@ -128,7 +172,7 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
         />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-[9999]">
+        <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 z-[9999] max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Nueva Geocerca</h2>
@@ -230,36 +274,36 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
             ) : (
               // Entrada manual de coordenadas
               <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">
-                  Latitud
-                </label>
-                <input
-                  id="latitude"
-                  type="number"
-                  step="any"
-                  value={latitude}
-                  onChange={(e) => setLatitude(e.target.value)}
-                  placeholder="Ej: 20.7215"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">
-                  Longitud
-                </label>
-                <input
-                  id="longitude"
-                  type="number"
-                  step="any"
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
-                  placeholder="Ej: -103.3915"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-                />
-              </div>
+                <div>
+                  <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitud
+                  </label>
+                  <input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="Ej: 20.7215"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitud
+                  </label>
+                  <input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="Ej: -103.3915"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                </div>
               </div>
             )}
 
@@ -295,11 +339,106 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
               </div>
             </div>
 
+            {/* Tipo de Alerta */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de alerta
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAlertType('entry')}
+                  className={`px-3 py-2 text-sm rounded-lg border-2 transition-colors ${
+                    alertType === 'entry'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  Solo entrada
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertType('exit')}
+                  className={`px-3 py-2 text-sm rounded-lg border-2 transition-colors ${
+                    alertType === 'exit'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  Solo salida
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertType('both')}
+                  className={`px-3 py-2 text-sm rounded-lg border-2 transition-colors ${
+                    alertType === 'both'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  Ambas
+                </button>
+              </div>
+            </div>
+
+            {/* Asignación (solo para admin/superuser) */}
+            {isAdmin && (
+              <div className="border-t border-gray-200 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Asignación
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={assignmentType === 'global'}
+                      onChange={() => setAssignmentType('global')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm">Global (visible para todos)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={assignmentType === 'client'}
+                      onChange={() => setAssignmentType('client')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm">Asignar a cliente específico</span>
+                  </label>
+                </div>
+
+                {assignmentType === 'client' && (
+                  <div className="mt-3">
+                    <label htmlFor="client" className="block text-sm font-medium text-gray-700 mb-1">
+                      Seleccionar cliente
+                    </label>
+                    <select
+                      id="client"
+                      value={selectedClientId}
+                      onChange={(e) => setSelectedClientId(e.target.value)}
+                      required={assignmentType === 'client'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    >
+                      <option value="">Selecciona un cliente...</option>
+                      {clients.map((client: any) => (
+                        <option key={client.id} value={client.id}>
+                          {client.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-800">
-                <strong>Nota:</strong> {useAddress
-                  ? 'Ingresa una dirección y haz clic en "Buscar" para obtener las coordenadas automáticamente.'
-                  : 'La geocerca se creará como un círculo con el centro en las coordenadas especificadas y el radio indicado.'}
+                <strong>Nota:</strong> La geocerca generará alertas cuando un vehículo {
+                  alertType === 'entry' ? 'entre en' :
+                  alertType === 'exit' ? 'salga de' :
+                  'entre o salga de'
+                } esta zona.
               </p>
             </div>
 

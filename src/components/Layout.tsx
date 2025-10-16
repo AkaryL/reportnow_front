@@ -14,17 +14,20 @@ import {
   X,
   Wifi,
   MapPin,
+  UserCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
+import { ClientLayout } from './ClientLayout';
 
 const navigation = [
-  { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'cliente'] },
-  { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck, roles: ['superuser', 'admin', 'cliente'] },
-  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'cliente'] },
+  { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'client'] },
+  { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck, roles: ['superuser', 'admin', 'client'] },
+  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin'] },
   { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser', 'admin'] },
-  { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'cliente'] },
-  { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'cliente'] },
+  { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin'] },
+  { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'client'] },
+  { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['client'] },
 ];
 
 export function Layout() {
@@ -35,6 +38,11 @@ export function Layout() {
   const filteredNavigation = navigation.filter((item) =>
     item.roles.includes(user?.role || '')
   );
+
+  // Use glassmorphism client layout for client users
+  if (user?.role === 'client') {
+    return <ClientLayout />;
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -49,8 +57,8 @@ export function Layout() {
             </div>
             {/* Texto en dos líneas */}
             <div className="flex flex-col leading-tight">
-              <span className="text-[14px] font-semibold text-gray-900">FleetWatch</span>
-              <span className="text-[12px] text-slate-400">Monitoreo & reservas</span>
+              <span className="text-[14px] font-semibold text-gray-900">ReportNow</span>
+              <span className="text-[12px] text-slate-400">Monitoreo</span>
             </div>
           </div>
         </div>
