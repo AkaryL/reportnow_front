@@ -447,7 +447,6 @@ export function HomePage() {
           <Topbar
             title="Home"
             subtitle="Visión general en tiempo real"
-            onSearch={handleSearch}
           />
         </div>
       )}
