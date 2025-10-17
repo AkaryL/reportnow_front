@@ -13,6 +13,8 @@ import { ReportsPage } from '../pages/ReportsPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
 import { RolesPage } from '../pages/RolesPage';
 import { AccountPage } from '../pages/AccountPage';
+import { AdminUsersPage } from '../pages/AdminUsersPage';
+import { AdminProfilePage } from '../pages/AdminProfilePage';
 
 export function AppRoutes() {
   return (
@@ -59,6 +61,25 @@ export function AppRoutes() {
           element={
             <RequireRole allowedRoles={['admin', 'superuser']}>
               <RolesPage />
+            </RequireRole>
+          }
+        />
+
+        {/* Admin Users Management - Solo para superuser */}
+        <Route
+          path="/admin/usuarios"
+          element={
+            <RequireRole allowedRoles={['superuser']}>
+              <AdminUsersPage />
+            </RequireRole>
+          }
+        />
+
+        <Route
+          path="/admin/usuarios/:id"
+          element={
+            <RequireRole allowedRoles={['superuser']}>
+              <AdminProfilePage />
             </RequireRole>
           }
         />

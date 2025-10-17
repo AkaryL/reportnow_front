@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 
 interface ClientButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -21,6 +21,7 @@ export function ClientButton({
     primary: 'client-btn-primary',
     secondary: 'client-btn-secondary',
     ghost: 'bg-transparent hover:bg-white/5 text-white/70 hover:text-white/92',
+    outline: 'bg-transparent border border-white/20 text-white/92 hover:bg-white/5 hover:border-white/30',
   };
 
   const sizeStyles = {

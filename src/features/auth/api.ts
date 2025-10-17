@@ -1,28 +1,51 @@
-import { apiClient } from '../../lib/apiClient';
 import type { AuthResponse, LoginCredentials, User } from '../../lib/types';
 import { LS_TOKEN_KEY, LS_USER_KEY } from '../../lib/constants';
+import { mockUsers } from '../../data/mockData';
+
+// Función auxiliar para simular delay de red
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Función para generar un token JWT mock
+const generateMockToken = (user: User): string => {
+  return `mock.jwt.token.${user.id}.${Date.now()}`;
+};
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     console.log('🔄 authApi.login called with:', credentials);
 
     try {
-      // Backend expects 'username' not 'email'
-      const response = await apiClient.post<AuthResponse>('/api/auth/login', {
-        username: credentials.email, // Using email as username
-        password: credentials.password,
-      });
+      // Simular delay de red
+      await delay(300);
 
-      console.log('✅ Login response:', response.data);
-      return response.data;
+      // Buscar usuario por username (usando email como username)
+      const user = mockUsers.find(
+        u => u.username === credentials.email && u.password === credentials.password
+      );
+
+      if (!user) {
+        throw new Error('Credenciales inválidas');
+      }
+
+      // Generar token mock
+      const token = generateMockToken(user);
+
+      // Crear objeto de usuario sin password
+      const { password, ...userWithoutPassword } = user;
+
+      console.log('✅ Login exitoso:', userWithoutPassword);
+
+      return {
+        token,
+        user: userWithoutPassword,
+      };
     } catch (error: any) {
       console.error('❌ Login error:', error);
-      throw new Error(error.response?.data?.error || 'Credenciales inválidas');
+      throw new Error(error.message || 'Credenciales inválidas');
     }
   },
 
   getMe: async (): Promise<User> => {
-    // Mock API call - get user from localStorage
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const userStr = localStorage.getItem(LS_USER_KEY);
@@ -35,9 +58,6 @@ export const authApi = {
         resolve(user);
       }, 200);
     });
-
-    // Real API call (commented for later)
-    // return apiClient.get<User>('/auth/me');
   },
 
   logout: (): void => {

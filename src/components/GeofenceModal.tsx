@@ -3,7 +3,7 @@ import { X, MapPin, Search } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useAuth } from '../features/auth/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../lib/apiClient';
+import { clientsApi } from '../features/clients/api';
 
 interface GeofenceModalProps {
   isOpen: boolean;
@@ -17,9 +17,10 @@ interface GeofenceModalProps {
     is_global?: boolean;
     client_id?: string;
   }) => void;
+  defaultClientId?: string;
 }
 
-export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
+export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId }: GeofenceModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3BA2E8');
@@ -37,14 +38,19 @@ export function GeofenceModal({ isOpen, onClose, onSave }: GeofenceModalProps) {
   // Obtener lista de clientes (solo para admin/superuser)
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
-    queryFn: async () => {
-      const response = await apiClient.get('/api/clients');
-      return response.data;
-    },
+    queryFn: () => clientsApi.getAll(),
     enabled: isOpen && (user?.role === 'admin' || user?.role === 'superuser'),
   });
 
   const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
+
+  // Pre-seleccionar el cliente si se pasa defaultClientId
+  useEffect(() => {
+    if (isOpen && defaultClientId) {
+      setAssignmentType('client');
+      setSelectedClientId(defaultClientId);
+    }
+  }, [isOpen, defaultClientId]);
 
   if (!isOpen) return null;
 

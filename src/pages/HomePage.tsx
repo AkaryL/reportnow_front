@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { vehiclesApi } from '../features/vehicles/api';
 import { geofencesApi } from '../features/geofences/api';
 import { clientsApi } from '../features/clients/api';
 import { notificationsApi } from '../features/notifications/api';
-import { wsClient } from '../lib/websocket';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
@@ -17,6 +17,7 @@ import { ClientButton } from '../components/ui/ClientButton';
 import { MapView } from '../components/map/MapView';
 import { LeafletMap } from '../components/map/LeafletMap';
 import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
+import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
 import { GeofenceModal } from '../components/GeofenceModal';
 import { Topbar } from '../components/Topbar';
 import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock } from 'lucide-react';
@@ -24,9 +25,9 @@ import type { Vehicle, VehicleStatus } from '../lib/types';
 import { formatFuel, formatSpeed, formatTemp, formatRelativeTime } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import { useAuth } from '../features/auth/hooks';
-import { apiClient } from '../lib/apiClient';
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [mapSearchQuery, setMapSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<VehicleStatus[]>([]);
@@ -50,33 +51,14 @@ export function HomePage() {
   const BadgeComponent = isClient ? ClientBadge : Badge;
   const ButtonComponent = isClient ? ClientButton : Button;
   const InputComponent = isClient ? ClientInput : Input;
+  const DrawerComponent = isClient ? ClientDrawer : Drawer;
+  const DrawerSectionComponent = isClient ? ClientDrawerSection : DrawerSection;
+  const DrawerItemComponent = isClient ? ClientDrawerItem : DrawerItem;
 
   // Get vehicles based on user role
   const { data: vehicles = [], isLoading } = useQuery({
-    queryKey: user?.role === 'client' ? ['user-vehicles', user.id] : QUERY_KEYS.VEHICLES,
-    queryFn: async () => {
-      if (user?.role === 'client') {
-        // Get only assigned vehicles for client users
-        const response = await apiClient.get<any[]>(`/api/users/${user.id}/vehicles`);
-        return response.data.map((v: any) => ({
-          id: v.id,
-          plate: v.plate,
-          driver: v.driver,
-          status: v.status,
-          fuel: v.fuel,
-          speed: v.speed || 0,
-          temp: v.temp,
-          lat: v.lat,
-          lng: v.lng,
-          lastSeenMin: v.last_seen_min || 0,
-          deviceId: v.device_id,
-          clientId: v.client_id,
-        }));
-      } else {
-        // Get all vehicles for admin and superuser
-        return vehiclesApi.getAll();
-      }
-    },
+    queryKey: QUERY_KEYS.VEHICLES,
+    queryFn: vehiclesApi.getAll,
     enabled: !!user,
     refetchInterval: false, // Disable automatic refetching
     refetchOnWindowFocus: false, // Don't refetch when window gains focus
@@ -87,6 +69,7 @@ export function HomePage() {
   const { data: geofences = [] } = useQuery({
     queryKey: QUERY_KEYS.GEOFENCES,
     queryFn: geofencesApi.getAll,
+    enabled: !!user,
   });
 
   const { data: clients = [] } = useQuery({
@@ -99,6 +82,11 @@ export function HomePage() {
     queryKey: QUERY_KEYS.NOTIFICATIONS,
     queryFn: notificationsApi.getAll,
   });
+
+  // Filter vehicles by client if user is a client
+  const userVehicles = isClient && user?.client_id
+    ? vehicles.filter(v => String(v.clientId) === String(user.client_id))
+    : vehicles;
 
   // WebSocket connection for real-time updates - DISABLED to prevent auto-reload
   // useEffect(() => {
@@ -131,7 +119,7 @@ export function HomePage() {
   const kpis = [
     {
       label: 'En movimiento',
-      value: vehicles.filter((v) => v.status === 'moving').length,
+      value: userVehicles.filter((v) => v.status === 'moving').length,
       icon: Activity,
       color: 'text-ok-600',
       bg: 'bg-ok-50',
@@ -139,7 +127,7 @@ export function HomePage() {
     },
     {
       label: 'Detenidos',
-      value: vehicles.filter((v) => v.status === 'stopped').length,
+      value: userVehicles.filter((v) => v.status === 'stopped').length,
       icon: Truck,
       color: 'text-info-600',
       bg: 'bg-info-50',
@@ -147,7 +135,7 @@ export function HomePage() {
     },
     {
       label: 'Sin señal',
-      value: vehicles.filter((v) => v.status === 'offline').length,
+      value: userVehicles.filter((v) => v.status === 'offline').length,
       icon: AlertTriangle,
       color: 'text-gray-600',
       bg: 'bg-gray-50',
@@ -155,7 +143,7 @@ export function HomePage() {
     },
     {
       label: 'Críticos',
-      value: vehicles.filter((v) => v.status === 'critical').length,
+      value: userVehicles.filter((v) => v.status === 'critical').length,
       icon: Gauge,
       color: 'text-crit-600',
       bg: 'bg-crit-50',
@@ -243,7 +231,7 @@ export function HomePage() {
   };
 
   // Filter vehicles
-  const filteredVehicles = vehicles.filter((vehicle) => {
+  const filteredVehicles = userVehicles.filter((vehicle) => {
     // Search filter
     const matchesSearch =
       !searchQuery ||
@@ -260,8 +248,11 @@ export function HomePage() {
       vehicle.plate.toLowerCase().includes(mapSearchQuery.toLowerCase()) ||
       vehicle.driver.toLowerCase().includes(mapSearchQuery.toLowerCase());
 
-    const matchesClient =
-      !selectedClientId || String(vehicle.clientId) === String(selectedClientId);
+    // For client users, filter by their client_id automatically
+    // For admin/superuser, use selectedClientId filter
+    const matchesClient = isClient
+      ? String(vehicle.clientId) === String(user?.client_id)
+      : !selectedClientId || String(vehicle.clientId) === String(selectedClientId);
 
     // Map filters
     const matchesMoving = !mapFilters.moving || vehicle.status === 'moving';
@@ -334,7 +325,7 @@ export function HomePage() {
         },
       };
 
-      await apiClient.post('/api/geofences', payload);
+      await geofencesApi.create(payload);
 
       // Refrescar la lista de geocercas
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
@@ -388,6 +379,13 @@ export function HomePage() {
     // TODO: Implementar navegación a página de alertas
     console.log('Ver alertas para:', selectedVehicle.plate);
     alert(`Función de alertas para ${selectedVehicle.plate} - Por implementar`);
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    // Navigate to vehicle detail page to see the problem
+    if (notification.vehicleId) {
+      navigate(`/vehiculos/${notification.vehicleId}`);
+    }
   };
 
   // Helper function to get notification icon and colors
@@ -493,7 +491,7 @@ export function HomePage() {
               <p className={`text-[34px] font-semibold leading-none ${
                 isClient ? 'client-text-primary' : 'text-gray-900'
               }`}>
-                {vehicles.filter((v) => v.status === 'moving').length}
+                {userVehicles.filter((v) => v.status === 'moving').length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
                 Vehículos transmitiendo posición
@@ -530,7 +528,7 @@ export function HomePage() {
               <p className={`text-[34px] font-semibold leading-none ${
                 isClient ? 'client-text-primary' : 'text-gray-900'
               }`}>
-                {vehicles.filter((v) => v.status === 'stopped').length}
+                {userVehicles.filter((v) => v.status === 'stopped').length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
                 Última señal reciente, sin movimiento
@@ -567,7 +565,7 @@ export function HomePage() {
               <p className={`text-[34px] font-semibold leading-none ${
                 isClient ? 'client-text-primary' : 'text-gray-900'
               }`}>
-                {vehicles.filter((v) => v.status === 'offline').length}
+                {userVehicles.filter((v) => v.status === 'offline').length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
                 Equipos fuera de línea
@@ -604,7 +602,7 @@ export function HomePage() {
               <p className={`text-[34px] font-semibold leading-none ${
                 isClient ? 'client-text-primary' : 'text-gray-900'
               }`}>
-                {vehicles.filter((v) => v.status === 'critical' || (v.fuel !== undefined && v.fuel < 15)).length}
+                {userVehicles.filter((v) => v.status === 'critical' || (v.fuel !== undefined && v.fuel < 15)).length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
                 Por debajo de 15%
@@ -781,13 +779,13 @@ export function HomePage() {
             <div className="space-y-0 overflow-y-auto h-[calc(100%-100px)]">
               {filteredVehicles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                    <Search className="w-8 h-8 text-slate-400" />
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isClient ? 'bg-white/10' : 'bg-slate-100'}`}>
+                    <Search className={`w-8 h-8 ${isClient ? 'text-white/30' : 'text-slate-400'}`} />
                   </div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  <h4 className={`text-sm font-semibold mb-2 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
                     No se encontraron vehículos
                   </h4>
-                  <p className="text-xs text-gray-500 mb-4">
+                  <p className={`text-xs mb-4 ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
                     {mapFilters.insideGeofence || mapFilters.moving || mapSearchQuery || selectedClientId
                       ? 'No hay vehículos que coincidan con los filtros seleccionados.'
                       : 'No hay vehículos disponibles en este momento.'}
@@ -823,7 +821,11 @@ export function HomePage() {
                   return (
                     <div
                       key={vehicle.id}
-                      className="py-3 border-t border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+                      className={`py-3 border-t cursor-pointer transition-colors ${
+                        isClient
+                          ? 'border-white/10 hover:bg-white/5'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
                       onClick={() => setSelectedVehicle(vehicle)}
                     >
                       <div className="flex items-start gap-3">
@@ -833,14 +835,14 @@ export function HomePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h4 className="text-sm font-bold text-gray-900">{vehicle.plate}</h4>
-                              <p className="text-xs text-gray-600">{vehicle.driver}</p>
+                              <h4 className={`text-sm font-bold ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{vehicle.plate}</h4>
+                              <p className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{vehicle.driver}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[11px] text-gray-500">
+                                <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
                                   <Gauge className="w-3 h-3 inline mr-0.5" />
                                   {vehicle.fuel}%
                                 </span>
-                                <span className="text-[11px] text-gray-500">
+                                <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
                                   <Activity className="w-3 h-3 inline mr-0.5" />
                                   {vehicle.speed} km/h
                                 </span>
@@ -860,21 +862,31 @@ export function HomePage() {
 
             {/* Paginación */}
             {filteredVehicles.length > 4 && (
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+              <div className={`pt-3 border-t flex items-center justify-between ${
+                isClient ? 'border-white/10' : 'border-slate-200'
+              }`}>
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                   disabled={currentPage === 0}
-                  className="text-xs text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed font-medium"
+                  className={`text-xs font-medium ${
+                    isClient
+                      ? 'text-cyan-400 hover:text-cyan-300 disabled:text-white/20 disabled:cursor-not-allowed'
+                      : 'text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed'
+                  }`}
                 >
                   ← Anterior
                 </button>
-                <span className="text-xs text-gray-500">
+                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
                   Página {currentPage + 1} de {Math.ceil(filteredVehicles.length / 4)}
                 </span>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredVehicles.length / 4) - 1, prev + 1))}
                   disabled={currentPage >= Math.ceil(filteredVehicles.length / 4) - 1}
-                  className="text-xs text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed font-medium"
+                  className={`text-xs font-medium ${
+                    isClient
+                      ? 'text-cyan-400 hover:text-cyan-300 disabled:text-white/20 disabled:cursor-not-allowed'
+                      : 'text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed'
+                  }`}
                 >
                   Siguiente →
                 </button>
@@ -906,8 +918,8 @@ export function HomePage() {
         <div className="space-y-3">
           {notifications.length === 0 ? (
             <div className="text-center py-8">
-              <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No hay notificaciones recientes</p>
+              <Bell className={`w-12 h-12 mx-auto mb-3 ${isClient ? 'text-white/30' : 'text-gray-300'}`} />
+              <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>No hay notificaciones recientes</p>
             </div>
           ) : (
             notifications.slice(0, 5).map((notification) => {
@@ -917,8 +929,11 @@ export function HomePage() {
               return (
                 <div
                   key={notification.id}
-                  className={`flex gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100 ${
-                    !notification.read ? 'bg-blue-50/30' : ''
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`flex gap-3 p-3 rounded-lg transition-colors cursor-pointer border ${
+                    isClient
+                      ? `border-white/10 hover:bg-white/5 ${!notification.read ? 'bg-cyan-500/10' : ''}`
+                      : `border-gray-100 hover:bg-gray-50 ${!notification.read ? 'bg-blue-50/30' : ''}`
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full ${style.bg} border ${style.border} flex items-center justify-center flex-shrink-0`}>
@@ -928,14 +943,14 @@ export function HomePage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-gray-900">{notification.vehiclePlate}</h4>
+                          <h4 className={`text-sm font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.vehiclePlate}</h4>
                           {!notification.read && (
-                            <span className="w-2 h-2 rounded-full bg-primary"></span>
+                            <span className={`w-2 h-2 rounded-full ${isClient ? 'bg-cyan-400' : 'bg-primary'}`}></span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mt-0.5">{notification.text}</p>
+                        <p className={`text-xs mt-0.5 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{notification.text}</p>
                       </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1">
+                      <span className={`text-xs whitespace-nowrap flex items-center gap-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
                         <Clock className="w-3 h-3" />
                         {getRelativeTime(notification.ts)}
                       </span>
@@ -950,75 +965,75 @@ export function HomePage() {
 
       {/* Vehicle Details Drawer */}
       {selectedVehicle && (
-        <Drawer
+        <DrawerComponent
           isOpen={!!selectedVehicle}
           onClose={() => setSelectedVehicle(null)}
           title={`Vehículo ${selectedVehicle.plate}`}
         >
-          <DrawerSection title="Estado actual">
+          <DrawerSectionComponent title="Estado actual">
             <div className="space-y-3">
-              <DrawerItem
+              <DrawerItemComponent
                 label="Estado"
                 value={
-                  <Badge variant={selectedVehicle.status}>
+                  <BadgeComponent variant={selectedVehicle.status}>
                     {VEHICLE_STATUS_CONFIG[selectedVehicle.status].label}
-                  </Badge>
+                  </BadgeComponent>
                 }
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Conductor"
                 value={selectedVehicle.driver}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Última señal"
                 value={formatRelativeTime(selectedVehicle.lastSeenMin)}
               />
             </div>
-          </DrawerSection>
+          </DrawerSectionComponent>
 
-          <DrawerSection title="Telemetría">
+          <DrawerSectionComponent title="Telemetría">
             <div className="space-y-3">
-              <DrawerItem
+              <DrawerItemComponent
                 label="Velocidad"
                 value={formatSpeed(selectedVehicle.speed)}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Combustible"
                 value={formatFuel(selectedVehicle.fuel)}
               />
               {selectedVehicle.temp && (
-                <DrawerItem
+                <DrawerItemComponent
                   label="Temperatura"
                   value={formatTemp(selectedVehicle.temp)}
                 />
               )}
             </div>
-          </DrawerSection>
+          </DrawerSectionComponent>
 
-          <DrawerSection title="Ubicación">
+          <DrawerSectionComponent title="Ubicación">
             <div className="space-y-3">
-              <DrawerItem
+              <DrawerItemComponent
                 label="Latitud"
                 value={selectedVehicle.lat.toFixed(6)}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Longitud"
                 value={selectedVehicle.lng.toFixed(6)}
               />
             </div>
-          </DrawerSection>
+          </DrawerSectionComponent>
 
           <div className="mt-6 space-y-3">
-            <Button className="w-full" variant="primary" onClick={handleViewRouteHistory}>
+            <ButtonComponent className="w-full" variant="primary" onClick={handleViewRouteHistory}>
               <Navigation className="w-4 h-4" />
               Ver historial de ruta
-            </Button>
-            <Button className="w-full" variant="outline" onClick={handleViewAlerts}>
+            </ButtonComponent>
+            <ButtonComponent className="w-full" variant={isClient ? 'secondary' : 'outline'} onClick={handleViewAlerts}>
               <AlertTriangle className="w-4 h-4" />
               Ver alertas
-            </Button>
+            </ButtonComponent>
           </div>
-        </Drawer>
+        </DrawerComponent>
       )}
 
       {/* Geofence Modal */}

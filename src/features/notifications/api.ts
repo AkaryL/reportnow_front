@@ -1,24 +1,36 @@
-import { apiClient } from '../../lib/apiClient';
 import type { Notification } from '../../lib/types';
+import { mockNotifications } from '../../data/mockData';
+
+// Función auxiliar para simular delay de red
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Copia mutable de notificaciones
+let notifications = [...mockNotifications];
 
 export const notificationsApi = {
   getAll: async (): Promise<Notification[]> => {
-    const response = await apiClient.get<any[]>('/api/notifications');
-    return response.data.map((n) => ({
-      id: n.id,
-      vehiclePlate: n.vehicle_plate,
-      type: n.type,
-      text: n.text,
-      read: n.read === 1,
-      ts: n.ts,
-    }));
+    await delay(150);
+    return [...notifications];
   },
 
   markAsRead: async (id: string): Promise<void> => {
-    await apiClient.put(`/api/notifications/${id}/read`);
+    await delay(100);
+
+    const index = notifications.findIndex(n => n.id === id);
+    if (index !== -1) {
+      notifications[index] = {
+        ...notifications[index],
+        read: true,
+      };
+    }
   },
 
   markAllAsRead: async (): Promise<void> => {
-    await apiClient.put('/api/notifications/read-all');
+    await delay(150);
+
+    notifications = notifications.map(n => ({
+      ...n,
+      read: true,
+    }));
   },
 };

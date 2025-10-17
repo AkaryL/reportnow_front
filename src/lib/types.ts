@@ -1,12 +1,17 @@
 // ==================== User & Auth ====================
-export type UserRole = 'superuser' | 'admin' | 'cliente';
+export type UserRole = 'superuser' | 'admin' | 'client' | 'cliente';
 
 export interface User {
   id: string;
+  username?: string;
+  password?: string;
   name: string;
-  email: string;
+  email?: string;
   role: UserRole;
   organizationId?: string;
+  client_id?: string;
+  client_name?: string;
+  created_at?: string;
 }
 
 export interface AuthResponse {
@@ -36,6 +41,32 @@ export interface Vehicle {
   deviceId?: string;
   organizationId?: string;
   assignedClientIds?: string[];
+  clientId?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface VehicleEvent {
+  id: string;
+  vehicle_id: string;
+  event_type: 'geofence_entry' | 'geofence_exit' | 'speed_alert' | 'fuel_alert' | 'temp_alert' | 'offline_alert';
+  description: string;
+  geofence_id?: string;
+  lat?: number;
+  lng?: number;
+  ts: string;
+  metadata?: any;
+}
+
+export interface VehicleHistoryPoint {
+  id: string;
+  vehicle_id: string;
+  lat: number;
+  lng: number;
+  speed?: number;
+  fuel?: number;
+  temp?: number;
+  ts: string;
 }
 
 // ==================== Client ====================
@@ -48,6 +79,7 @@ export interface Client {
   vehicles: number; // count of assigned vehicles
   lastActivity?: string; // ISO date
   organizationId?: string;
+  created_at?: string;
 }
 
 // ==================== Notification ====================
@@ -69,13 +101,19 @@ export type GeofencePolicy = 'entrada' | 'salida' | 'prohibido';
 export interface Geofence {
   id: string;
   name: string;
-  policy: GeofencePolicy;
+  type: string;
+  policy?: GeofencePolicy;
+  alert_type?: 'entry' | 'exit' | 'both';
   color: string;
   geom: {
     type: string;
     coordinates: number[][][];
   };
   organizationId?: string;
+  client_id?: string;
+  is_global?: boolean;
+  created_by_role?: UserRole;
+  created_by_user_id?: string;
 }
 
 // ==================== Report ====================
@@ -130,6 +168,38 @@ export interface WSPositionUpdate {
 
 export interface WSNotificationEvent {
   notification: Notification;
+}
+
+// ==================== Activity Log ====================
+export type ActivityType =
+  | 'create_client'
+  | 'update_client'
+  | 'delete_client'
+  | 'create_geofence'
+  | 'update_geofence'
+  | 'delete_geofence'
+  | 'create_vehicle'
+  | 'update_vehicle'
+  | 'delete_vehicle'
+  | 'send_notification'
+  | 'assign_vehicle'
+  | 'unassign_vehicle'
+  | 'create_user'
+  | 'update_user'
+  | 'delete_user';
+
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_role: UserRole;
+  activity_type: ActivityType;
+  description: string;
+  target_type?: 'client' | 'vehicle' | 'geofence' | 'user' | 'notification';
+  target_id?: string;
+  target_name?: string;
+  metadata?: Record<string, any>;
+  ts: string;
 }
 
 // ==================== API Responses ====================

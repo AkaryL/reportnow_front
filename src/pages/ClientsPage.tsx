@@ -128,7 +128,12 @@ export function ClientsPage() {
                         <Building2 className="w-5 h-5 text-primary-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{client.name}</p>
+                        <button
+                          onClick={() => handleViewClient(client.id)}
+                          className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-left"
+                        >
+                          {client.name}
+                        </button>
                         <p className="text-sm text-gray-500">ID: {client.id}</p>
                       </div>
                     </div>

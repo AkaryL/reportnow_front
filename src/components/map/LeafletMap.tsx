@@ -29,6 +29,7 @@ export function LeafletMap({
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const geofencesLayerRef = useRef<L.LayerGroup | null>(null);
   const routePolylineRef = useRef<L.Polyline | null>(null);
+  const routeMarkersRef = useRef<L.Marker[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
@@ -344,6 +345,10 @@ export function LeafletMap({
       routePolylineRef.current = null;
     }
 
+    // Remove existing route markers
+    routeMarkersRef.current.forEach(marker => marker.remove());
+    routeMarkersRef.current = [];
+
     // Draw new polyline if route history is provided and showRoute is true
     if (showRoute && routeHistory.length > 1) {
       const latLngs: [number, number][] = routeHistory.map(point => [point.lat, point.lng]);
@@ -372,9 +377,10 @@ export function LeafletMap({
           iconAnchor: [8, 8],
         });
         const startTime = routeHistory[0]?.ts ? `<div class="text-xs text-gray-600 mt-1">⏱️ ${formatTime(routeHistory[0].ts)}</div>` : '';
-        L.marker(latLngs[0], { icon: startIcon })
+        const startMarker = L.marker(latLngs[0], { icon: startIcon })
           .bindPopup(`<div class="p-2"><div class="text-sm font-semibold">🟢 Inicio del recorrido</div>${startTime}</div>`)
           .addTo(mapRef.current);
+        routeMarkersRef.current.push(startMarker);
 
         // Intermediate points (blue, small)
         const pointIcon = L.divIcon({
@@ -386,9 +392,10 @@ export function LeafletMap({
 
         for (let i = 1; i < latLngs.length - 1; i++) {
           const timestamp = routeHistory[i]?.ts ? `<div class="text-xs text-gray-600">⏱️ ${formatTime(routeHistory[i].ts)}</div>` : '';
-          L.marker(latLngs[i], { icon: pointIcon })
+          const pointMarker = L.marker(latLngs[i], { icon: pointIcon })
             .bindPopup(`<div class="p-2"><div class="text-xs font-medium">Punto ${i} de ${latLngs.length}</div>${timestamp}</div>`)
             .addTo(mapRef.current);
+          routeMarkersRef.current.push(pointMarker);
         }
 
         // End marker (red, larger)
@@ -399,9 +406,10 @@ export function LeafletMap({
           iconAnchor: [8, 8],
         });
         const endTime = routeHistory[routeHistory.length - 1]?.ts ? `<div class="text-xs text-gray-600 mt-1">⏱️ ${formatTime(routeHistory[routeHistory.length - 1].ts)}</div>` : '';
-        L.marker(latLngs[latLngs.length - 1], { icon: endIcon })
+        const endMarker = L.marker(latLngs[latLngs.length - 1], { icon: endIcon })
           .bindPopup(`<div class="p-2"><div class="text-sm font-semibold">🔴 Fin del recorrido</div>${endTime}</div>`)
           .addTo(mapRef.current);
+        routeMarkersRef.current.push(endMarker);
       }
 
       routePolylineRef.current = polyline;

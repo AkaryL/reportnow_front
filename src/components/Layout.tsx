@@ -23,8 +23,9 @@ import { ClientLayout } from './ClientLayout';
 const navigation = [
   { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'client'] },
   { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck, roles: ['superuser', 'admin', 'client'] },
-  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin'] },
+  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'client'] },
   { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser', 'admin'] },
+  { name: 'Administradores', href: '/admin/usuarios', icon: Shield, roles: ['superuser'] },
   { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin'] },
   { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'client'] },
   { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['client'] },

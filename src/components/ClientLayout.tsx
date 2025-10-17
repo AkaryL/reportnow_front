@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  MapPin,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
@@ -16,6 +17,7 @@ import { cn } from '../lib/utils';
 const navigation = [
   { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard },
   { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck },
+  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin },
   { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell },
   { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle },
 ];

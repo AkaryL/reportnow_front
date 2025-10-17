@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsApi } from '../features/clients/api';
 import { vehiclesApi } from '../features/vehicles/api';
+import { geofencesApi } from '../features/geofences/api';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -10,6 +11,8 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
+import { LeafletMap } from '../components/map/LeafletMap';
+import { GeofenceModal } from '../components/GeofenceModal';
 import {
   ArrowLeft,
   Building2,
@@ -21,9 +24,12 @@ import {
   Plus,
   Trash2,
   AlertTriangle,
+  Pencil,
+  Eye,
 } from 'lucide-react';
 import { formatDate } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
+import type { Vehicle } from '../lib/types';
 
 export function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +40,9 @@ export function ClientDetailPage() {
   const [alertMessage, setAlertMessage] = useState('');
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [showGeofences, setShowGeofences] = useState(true);
+  const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
 
   const { data: client, isLoading: isLoadingClient } = useQuery({
     queryKey: ['client', id],
@@ -82,16 +91,74 @@ export function ClientDetailPage() {
   });
 
   const removeVehicleMutation = useMutation({
-    mutationFn: (vehicleId: string) =>
-      clientsApi.update(id!, {
-        ...client,
-        vehicle_ids: vehicles.filter((v: any) => v.id !== vehicleId).map((v: any) => v.id),
-      }),
+    mutationFn: async (vehicleId: string) => {
+      await vehiclesApi.update(vehicleId, { clientId: null });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-vehicles', id] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VEHICLES });
     },
   });
+
+  const deleteGeofenceMutation = useMutation({
+    mutationFn: async (geofenceId: string) => {
+      await geofencesApi.delete(geofenceId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-geofences', id] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
+    },
+  });
+
+  const createGeofenceMutation = useMutation({
+    mutationFn: async (geofenceData: {
+      name: string;
+      color: string;
+      center: [number, number];
+      radius: number;
+      alert_type: 'entry' | 'exit' | 'both';
+      is_global?: boolean;
+      client_id?: string;
+    }) => {
+      const [lat, lng] = geofenceData.center;
+      const geofence = {
+        name: geofenceData.name,
+        type: 'zona-permitida',
+        color: geofenceData.color,
+        geom: {
+          type: 'Circle',
+          coordinates: [[[lng, lat]]],
+        },
+        created_at: new Date().toISOString(),
+        is_global: geofenceData.is_global || false,
+        client_id: geofenceData.client_id || id,
+      };
+      await geofencesApi.create(geofence);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-geofences', id] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
+      setIsGeofenceModalOpen(false);
+      alert('Geocerca creada exitosamente');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || 'Error al crear la geocerca';
+      alert(errorMessage);
+    },
+  });
+
+  const handleSaveGeofence = (geofenceData: {
+    name: string;
+    color: string;
+    center: [number, number];
+    radius: number;
+    alert_type: 'entry' | 'exit' | 'both';
+    is_global?: boolean;
+    client_id?: string;
+  }) => {
+    createGeofenceMutation.mutate({ ...geofenceData, client_id: id });
+  };
 
   const handleSendAlert = () => {
     if (alertMessage.trim()) {
@@ -137,27 +204,29 @@ export function ClientDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/clientes')}
+            className="mt-1"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
-            <p className="text-gray-600 mt-1">Detalles del cliente y vehículos asignados</p>
+            <h1 className="text-3xl font-bold text-gray-900">{client.name}</h1>
+            <p className="text-gray-600 mt-2">Detalles del cliente y sus recursos</p>
           </div>
         </div>
         {client.whatsapp && (
           <Button
             variant="primary"
             onClick={() => setIsAlertModalOpen(true)}
+            className="self-start sm:self-center"
           >
             <MessageCircle className="w-4 h-4" />
             Enviar Alerta WhatsApp
@@ -167,38 +236,42 @@ export function ClientDetailPage() {
 
       {/* Client Info Card */}
       <Card>
-        <CardHeader>
-          <CardTitle>Información del Cliente</CardTitle>
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+          <CardTitle className="flex items-center gap-2 text-gray-900">
+            <Building2 className="w-6 h-6 text-blue-600" />
+            Información del Cliente
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3">
-              <Building2 className="w-5 h-5 text-gray-400 mt-0.5" />
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="p-3 rounded-xl bg-blue-100">
+                <Mail className="w-5 h-5 text-blue-600" />
+              </div>
               <div>
-                <p className="text-sm text-gray-500">Nombre</p>
-                <p className="font-medium text-gray-900">{client.name}</p>
+                <p className="text-xs font-medium text-gray-600 mb-1">Email</p>
+                <p className="text-sm font-semibold text-gray-900">{client.email}</p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
+
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="p-3 rounded-xl bg-green-100">
+                <Phone className="w-5 h-5 text-green-600" />
+              </div>
               <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium text-gray-900">{client.email}</p>
+                <p className="text-xs font-medium text-gray-600 mb-1">Teléfono</p>
+                <p className="text-sm font-semibold text-gray-900">{client.phone}</p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-500">Teléfono</p>
-                <p className="font-medium text-gray-900">{client.phone}</p>
-              </div>
-            </div>
+
             {client.whatsapp && (
-              <div className="flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-gray-400 mt-0.5" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="p-3 rounded-xl bg-emerald-100">
+                  <MessageCircle className="w-5 h-5 text-emerald-600" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-500">WhatsApp</p>
-                  <p className="font-medium text-gray-900">{client.whatsapp}</p>
+                  <p className="text-xs font-medium text-gray-600 mb-1">WhatsApp</p>
+                  <p className="text-sm font-semibold text-gray-900">{client.whatsapp}</p>
                 </div>
               </div>
             )}
@@ -206,15 +279,53 @@ export function ClientDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Vehicles Card */}
+      {/* Map with Vehicles and Geofences */}
       <Card>
-        <CardHeader>
+        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <CardTitle>
               <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5" />
-                Vehículos Asignados ({vehicles.length})
+                <MapPin className="w-5 h-5 text-emerald-600" />
+                Mapa de vehículos y geocercas
               </div>
+            </CardTitle>
+            <Button
+              variant={showGeofences ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setShowGeofences(!showGeofences)}
+            >
+              {showGeofences ? 'Ocultar geocercas' : 'Mostrar geocercas'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          {vehicles.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <MapPin className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm">No hay vehículos para mostrar en el mapa</p>
+            </div>
+          ) : (
+            <div className="h-[500px] rounded-xl overflow-hidden shadow-md border border-gray-200">
+              <LeafletMap
+                vehicles={vehicles}
+                geofences={showGeofences ? geofences : []}
+                onVehicleClick={setSelectedVehicle}
+                center={vehicles.length > 0 ? [vehicles[0].lat, vehicles[0].lng] : [20.7167, -103.3830]}
+                zoom={13}
+                showGeofences={showGeofences}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Vehicles Card */}
+      <Card>
+        <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Truck className="w-6 h-6 text-violet-600" />
+              Vehículos Asignados ({vehicles.length})
             </CardTitle>
             <Button
               variant="outline"
@@ -226,7 +337,7 @@ export function ClientDetailPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-6">
           {isLoadingVehicles ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -236,7 +347,9 @@ export function ClientDetailPage() {
               <p className="text-gray-500">No hay vehículos asignados a este cliente</p>
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto -mx-6">
+              <div className="inline-block min-w-full align-middle">
+                <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Placa</TableHead>
@@ -260,34 +373,55 @@ export function ClientDetailPage() {
                       Hace {vehicle.last_seen_min || 0} min
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveVehicle(vehicle.id)}
-                        className="text-crit-600 hover:text-crit-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/vehiculos/${vehicle.id}`)}
+                          title="Ver detalles del vehículo"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveVehicle(vehicle.id)}
+                          className="text-red-600 hover:text-red-700"
+                          title="Desasignar vehículo"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Geofences Card */}
       <Card>
-        <CardHeader>
-          <CardTitle>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
+        <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <MapPin className="w-6 h-6 text-cyan-600" />
               Geocercas ({geofences.length})
-            </div>
-          </CardTitle>
+            </CardTitle>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsGeofenceModalOpen(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Crear Geocerca
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-6">
           {isLoadingGeofences ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -297,36 +431,82 @@ export function ClientDetailPage() {
               <p className="text-gray-500">No hay geocercas asignadas a este cliente</p>
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto -mx-6">
+              <div className="inline-block min-w-full align-middle">
+                <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Global</TableHead>
+                  <TableHead>Propiedad</TableHead>
                   <TableHead>Fecha de creación</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {geofences.map((geofence: any) => (
-                  <TableRow key={geofence.id}>
-                    <TableCell className="font-medium">{geofence.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="default">{geofence.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {geofence.is_global ? (
-                        <Badge variant="info">Global</Badge>
-                      ) : (
-                        <Badge variant="default">Cliente</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {formatDate(geofence.created_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {geofences.map((geofence: any) => {
+                  const isOwnGeofence = geofence.client_id === id;
+                  const isGlobal = geofence.is_global;
+
+                  return (
+                    <TableRow key={geofence.id}>
+                      <TableCell className="font-medium">{geofence.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="default">{geofence.type}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {isGlobal ? (
+                          <Badge variant="info">Global</Badge>
+                        ) : isOwnGeofence ? (
+                          <Badge variant="success">Propia</Badge>
+                        ) : (
+                          <Badge variant="default">Asignada</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {formatDate(geofence.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/geocercas/${geofence.id}`)}
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate('/geocercas')}
+                            title="Ir a geocercas para editar"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`¿Eliminar la geocerca "${geofence.name}"?`)) {
+                                deleteGeofenceMutation.mutate(geofence.id);
+                              }
+                            }}
+                            disabled={!isOwnGeofence}
+                            className="text-red-600 hover:text-red-700 disabled:opacity-30"
+                            title={isOwnGeofence ? "Eliminar geocerca" : "Solo puedes eliminar geocercas propias del cliente"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -417,6 +597,14 @@ export function ClientDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Geofence Modal */}
+      <GeofenceModal
+        isOpen={isGeofenceModalOpen}
+        onClose={() => setIsGeofenceModalOpen(false)}
+        onSave={handleSaveGeofence}
+        defaultClientId={id}
+      />
     </div>
   );
 }

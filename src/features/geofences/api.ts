@@ -1,18 +1,32 @@
-import { apiClient } from '../../lib/apiClient';
 import type { Geofence } from '../../lib/types';
+import { mockGeofences } from '../../data/mockData';
+
+// Función auxiliar para simular delay de red
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Copia mutable de geocercas
+let geofences = [...mockGeofences];
 
 export const geofencesApi = {
   getAll: async (): Promise<Geofence[]> => {
-    const response = await apiClient.get<any[]>('/api/geofences');
-    return response.data;
+    await delay(150);
+    return [...geofences];
   },
 
   create: async (data: Omit<Geofence, 'id'>): Promise<Geofence> => {
-    const response = await apiClient.post<any>('/api/geofences', data);
-    return response.data;
+    await delay(250);
+
+    const newGeofence: Geofence = {
+      id: `g${Date.now()}`,
+      ...data,
+    };
+
+    geofences.push(newGeofence);
+    return { ...newGeofence };
   },
 
   delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/api/geofences/${id}`);
+    await delay(150);
+    geofences = geofences.filter(g => g.id !== id);
   },
 };

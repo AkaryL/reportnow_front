@@ -14,12 +14,12 @@ import { ClientButton } from '../components/ui/ClientButton';
 import { Input } from '../components/ui/Input';
 import { ClientInput } from '../components/ui/ClientInput';
 import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
+import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
 import { Eye, Search, MapPin, Navigation, AlertTriangle, Clock } from 'lucide-react';
 import { formatFuel, formatRelativeTime, formatSpeed, formatTemp } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import type { Vehicle } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
-import { apiClient } from '../lib/apiClient';
 
 export function VehiclesPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,28 +41,18 @@ export function VehiclesPage() {
   const TableRowComponent = isClient ? ClientTableRow : TableRow;
   const TableHeadComponent = isClient ? ClientTableHead : TableHead;
   const TableCellComponent = isClient ? ClientTableCell : TableCell;
+  const DrawerComponent = isClient ? ClientDrawer : Drawer;
+  const DrawerSectionComponent = isClient ? ClientDrawerSection : DrawerSection;
+  const DrawerItemComponent = isClient ? ClientDrawerItem : DrawerItem;
 
   // Get vehicles based on user role
   const { data: vehicles, isLoading } = useQuery({
-    queryKey: user?.role === 'client' ? ['user-vehicles', user.id] : QUERY_KEYS.VEHICLES,
+    queryKey: user?.role === 'client' ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
     queryFn: async () => {
-      if (user?.role === 'client') {
-        // Get only assigned vehicles for client users
-        const response = await apiClient.get<any[]>(`/api/users/${user.id}/vehicles`);
-        return response.data.map((v: any) => ({
-          id: v.id,
-          plate: v.plate,
-          driver: v.driver,
-          status: v.status,
-          fuel: v.fuel,
-          speed: v.speed || 0,
-          temp: v.temp,
-          lat: v.lat,
-          lng: v.lng,
-          lastSeenMin: v.last_seen_min || 0,
-          deviceId: v.device_id,
-          clientId: v.client_id,
-        }));
+      if (user?.role === 'client' && user.client_id) {
+        // Get only vehicles for this client
+        const allVehicles = await vehiclesApi.getAll();
+        return allVehicles.filter(v => v.clientId === user.client_id);
       } else {
         // Get all vehicles for admin and superuser
         return vehiclesApi.getAll();
@@ -285,26 +275,26 @@ export function VehiclesPage() {
 
       {/* Vehicle Details Drawer */}
       {selectedVehicle && (
-        <Drawer
+        <DrawerComponent
           isOpen={!!selectedVehicle}
           onClose={() => setSelectedVehicle(null)}
           title={`Vehículo ${selectedVehicle.plate}`}
         >
-          <DrawerSection title="Información general">
+          <DrawerSectionComponent title="Información general">
             <div className="space-y-3">
-              <DrawerItem
+              <DrawerItemComponent
                 label="Placa"
                 value={selectedVehicle.plate}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Conductor"
                 value={selectedVehicle.driver}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="ID Dispositivo"
                 value={selectedVehicle.deviceId || 'N/A'}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Estado"
                 value={
                   <BadgeComponent variant={selectedVehicle.status}>
@@ -313,19 +303,19 @@ export function VehiclesPage() {
                 }
               />
             </div>
-          </DrawerSection>
+          </DrawerSectionComponent>
 
-          <DrawerSection title="Telemetría en tiempo real">
+          <DrawerSectionComponent title="Telemetría en tiempo real">
             <div className="space-y-3">
-              <DrawerItem
+              <DrawerItemComponent
                 label="Velocidad actual"
                 value={
-                  <span className={selectedVehicle.speed > 0 ? 'text-ok-600 font-semibold' : ''}>
+                  <span className={selectedVehicle.speed > 0 ? (isClient ? 'text-green-400 font-semibold' : 'text-ok-600 font-semibold') : ''}>
                     {formatSpeed(selectedVehicle.speed)}
                   </span>
                 }
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Combustible"
                 value={
                   <div className="flex items-center gap-2">
@@ -346,40 +336,40 @@ export function VehiclesPage() {
                 }
               />
               {selectedVehicle.temp && (
-                <DrawerItem
+                <DrawerItemComponent
                   label="Temperatura motor"
                   value={
-                    <span className={selectedVehicle.temp > 30 ? 'text-crit-600 font-semibold' : ''}>
+                    <span className={selectedVehicle.temp > 30 ? (isClient ? 'text-red-400 font-semibold' : 'text-crit-600 font-semibold') : ''}>
                       {formatTemp(selectedVehicle.temp)}
                     </span>
                   }
                 />
               )}
-              <DrawerItem
+              <DrawerItemComponent
                 label="Última señal"
                 value={formatRelativeTime(selectedVehicle.lastSeenMin)}
               />
             </div>
-          </DrawerSection>
+          </DrawerSectionComponent>
 
-          <DrawerSection title="Ubicación GPS">
+          <DrawerSectionComponent title="Ubicación GPS">
             <div className="space-y-3">
-              <DrawerItem
+              <DrawerItemComponent
                 label="Latitud"
                 value={selectedVehicle.lat.toFixed(6)}
               />
-              <DrawerItem
+              <DrawerItemComponent
                 label="Longitud"
                 value={selectedVehicle.lng.toFixed(6)}
               />
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
+              <div className={`mt-4 p-3 rounded-lg ${isClient ? 'bg-white/5 border border-white/10' : 'bg-gray-50'}`}>
+                <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
                   <MapPin className="w-4 h-4 inline mr-1" />
                   Zapopan, Jalisco
                 </p>
               </div>
             </div>
-          </DrawerSection>
+          </DrawerSectionComponent>
 
           <div className="mt-6 space-y-3">
             <ButtonComponent className="w-full" variant="primary" onClick={handleViewOnMap}>
@@ -395,7 +385,7 @@ export function VehiclesPage() {
               Ver alertas del vehículo
             </ButtonComponent>
           </div>
-        </Drawer>
+        </DrawerComponent>
       )}
     </div>
   );

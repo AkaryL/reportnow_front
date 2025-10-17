@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { notificationsApi } from '../features/notifications/api';
-import { wsClient } from '../lib/websocket';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
@@ -17,6 +16,7 @@ import { useAuth } from '../features/auth/hooks';
 import type { Notification } from '../lib/types';
 
 export function NotificationsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -51,24 +51,6 @@ export function NotificationsPage() {
     },
   });
 
-  // WebSocket for real-time notifications
-  useEffect(() => {
-    wsClient.connect();
-
-    wsClient.on('notification:updated', () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATIONS });
-    });
-
-    wsClient.on('notifications:all-read', () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATIONS });
-    });
-
-    return () => {
-      wsClient.off('notification:updated');
-      wsClient.off('notifications:all-read');
-    };
-  }, [queryClient]);
-
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAsRead = (id: string) => {
@@ -77,6 +59,13 @@ export function NotificationsPage() {
 
   const markAllAsRead = () => {
     markAllAsReadMutation.mutate();
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Navigate to vehicle detail page to see the problem
+    if (notification.vehicleId) {
+      navigate(`/vehiculos/${notification.vehicleId}`);
+    }
   };
 
   const getIcon = (type: Notification['type']) => {
@@ -182,7 +171,14 @@ export function NotificationsPage() {
               {notifications.map((notification) => (
                 <TableRowComponent
                   key={notification.id}
-                  className={!notification.read && !isClient ? 'bg-blue-50/50' : ''}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`cursor-pointer transition-colors ${
+                    !notification.read && !isClient
+                      ? 'bg-blue-50/50 hover:bg-blue-100/50'
+                      : isClient
+                        ? 'hover:bg-white/5'
+                        : 'hover:bg-gray-50'
+                  }`}
                 >
                   <TableCellComponent className={`text-sm ${isClient ? '' : 'text-gray-600'}`}>
                     {formatDate(notification.ts)}
@@ -203,7 +199,7 @@ export function NotificationsPage() {
                     </div>
                   </TableCellComponent>
                   <TableCellComponent className="max-w-md">
-                    <p className={`text-sm truncate ${isClient ? '' : 'text-gray-900'}`}>{notification.text}</p>
+                    <p className={`text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.text}</p>
                   </TableCellComponent>
                   <TableCellComponent>
                     {notification.read ? (
@@ -217,7 +213,10 @@ export function NotificationsPage() {
                       <ButtonComponent
                         variant="ghost"
                         size="sm"
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(notification.id);
+                        }}
                       >
                         <Check className="w-4 h-4" />
                         Marcar leída

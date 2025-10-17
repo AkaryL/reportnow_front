@@ -56,14 +56,14 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -71,7 +71,7 @@ export function Modal({
       {/* Modal Content */}
       <div
         className={cn(
-          'relative bg-white rounded-xl shadow-medium max-h-[90vh] w-full overflow-hidden flex flex-col',
+          'relative bg-white rounded-xl shadow-medium max-h-[90vh] w-full overflow-hidden flex flex-col z-[9999]',
           sizeStyles[size],
           className
         )}
