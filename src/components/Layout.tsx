@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  Wifi,
   MapPin,
   UserCircle,
 } from 'lucide-react';
@@ -87,18 +86,6 @@ export function Layout() {
             );
           })}
         </nav>
-
-        {/* Chips de estado */}
-        <div className="p-4 space-y-2">
-          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 rounded-full px-2.5 py-1.5">
-            <Wifi className="w-3.5 h-3.5" />
-            <span className="text-[12px] font-medium">Conexión estable</span>
-          </div>
-          <div className="flex items-center gap-2 bg-slate-100 text-slate-600 rounded-full px-2.5 py-1.5">
-            <MapPin className="w-3.5 h-3.5" />
-            <span className="text-[12px] font-medium">12 geocercas</span>
-          </div>
-        </div>
 
         {/* User Info and Logout */}
         <div className="p-4 border-t border-app-border">
