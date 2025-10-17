@@ -88,21 +88,6 @@ export function LoginPage() {
               Iniciar sesión
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 font-semibold mb-2">Usuarios de prueba:</p>
-            <div className="space-y-1 text-xs text-gray-600">
-              <div>
-                <strong>Superuser:</strong> julio / admin123
-              </div>
-              <div>
-                <strong>Admin:</strong> admin / admin123
-              </div>
-              <div>
-                <strong>Cliente:</strong> cliente / cliente123
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
