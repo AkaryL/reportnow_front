@@ -154,8 +154,7 @@ export function NotificationsPage() {
             <h3 className="client-heading text-xl">Historial de notificaciones</h3>
           </div>
         )}
-        <div className={isClient ? 'p-0' : ''}>
-          {!isClient && <CardContent className="p-0" />}
+        <CardContent className={isClient ? 'p-0' : 'p-0'}>
           <TableComponent>
             <TableHeaderComponent>
               <TableRowComponent>
@@ -227,7 +226,7 @@ export function NotificationsPage() {
               ))}
             </TableBodyComponent>
           </TableComponent>
-        </div>
+        </CardContent>
       </CardComponent>
     </div>
   );

@@ -321,6 +321,7 @@ export const mockGeofences: Geofence[] = [
   {
     id: 'g1',
     name: 'Centro Zapopan',
+    type: 'zona-permitida',
     policy: 'entrada',
     color: '#10b981',
     geom: {
@@ -339,6 +340,7 @@ export const mockGeofences: Geofence[] = [
   {
     id: 'g2',
     name: 'Zona Andares',
+    type: 'punto-interes',
     policy: 'salida',
     color: '#f59e0b',
     geom: {
@@ -357,6 +359,7 @@ export const mockGeofences: Geofence[] = [
   {
     id: 'g3',
     name: 'Zona Restringida Industrial',
+    type: 'zona-restringida',
     policy: 'prohibido',
     color: '#ef4444',
     geom: {
@@ -375,6 +378,7 @@ export const mockGeofences: Geofence[] = [
   {
     id: 'g4',
     name: 'Plaza del Sol',
+    type: 'zona-permitida',
     policy: 'entrada',
     color: '#10b981',
     geom: {
@@ -393,6 +397,7 @@ export const mockGeofences: Geofence[] = [
   {
     id: 'g5',
     name: 'Periferico Norte',
+    type: 'punto-interes',
     policy: 'salida',
     color: '#f59e0b',
     geom: {

@@ -350,6 +350,31 @@ export const mockVehicles: Vehicle[] = [
   },
 ];
 
+// Helper function to create circle polygon (approximation with 32 points)
+const createCirclePolygon = (centerLng: number, centerLat: number, radiusMeters: number): number[][][] => {
+  const points = 32;
+  const coords: number[][] = [];
+  const earthRadius = 6371000; // Earth radius in meters
+
+  for (let i = 0; i <= points; i++) {
+    const angle = (i * 360) / points;
+    const rad = (angle * Math.PI) / 180;
+
+    const dx = radiusMeters * Math.cos(rad);
+    const dy = radiusMeters * Math.sin(rad);
+
+    const deltaLat = dy / earthRadius;
+    const deltaLng = dx / (earthRadius * Math.cos((centerLat * Math.PI) / 180));
+
+    const lat = centerLat + (deltaLat * 180) / Math.PI;
+    const lng = centerLng + (deltaLng * 180) / Math.PI;
+
+    coords.push([lng, lat]);
+  }
+
+  return [coords];
+};
+
 // ==================== GEOCERCAS ====================
 export const mockGeofences: Geofence[] = [
   {
@@ -357,10 +382,9 @@ export const mockGeofences: Geofence[] = [
     name: 'Centro de Guadalajara',
     type: 'zona-permitida',
     color: '#22c55e',
-    geom_type: 'Circle',
-    coordinates: {
-      center: [-103.3400, 20.6775], // [lng, lat]
-      radius: 1500, // metros
+    geom: {
+      type: 'Polygon',
+      coordinates: createCirclePolygon(-103.3400, 20.6775, 1500),
     },
     alert_type: 'exit',
     is_global: true,
@@ -372,10 +396,9 @@ export const mockGeofences: Geofence[] = [
     name: 'Zona Industrial',
     type: 'punto-interes',
     color: '#3b82f6',
-    geom_type: 'Circle',
-    coordinates: {
-      center: [-103.4050, 20.7400],
-      radius: 2000,
+    geom: {
+      type: 'Polygon',
+      coordinates: createCirclePolygon(-103.4050, 20.7400, 2000),
     },
     alert_type: 'entry',
     is_global: true,
@@ -387,10 +410,9 @@ export const mockGeofences: Geofence[] = [
     name: 'Zona Restringida',
     type: 'zona-restringida',
     color: '#ef4444',
-    geom_type: 'Circle',
-    coordinates: {
-      center: [-103.3650, 20.7150],
-      radius: 800,
+    geom: {
+      type: 'Polygon',
+      coordinates: createCirclePolygon(-103.3650, 20.7150, 800),
     },
     alert_type: 'entry',
     is_global: true,
@@ -402,10 +424,9 @@ export const mockGeofences: Geofence[] = [
     name: 'Bodega Principal - Valle',
     type: 'punto-interes',
     color: '#8b5cf6',
-    geom_type: 'Circle',
-    coordinates: {
-      center: [-103.3435, 20.6765],
-      radius: 500,
+    geom: {
+      type: 'Polygon',
+      coordinates: createCirclePolygon(-103.3435, 20.6765, 500),
     },
     alert_type: 'both',
     client_id: '1',
@@ -418,10 +439,9 @@ export const mockGeofences: Geofence[] = [
     name: 'Ruta Zapopan',
     type: 'zona-permitida',
     color: '#f59e0b',
-    geom_type: 'Circle',
-    coordinates: {
-      center: [-103.3950, 20.7150],
-      radius: 2500,
+    geom: {
+      type: 'Polygon',
+      coordinates: createCirclePolygon(-103.3950, 20.7150, 2500),
     },
     alert_type: 'exit',
     is_global: true,
