@@ -3,9 +3,8 @@ import type { FormEvent } from 'react';
 import { useAuth } from './hooks';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { APP_NAME } from '../../lib/constants';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, Truck, MapPin, BarChart3, Shield } from 'lucide-react';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,78 +17,175 @@ export function LoginPage() {
     login({ email, password });
   };
 
+  const features = [
+    {
+      icon: Truck,
+      title: 'Monitoreo en tiempo real',
+      description: 'Rastrea tu flota vehicular 24/7',
+    },
+    {
+      icon: MapPin,
+      title: 'Geocercas inteligentes',
+      description: 'Define zonas y recibe alertas automáticas',
+    },
+    {
+      icon: BarChart3,
+      title: 'Reportes detallados',
+      description: 'Analítica avanzada de tu operación',
+    },
+    {
+      icon: Shield,
+      title: 'Seguridad garantizada',
+      description: 'Datos protegidos y encriptados',
+    },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-info-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-4">
-            <Lock className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+                <Truck className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">{APP_NAME}</h1>
+            </div>
+            <p className="text-blue-100 text-lg font-light">
+              Gestión Inteligente de Flotas Vehiculares
+            </p>
           </div>
-          <CardTitle className="text-2xl">{APP_NAME}</CardTitle>
-          <p className="text-gray-600 text-sm mt-2">
-            Inicia sesión para acceder a la plataforma
-          </p>
-        </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-8">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Usuario
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="email"
-                  type="text"
-                  placeholder="usuario"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                  autoComplete="username"
-                />
+              <h2 className="text-2xl font-semibold mb-6">
+                Controla tu flota desde cualquier lugar
+              </h2>
+              <div className="grid grid-cols-1 gap-6">
+                {features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-4 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/15 transition-all duration-200"
+                  >
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <feature.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
+                      <p className="text-blue-100 text-sm">{feature.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
+          <div className="text-sm text-blue-200">
+            © 2024 {APP_NAME}. Todos los derechos reservados.
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+              <Truck className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">{APP_NAME}</h1>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Bienvenido de nuevo
+              </h2>
+              <p className="text-gray-600">
+                Ingresa tus credenciales para acceder
+              </p>
             </div>
 
-            {loginError && (
-              <div className="p-3 bg-crit-50 border border-crit-200 rounded-lg">
-                <p className="text-sm text-crit-700">
-                  {loginError instanceof Error ? loginError.message : 'Error al iniciar sesión'}
-                </p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Usuario
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="text"
+                    placeholder="Ingresa tu usuario"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
               </div>
-            )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              isLoading={isLoggingIn}
-              disabled={isLoggingIn}
-            >
-              Iniciar sesión
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Ingresa tu contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+
+              {loginError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700 font-medium">
+                    {loginError instanceof Error ? loginError.message : 'Error al iniciar sesión'}
+                  </p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                isLoading={isLoggingIn}
+                disabled={isLoggingIn}
+              >
+                Iniciar sesión
+              </Button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-center text-sm text-gray-600">
+                Sistema de gestión vehicular empresarial
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              ¿Necesitas ayuda? Contacta a soporte técnico
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
