@@ -1,91 +1,105 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from '../features/auth/LoginPage';
 import { ProtectedRoute, RequireRole } from '../features/auth/guard';
 import { ROUTES } from '../lib/constants';
 import { Layout } from '../components/Layout';
-import { HomePage } from '../pages/HomePage';
-import { VehiclesPage } from '../pages/VehiclesPage';
-import { VehicleDetailPage } from '../pages/VehicleDetailPage';
-import { ClientsPage } from '../pages/ClientsPage';
-import { ClientDetailPage } from '../pages/ClientDetailPage';
-import { GeofencesPage } from '../pages/GeofencesPage';
-import { ReportsPage } from '../pages/ReportsPage';
-import { NotificationsPage } from '../pages/NotificationsPage';
-import { RolesPage } from '../pages/RolesPage';
-import { AccountPage } from '../pages/AccountPage';
-import { AdminUsersPage } from '../pages/AdminUsersPage';
-import { AdminProfilePage } from '../pages/AdminProfilePage';
+
+// Lazy load de páginas para mejorar code splitting
+const HomePage = lazy(() => import('../pages/HomePage').then(m => ({ default: m.HomePage })));
+const VehiclesPage = lazy(() => import('../pages/VehiclesPage').then(m => ({ default: m.VehiclesPage })));
+const VehicleDetailPage = lazy(() => import('../pages/VehicleDetailPage').then(m => ({ default: m.VehicleDetailPage })));
+const ClientsPage = lazy(() => import('../pages/ClientsPage').then(m => ({ default: m.ClientsPage })));
+const ClientDetailPage = lazy(() => import('../pages/ClientDetailPage').then(m => ({ default: m.ClientDetailPage })));
+const GeofencesPage = lazy(() => import('../pages/GeofencesPage').then(m => ({ default: m.GeofencesPage })));
+const ReportsPage = lazy(() => import('../pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const RolesPage = lazy(() => import('../pages/RolesPage').then(m => ({ default: m.RolesPage })));
+const AccountPage = lazy(() => import('../pages/AccountPage').then(m => ({ default: m.AccountPage })));
+const AdminUsersPage = lazy(() => import('../pages/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })));
+const AdminProfilePage = lazy(() => import('../pages/AdminProfilePage').then(m => ({ default: m.AdminProfilePage })));
+
+// Loading spinner component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    </div>
+  );
+}
 
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<HomePage />} />
-        <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
-        <Route path={ROUTES.VEHICLE_DETAIL} element={<VehicleDetailPage />} />
-        <Route path={ROUTES.GEOFENCES} element={<GeofencesPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
 
         <Route
-          path={ROUTES.CLIENTS}
+          path="/"
           element={
-            <RequireRole allowedRoles={['admin', 'superuser']}>
-              <ClientsPage />
-            </RequireRole>
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<HomePage />} />
+          <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
+          <Route path={ROUTES.VEHICLE_DETAIL} element={<VehicleDetailPage />} />
+          <Route path={ROUTES.GEOFENCES} element={<GeofencesPage />} />
 
-        <Route
-          path={ROUTES.CLIENT_DETAIL}
-          element={
-            <RequireRole allowedRoles={['admin', 'superuser']}>
-              <ClientDetailPage />
-            </RequireRole>
-          }
-        />
+          <Route
+            path={ROUTES.CLIENTS}
+            element={
+              <RequireRole allowedRoles={['admin', 'superuser']}>
+                <ClientsPage />
+              </RequireRole>
+            }
+          />
 
-        <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
-        <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
-        <Route path={ROUTES.ACCOUNT} element={<AccountPage />} />
+          <Route
+            path={ROUTES.CLIENT_DETAIL}
+            element={
+              <RequireRole allowedRoles={['admin', 'superuser']}>
+                <ClientDetailPage />
+              </RequireRole>
+            }
+          />
 
-        <Route
-          path={ROUTES.ROLES}
-          element={
-            <RequireRole allowedRoles={['admin', 'superuser']}>
-              <RolesPage />
-            </RequireRole>
-          }
-        />
+          <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
+          <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
+          <Route path={ROUTES.ACCOUNT} element={<AccountPage />} />
 
-        {/* Admin Users Management - Solo para superuser */}
-        <Route
-          path="/admin/usuarios"
-          element={
-            <RequireRole allowedRoles={['superuser']}>
-              <AdminUsersPage />
-            </RequireRole>
-          }
-        />
+          <Route
+            path={ROUTES.ROLES}
+            element={
+              <RequireRole allowedRoles={['admin', 'superuser']}>
+                <RolesPage />
+              </RequireRole>
+            }
+          />
 
-        <Route
-          path="/admin/usuarios/:id"
-          element={
-            <RequireRole allowedRoles={['superuser']}>
-              <AdminProfilePage />
-            </RequireRole>
-          }
-        />
-      </Route>
+          {/* Admin Users Management - Solo para superuser */}
+          <Route
+            path="/admin/usuarios"
+            element={
+              <RequireRole allowedRoles={['superuser']}>
+                <AdminUsersPage />
+              </RequireRole>
+            }
+          />
 
-      <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
-    </Routes>
+          <Route
+            path="/admin/usuarios/:id"
+            element={
+              <RequireRole allowedRoles={['superuser']}>
+                <AdminProfilePage />
+              </RequireRole>
+            }
+          />
+        </Route>
+
+        <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+      </Routes>
+    </Suspense>
   );
 }
