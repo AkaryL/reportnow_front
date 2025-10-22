@@ -7,12 +7,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'JLS-1234',
     driver: 'Juan Pérez Sánchez',
     status: 'moving',
-    fuel: 75,
     lastSeenMin: 0,
     lat: 20.7214,
     lng: -103.3918, // Zona Centro Zapopan
     speed: 45,
-    temp: 22,
     deviceId: 'dev-001',
   },
   {
@@ -20,12 +18,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'JAL-5678',
     driver: 'María García López',
     status: 'stopped',
-    fuel: 60,
     lastSeenMin: 5,
     lat: 20.7367,
     lng: -103.4629, // Andares
     speed: 0,
-    temp: 25,
     deviceId: 'dev-002',
   },
   {
@@ -33,12 +29,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'GDL-9012',
     driver: 'Carlos López Ramírez',
     status: 'moving',
-    fuel: 85,
     lastSeenMin: 1,
     lat: 20.6597,
     lng: -103.3494, // Plaza del Sol
     speed: 60,
-    temp: 23,
     deviceId: 'dev-003',
   },
   {
@@ -46,12 +40,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'ZAP-3456',
     driver: 'Ana Martínez González',
     status: 'offline',
-    fuel: 40,
     lastSeenMin: 120,
     lat: 20.7008,
     lng: -103.3743, // Av. Patria
     speed: 0,
-    temp: 20,
     deviceId: 'dev-004',
   },
   {
@@ -59,12 +51,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'MEX-7890',
     driver: 'Pedro Sánchez Torres',
     status: 'critical',
-    fuel: 15,
     lastSeenMin: 2,
     lat: 20.7463,
     lng: -103.4311, // Ciudad Granja
     speed: 30,
-    temp: 35,
     deviceId: 'dev-005',
   },
   {
@@ -72,12 +62,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'TLA-2345',
     driver: 'Laura Fernández Cruz',
     status: 'moving',
-    fuel: 90,
     lastSeenMin: 0,
     lat: 20.6829,
     lng: -103.3935, // Universidad Panamericana
     speed: 50,
-    temp: 21,
     deviceId: 'dev-006',
   },
   {
@@ -85,12 +73,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'GTO-6789',
     driver: 'Roberto Torres Díaz',
     status: 'stopped',
-    fuel: 55,
     lastSeenMin: 10,
     lat: 20.7186,
     lng: -103.4139, // Plaza Concentro
     speed: 0,
-    temp: 24,
     deviceId: 'dev-007',
   },
   {
@@ -98,12 +84,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'VER-0123',
     driver: 'Diana Ramírez Ortiz',
     status: 'moving',
-    fuel: 70,
     lastSeenMin: 0,
     lat: 20.7294,
     lng: -103.3815, // Av. Aviación
     speed: 55,
-    temp: 22,
     deviceId: 'dev-008',
   },
   {
@@ -111,12 +95,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'QRO-4567',
     driver: 'Miguel Castro Vargas',
     status: 'moving',
-    fuel: 80,
     lastSeenMin: 1,
     lat: 20.7095,
     lng: -103.4235, // Punto Sao Paulo
     speed: 40,
-    temp: 23,
     deviceId: 'dev-009',
   },
   {
@@ -124,12 +106,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'PUE-8901',
     driver: 'Sofía Morales Ruiz',
     status: 'stopped',
-    fuel: 65,
     lastSeenMin: 15,
     lat: 20.7440,
     lng: -103.3890, // Periferico Norte
     speed: 0,
-    temp: 26,
     deviceId: 'dev-010',
   },
   {
@@ -137,12 +117,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'JAL-1111',
     driver: 'Jorge Mendoza Silva',
     status: 'moving',
-    fuel: 72,
     lastSeenMin: 3,
     lat: 20.6934,
     lng: -103.4012, // Av. Vallarta
     speed: 48,
-    temp: 24,
     deviceId: 'dev-011',
   },
   {
@@ -150,12 +128,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'GDL-2222',
     driver: 'Patricia Herrera Gómez',
     status: 'stopped',
-    fuel: 45,
     lastSeenMin: 8,
     lat: 20.7523,
     lng: -103.4501, // Tesistán
     speed: 0,
-    temp: 27,
     deviceId: 'dev-012',
   },
   {
@@ -163,12 +139,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'ZAP-3333',
     driver: 'Ricardo Flores Medina',
     status: 'critical',
-    fuel: 12,
     lastSeenMin: 1,
     lat: 20.7156,
     lng: -103.3654, // Base Aérea
     speed: 25,
-    temp: 38,
     deviceId: 'dev-013',
   },
   {
@@ -176,12 +150,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'MEX-4444',
     driver: 'Gabriela Reyes Núñez',
     status: 'moving',
-    fuel: 88,
     lastSeenMin: 0,
     lat: 20.6712,
     lng: -103.4178, // Chapalita
     speed: 52,
-    temp: 21,
     deviceId: 'dev-014',
   },
   {
@@ -189,12 +161,10 @@ export const mockVehicles: Vehicle[] = [
     plate: 'JAL-5555',
     driver: 'Fernando Jiménez Castro',
     status: 'offline',
-    fuel: 35,
     lastSeenMin: 180,
     lat: 20.7381,
     lng: -103.3742, // La Cima
     speed: 0,
-    temp: 19,
     deviceId: 'dev-015',
   },
 ];
@@ -243,24 +213,6 @@ export const mockClients: Client[] = [
 ];
 
 export const mockNotifications: Notification[] = [
-  {
-    id: 'n1',
-    ts: new Date().toISOString(),
-    type: 'crit',
-    vehicleId: '5',
-    vehiclePlate: 'MEX-7890',
-    text: 'Combustible crítico: 15% - Requiere recarga inmediata',
-    read: false,
-  },
-  {
-    id: 'n2',
-    ts: new Date(Date.now() - 180000).toISOString(),
-    type: 'crit',
-    vehicleId: '13',
-    vehiclePlate: 'ZAP-3333',
-    text: 'Temperatura del motor alta: 38°C - Revisar sistema de enfriamiento',
-    read: false,
-  },
   {
     id: 'n3',
     ts: new Date(Date.now() - 300000).toISOString(),

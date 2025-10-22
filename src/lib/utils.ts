@@ -33,24 +33,10 @@ export function formatDate(date: string | Date): string {
 }
 
 /**
- * Format fuel percentage
- */
-export function formatFuel(fuel: number): string {
-  return `${Math.round(fuel)}%`;
-}
-
-/**
  * Format speed
  */
 export function formatSpeed(speed: number): string {
   return `${Math.round(speed)} km/h`;
-}
-
-/**
- * Format temperature
- */
-export function formatTemp(temp: number): string {
-  return `${Math.round(temp)}°C`;
 }
 
 /**

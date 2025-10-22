@@ -22,7 +22,7 @@ import { GeofenceModal } from '../components/GeofenceModal';
 import { Topbar } from '../components/Topbar';
 import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock } from 'lucide-react';
 import type { Vehicle, VehicleStatus } from '../lib/types';
-import { formatFuel, formatSpeed, formatTemp, formatRelativeTime } from '../lib/utils';
+import { formatSpeed, formatRelativeTime } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import { useAuth } from '../features/auth/hooks';
 
@@ -38,7 +38,6 @@ export function HomePage() {
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
   const [mapFilters, setMapFilters] = useState({
-    lowFuel: false,
     moving: false,
     insideGeofence: false,
   });
@@ -355,7 +354,6 @@ export function HomePage() {
 
   const clearMapFilters = () => {
     setMapFilters({
-      lowFuel: false,
       moving: false,
       insideGeofence: false,
     });
@@ -573,7 +571,7 @@ export function HomePage() {
           </div>
         </CardComponent>
 
-        {/* Card 4 - Combustible bajo */}
+        {/* Card 4 - Críticos */}
         <CardComponent
           className={`h-[140px] transition-shadow cursor-pointer p-5 ${
             isClient ? 'hover:bg-white/8' : 'hover:shadow-lg'
@@ -582,7 +580,7 @@ export function HomePage() {
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700'}`}>Combustible bajo</h3>
+              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700'}`}>Críticos</h3>
               <ButtonComponent
                 variant={isClient ? 'secondary' : 'outline'}
                 size="sm"
@@ -601,10 +599,10 @@ export function HomePage() {
               <p className={`text-[34px] font-semibold leading-none ${
                 isClient ? 'client-text-primary' : 'text-gray-900'
               }`}>
-                {userVehicles.filter((v) => v.status === 'critical' || (v.fuel !== undefined && v.fuel < 15)).length}
+                {userVehicles.filter((v) => v.status === 'critical').length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
-                Por debajo de 15%
+                Vehículos con alertas críticas
               </p>
             </div>
           </div>
@@ -838,10 +836,6 @@ export function HomePage() {
                               <p className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{vehicle.driver}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
-                                  <Gauge className="w-3 h-3 inline mr-0.5" />
-                                  {vehicle.fuel}%
-                                </span>
-                                <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
                                   <Activity className="w-3 h-3 inline mr-0.5" />
                                   {vehicle.speed} km/h
                                 </span>
@@ -996,16 +990,6 @@ export function HomePage() {
                 label="Velocidad"
                 value={formatSpeed(selectedVehicle.speed)}
               />
-              <DrawerItemComponent
-                label="Combustible"
-                value={formatFuel(selectedVehicle.fuel)}
-              />
-              {selectedVehicle.temp && (
-                <DrawerItemComponent
-                  label="Temperatura"
-                  value={formatTemp(selectedVehicle.temp)}
-                />
-              )}
             </div>
           </DrawerSectionComponent>
 

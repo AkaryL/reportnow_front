@@ -192,7 +192,6 @@ export function MapView({
               <div style="font-size: 12px; color: #666;">
                 <div style="margin: 4px 0;"><strong>Conductor:</strong> ${vehicle.driver}</div>
                 <div style="margin: 4px 0;"><strong>Velocidad:</strong> ${vehicle.speed} km/h</div>
-                <div style="margin: 4px 0;"><strong>Combustible:</strong> ${Math.round(vehicle.fuel)}%</div>
                 <div style="margin: 4px 0;"><strong>Estado:</strong> ${VEHICLE_STATUS_CONFIG[vehicle.status].label}</div>
               </div>
             </div>
@@ -244,7 +243,6 @@ export function MapView({
             <div style="font-size: 12px; color: #666;">
               <div style="margin: 4px 0;"><strong>Conductor:</strong> ${vehicle.driver}</div>
               <div style="margin: 4px 0;"><strong>Velocidad:</strong> ${vehicle.speed} km/h</div>
-              <div style="margin: 4px 0;"><strong>Combustible:</strong> ${Math.round(vehicle.fuel)}%</div>
               <div style="margin: 4px 0;"><strong>Estado:</strong> ${VEHICLE_STATUS_CONFIG[vehicle.status].label}</div>
             </div>
           </div>

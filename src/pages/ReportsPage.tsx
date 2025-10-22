@@ -21,13 +21,6 @@ export function ReportsPage() {
       color: 'bg-ok-100 text-ok-600',
     },
     {
-      id: '2',
-      title: 'Reporte de Combustible',
-      description: 'Análisis de consumo y niveles de combustible',
-      icon: Gauge,
-      color: 'bg-warn-100 text-warn-600',
-    },
-    {
       id: '3',
       title: 'Reporte de Rutas',
       description: 'Historial de rutas y geocercas visitadas',
@@ -49,8 +42,6 @@ export function ReportsPage() {
       Conductor: v.driver,
       Estado: v.status,
       Velocidad: `${v.speed} km/h`,
-      Combustible: `${v.fuel}%`,
-      Temperatura: v.temp ? `${v.temp}°C` : 'N/A',
       Latitud: v.lat,
       Longitud: v.lng,
     }));
@@ -125,7 +116,7 @@ export function ReportsPage() {
                     Estado
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Combustible
+                    Velocidad
                   </th>
                 </tr>
               </thead>
@@ -137,7 +128,7 @@ export function ReportsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{vehicle.driver}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{vehicle.status}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{vehicle.fuel}%</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{vehicle.speed} km/h</td>
                   </tr>
                 ))}
               </tbody>

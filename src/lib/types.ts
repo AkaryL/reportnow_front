@@ -32,12 +32,10 @@ export interface Vehicle {
   plate: string;
   driver: string;
   status: VehicleStatus;
-  fuel: number; // percentage 0-100
   lastSeenMin: number; // minutes ago
   lat: number;
   lng: number;
   speed: number; // km/h
-  temp?: number; // celsius
   deviceId?: string;
   organizationId?: string;
   assignedClientIds?: string[];
@@ -49,7 +47,7 @@ export interface Vehicle {
 export interface VehicleEvent {
   id: string;
   vehicle_id: string;
-  event_type: 'geofence_entry' | 'geofence_exit' | 'speed_alert' | 'fuel_alert' | 'temp_alert' | 'offline_alert';
+  event_type: 'geofence_entry' | 'geofence_exit' | 'speed_alert' | 'offline_alert';
   description: string;
   geofence_id?: string;
   lat?: number;
@@ -64,8 +62,6 @@ export interface VehicleHistoryPoint {
   lat: number;
   lng: number;
   speed?: number;
-  fuel?: number;
-  temp?: number;
   ts: string;
 }
 
@@ -121,7 +117,7 @@ export interface Report {
   id: string;
   name: string;
   description: string;
-  type: 'trips' | 'alerts' | 'fuel' | 'activity';
+  type: 'trips' | 'alerts' | 'activity';
   createdAt: string;
 }
 
@@ -161,7 +157,6 @@ export interface WSPositionUpdate {
   lat: number;
   lng: number;
   speed: number;
-  fuel: number;
   status: VehicleStatus;
   timestamp: string;
 }

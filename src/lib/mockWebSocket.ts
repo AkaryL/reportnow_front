@@ -90,7 +90,6 @@ class MockWebSocket {
           lat: newLat,
           lng: newLng,
           speed: vehicle.speed + (Math.random() - 0.5) * 5,
-          fuel: Math.max(0, vehicle.fuel - Math.random() * 0.1),
           status: vehicle.status,
           timestamp: new Date().toISOString(),
         };
@@ -111,10 +110,6 @@ class MockWebSocket {
         {
           type: 'warn' as const,
           text: 'Velocidad excedida',
-        },
-        {
-          type: 'crit' as const,
-          text: 'Combustible bajo',
         },
       ];
 

@@ -16,7 +16,7 @@ import { ClientInput } from '../components/ui/ClientInput';
 import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
 import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
 import { Eye, Search, MapPin, Navigation, AlertTriangle, Clock } from 'lucide-react';
-import { formatFuel, formatRelativeTime, formatSpeed, formatTemp } from '../lib/utils';
+import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import type { Vehicle } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
@@ -158,7 +158,6 @@ export function VehiclesPage() {
                   <TableHeadComponent>Conductor</TableHeadComponent>
                   <TableHeadComponent>Estado</TableHeadComponent>
                   <TableHeadComponent>Velocidad</TableHeadComponent>
-                  <TableHeadComponent>Combustible</TableHeadComponent>
                   <TableHeadComponent>Última señal</TableHeadComponent>
                   <TableHeadComponent className="text-right">Acciones</TableHeadComponent>
                 </TableRowComponent>
@@ -177,23 +176,6 @@ export function VehiclesPage() {
                       <span className={vehicle.speed > 0 ? `${isClient ? 'text-green-400' : 'text-ok-600'} font-medium` : `${isClient ? 'text-white/40' : 'text-gray-500'}`}>
                         {formatSpeed(vehicle.speed)}
                       </span>
-                    </TableCellComponent>
-                    <TableCellComponent>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-full max-w-[80px] rounded-full h-2 ${isClient ? 'bg-white/10' : 'bg-gray-200'}`}>
-                          <div
-                            className={`h-2 rounded-full ${
-                              vehicle.fuel > 50
-                                ? isClient ? 'bg-green-400' : 'bg-ok-600'
-                                : vehicle.fuel > 20
-                                ? isClient ? 'bg-orange-400' : 'bg-warn-600'
-                                : isClient ? 'bg-red-400' : 'bg-crit-600'
-                            }`}
-                            style={{ width: `${vehicle.fuel}%` }}
-                          />
-                        </div>
-                        <span className="text-sm">{formatFuel(vehicle.fuel)}</span>
-                      </div>
                     </TableCellComponent>
                     <TableCellComponent>
                       <span className="flex items-center gap-1 text-sm">
@@ -315,36 +297,6 @@ export function VehiclesPage() {
                   </span>
                 }
               />
-              <DrawerItemComponent
-                label="Combustible"
-                value={
-                  <div className="flex items-center gap-2">
-                    <div className={`w-24 rounded-full h-2 ${isClient ? 'bg-white/10' : 'bg-gray-200'}`}>
-                      <div
-                        className={`h-2 rounded-full ${
-                          selectedVehicle.fuel > 50
-                            ? isClient ? 'bg-green-400' : 'bg-ok-600'
-                            : selectedVehicle.fuel > 20
-                            ? isClient ? 'bg-orange-400' : 'bg-warn-600'
-                            : isClient ? 'bg-red-400' : 'bg-crit-600'
-                        }`}
-                        style={{ width: `${selectedVehicle.fuel}%` }}
-                      />
-                    </div>
-                    <span className="font-medium">{formatFuel(selectedVehicle.fuel)}</span>
-                  </div>
-                }
-              />
-              {selectedVehicle.temp && (
-                <DrawerItemComponent
-                  label="Temperatura motor"
-                  value={
-                    <span className={selectedVehicle.temp > 30 ? (isClient ? 'text-red-400 font-semibold' : 'text-crit-600 font-semibold') : ''}>
-                      {formatTemp(selectedVehicle.temp)}
-                    </span>
-                  }
-                />
-              )}
               <DrawerItemComponent
                 label="Última señal"
                 value={formatRelativeTime(selectedVehicle.lastSeenMin)}

@@ -135,7 +135,6 @@ export function LeafletMap({
           <div class="space-y-1 text-xs text-gray-600">
             <div><strong>Conductor:</strong> ${vehicle.driver}</div>
             <div><strong>Estado:</strong> ${statusLabels[vehicle.status]}</div>
-            <div><strong>Combustible:</strong> ${vehicle.fuel}%</div>
             <div><strong>Velocidad:</strong> ${vehicle.speed} km/h</div>
           </div>
         </div>

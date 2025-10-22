@@ -10,8 +10,8 @@ import { ClientBadge } from '../components/ui/ClientBadge';
 import { Button } from '../components/ui/Button';
 import { ClientButton } from '../components/ui/ClientButton';
 import { LeafletMap } from '../components/map/LeafletMap';
-import { ArrowLeft, MapPin, Navigation, Clock, AlertTriangle, Fuel, Gauge, Thermometer, Calendar } from 'lucide-react';
-import { formatFuel, formatRelativeTime, formatSpeed, formatTemp } from '../lib/utils';
+import { ArrowLeft, MapPin, Navigation, Clock, AlertTriangle, Gauge, Calendar } from 'lucide-react';
+import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import type { Vehicle } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
@@ -401,58 +401,6 @@ export function VehicleDetailPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Combustible */}
-              <div className={`p-5 rounded-xl border shadow-sm ${
-                isClient
-                  ? 'bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20'
-                  : 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'
-              }`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl shadow-sm ${isClient ? 'bg-white/10' : 'bg-white'}`}>
-                      <Fuel className={`w-6 h-6 ${isClient ? 'text-green-400' : 'text-green-600'}`} />
-                    </div>
-                    <div>
-                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${isClient ? 'text-green-400' : 'text-green-600'}`}>Combustible</p>
-                      <p className={`text-3xl font-bold ${isClient ? 'client-text-primary' : 'text-green-900'}`}>{formatFuel(vehicle.fuel)}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className={`w-full rounded-full h-3 overflow-hidden shadow-inner ${isClient ? 'bg-white/10' : 'bg-white'}`}>
-                  <div
-                    className={`h-3 rounded-full transition-all ${
-                      vehicle.fuel > 50
-                        ? isClient ? 'bg-green-400' : 'bg-green-600'
-                        : vehicle.fuel > 20
-                        ? isClient ? 'bg-yellow-400' : 'bg-yellow-500'
-                        : isClient ? 'bg-red-400' : 'bg-red-600'
-                    }`}
-                    style={{ width: `${vehicle.fuel}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Temperatura */}
-              {vehicle.temp && (
-                <div className={`p-5 rounded-xl border shadow-sm ${
-                  isClient
-                    ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20'
-                    : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'
-                }`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl shadow-sm ${isClient ? 'bg-white/10' : 'bg-white'}`}>
-                      <Thermometer className={`w-6 h-6 ${isClient ? 'text-orange-400' : 'text-orange-600'}`} />
-                    </div>
-                    <div>
-                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${isClient ? 'text-orange-400' : 'text-orange-600'}`}>Temperatura motor</p>
-                      <p className={`text-3xl font-bold ${isClient ? 'client-text-primary' : 'text-orange-900'}`}>
-                        {formatTemp(vehicle.temp)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Última señal */}
               <div className={`p-5 rounded-xl border shadow-sm ${
