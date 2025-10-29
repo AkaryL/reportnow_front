@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
-import { ClientLayout } from './ClientLayout';
 
 const navigation = [
   { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
