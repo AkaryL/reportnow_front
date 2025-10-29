@@ -20,14 +20,14 @@ import { cn } from '../lib/utils';
 import { ClientLayout } from './ClientLayout';
 
 const navigation = [
-  { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'client'] },
-  { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck, roles: ['superuser', 'admin', 'client'] },
-  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'client'] },
-  { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser', 'admin'] },
-  { name: 'Administradores', href: '/admin/usuarios', icon: Shield, roles: ['superuser'] },
-  { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin'] },
-  { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'client'] },
-  { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['client'] },
+  { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser'] },
+  { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser', 'admin', 'operator-admin'] },
+  { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'operator-admin'] },
+  { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['admin', 'operator-admin', 'operator-monitor'] },
 ];
 
 export function Layout() {
@@ -39,10 +39,8 @@ export function Layout() {
     item.roles.includes(user?.role || '')
   );
 
-  // Use glassmorphism client layout for client users
-  if (user?.role === 'client') {
-    return <ClientLayout />;
-  }
+  // Ya no usamos ClientLayout separado - todos usan el mismo layout
+  // (Podemos eliminarlo o modificarlo si es necesario después)
 
   return (
     <div className="min-h-screen flex">

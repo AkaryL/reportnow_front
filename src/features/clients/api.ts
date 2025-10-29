@@ -36,12 +36,15 @@ export const clientsApi = {
 
     const newClient: Client = {
       id: `c${Date.now()}`,
-      name: data.name,
+      contact_name: data.contact_name || data.name,
+      contact_position: data.contact_position || 'Gerente',
+      company_name: data.company_name || data.name,
+      contact_phone: data.phone || data.contact_phone,
       email: data.email,
-      phone: data.phone,
-      whatsapp: data.whatsapp,
-      vehicles: 0,
-      lastActivity: new Date().toISOString(),
+      authorized_phones: data.authorized_phones || [data.phone || data.contact_phone],
+      authorized_emails: data.authorized_emails || [data.email],
+      equipment_quota: data.equipment_quota || 5,
+      status: 'active',
       created_at: new Date().toISOString(),
     };
 
@@ -55,11 +58,11 @@ export const clientsApi = {
         user_name: user.name,
         user_role: user.role,
         activity_type: 'create_client',
-        description: `Creó el cliente "${newClient.name}"`,
+        description: `Creó el cliente "${newClient.company_name}"`,
         target_type: 'client',
         target_id: newClient.id,
-        target_name: newClient.name,
-        metadata: { client_phone: newClient.phone },
+        target_name: newClient.company_name,
+        metadata: { client_phone: newClient.contact_phone },
       });
     }
 
@@ -91,10 +94,10 @@ export const clientsApi = {
         user_name: user.name,
         user_role: user.role,
         activity_type: 'update_client',
-        description: `Actualizó la información de "${clients[index].name}"`,
+        description: `Actualizó la información de "${clients[index].company_name}"`,
         target_type: 'client',
         target_id: clients[index].id,
-        target_name: clients[index].name,
+        target_name: clients[index].company_name,
         metadata: { updated_fields: updatedFields },
       });
     }
@@ -117,10 +120,10 @@ export const clientsApi = {
         user_name: user.name,
         user_role: user.role,
         activity_type: 'delete_client',
-        description: `Eliminó el cliente "${client.name}"`,
+        description: `Eliminó el cliente "${client.company_name}"`,
         target_type: 'client',
         target_id: client.id,
-        target_name: client.name,
+        target_name: client.company_name,
       });
     }
   },
@@ -148,7 +151,7 @@ export const clientsApi = {
         user_name: user.name,
         user_role: user.role,
         activity_type: 'send_notification',
-        description: `Envió notificación de alerta a cliente "${client.name}"`,
+        description: `Envió notificación de alerta a cliente "${client.company_name}"`,
         target_type: 'notification',
         target_id: `alert_${Date.now()}`,
         target_name: 'Alerta manual',
@@ -160,7 +163,7 @@ export const clientsApi = {
       success: true,
       clientId: id,
       message: 'Alerta enviada (modo mock)',
-      sentTo: client?.whatsapp || client?.phone,
+      sentTo: client?.authorized_phones[0] || client?.contact_phone,
       text: message,
     };
   },

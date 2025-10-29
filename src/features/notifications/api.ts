@@ -21,16 +21,16 @@ export const notificationsApi = {
     try {
       const user = JSON.parse(userStr);
 
-      // Si es cliente, filtrar notificaciones solo de sus vehículos
-      if (user.role === 'client' && user.client_id) {
-        const clientNotifications = getNotificationsByClient(user.client_id);
-        // Filtrar de las notificaciones mutables solo las que pertenecen al cliente
+      // Si es admin, operator-admin o operator-monitor, filtrar notificaciones de su tenant
+      if ((user.role === 'admin' || user.role === 'operator-admin' || user.role === 'operator-monitor') && user.client_id) {
+        // Filtrar por client_id y por destinatarios
         return notifications.filter(n =>
-          clientNotifications.some(cn => cn.id === n.id)
+          n.client_id === user.client_id &&
+          (n.recipients.includes(user.id) || n.recipients.length === 0)
         );
       }
 
-      // Admin y superuser ven todas las notificaciones
+      // Superuser ve todas las notificaciones
       return [...notifications];
     } catch (error) {
       console.error('Error parsing user from localStorage:', error);
@@ -41,21 +41,34 @@ export const notificationsApi = {
   markAsRead: async (id: string): Promise<void> => {
     await delay(100);
 
+    const userStr = localStorage.getItem(LS_USER_KEY);
+    if (!userStr) return;
+
+    const user = JSON.parse(userStr);
+
     const index = notifications.findIndex(n => n.id === id);
     if (index !== -1) {
-      notifications[index] = {
-        ...notifications[index],
-        read: true,
-      };
+      // Agregar el user.id a read_by si no está
+      if (!notifications[index].read_by.includes(user.id)) {
+        notifications[index] = {
+          ...notifications[index],
+          read_by: [...notifications[index].read_by, user.id],
+        };
+      }
     }
   },
 
   markAllAsRead: async (): Promise<void> => {
     await delay(150);
 
+    const userStr = localStorage.getItem(LS_USER_KEY);
+    if (!userStr) return;
+
+    const user = JSON.parse(userStr);
+
     notifications = notifications.map(n => ({
       ...n,
-      read: true,
+      read_by: n.read_by.includes(user.id) ? n.read_by : [...n.read_by, user.id],
     }));
   },
 };

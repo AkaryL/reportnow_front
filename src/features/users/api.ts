@@ -59,7 +59,7 @@ export const usersApi = {
     username: string;
     password: string;
     name: string;
-    role: 'superuser' | 'admin' | 'client';
+    role: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
     email?: string;
     client_id?: string;
     vehicle_ids?: string[];

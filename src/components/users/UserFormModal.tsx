@@ -25,7 +25,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
     username: '',
     password: '',
     name: '',
-    role: 'client' as 'superuser' | 'admin' | 'client',
+    role: 'operator-monitor' as 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor',
     email: '',
     client_id: '',
   });
@@ -37,7 +37,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
   const { data: vehicles = [] } = useQuery({
     queryKey: QUERY_KEYS.VEHICLES,
     queryFn: vehiclesApi.getAll,
-    enabled: formData.role === 'client',
+    enabled: formData.role === 'operator-admin' || formData.role === 'operator-monitor',
   });
 
   const { data: clients = [] } = useQuery({
@@ -63,7 +63,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
         username: '',
         password: '',
         name: '',
-        role: 'client',
+        role: 'operator-monitor',
         email: '',
         client_id: '',
       });
@@ -80,7 +80,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
     e.preventDefault();
     onSubmit({
       ...formData,
-      vehicle_ids: formData.role === 'client' ? selectedVehicles : undefined,
+      vehicle_ids: (formData.role === 'operator-admin' || formData.role === 'operator-monitor') ? selectedVehicles : undefined,
     });
   };
 
@@ -162,37 +162,39 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
-            <option value="client">Cliente</option>
+            <option value="operator-monitor">Operador Monitor (Solo lectura)</option>
+            <option value="operator-admin">Operador Administrador</option>
             {currentUser?.role === 'superuser' && (
               <>
-                <option value="admin">Administrador</option>
-                <option value="superuser">Super Usuario</option>
+                <option value="admin">Administrador (Cliente)</option>
+                <option value="superuser">Superusuario</option>
               </>
             )}
           </select>
         </div>
 
-        {formData.role === 'client' && (
+        {(formData.role === 'admin' || formData.role === 'operator-admin' || formData.role === 'operator-monitor') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cliente
+              Cliente (Tenant) *
             </label>
             <select
               value={formData.client_id}
               onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
             >
-              <option value="">Sin cliente asignado</option>
+              <option value="">Seleccionar cliente</option>
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
-                  {client.name}
+                  {client.company_name}
                 </option>
               ))}
             </select>
           </div>
         )}
 
-        {formData.role === 'client' && (
+        {(formData.role === 'operator-admin' || formData.role === 'operator-monitor') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Vehículos Asignados ({selectedVehicles.length})
