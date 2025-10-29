@@ -36,8 +36,8 @@ export function GeofencesPage() {
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const queryClient = useQueryClient();
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
-  const isClient = user?.role === 'client';
+  const isAdmin = user?.role === 'superuser' || user?.role === 'admin' || user?.role === 'operator-admin';
+  const isClient = user?.role === 'admin';
 
   // Componentes condicionales para glassmorphism
   const CardComponent = isClient ? ClientCard : Card;

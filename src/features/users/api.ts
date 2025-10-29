@@ -1,5 +1,5 @@
 import type { User, ActivityLog } from '../../lib/types';
-import { mockUsers, mockUserVehicles, mockVehicles, mockActivityLogs } from '../../data/mockData';
+import { mockUsers, mockActivityLogs } from '../../data/mockData';
 import { LS_USER_KEY } from '../../lib/constants';
 
 // Función auxiliar para simular delay de red
@@ -18,7 +18,6 @@ export interface UserWithVehicles extends User {
 
 // Copias mutables
 let users = [...mockUsers];
-let userVehicles = [...mockUserVehicles];
 let activityLogs = [...mockActivityLogs];
 
 export const usersApi = {
@@ -27,13 +26,10 @@ export const usersApi = {
 
     return users.map(user => {
       const { password, ...userWithoutPassword } = user;
-      const assignedVehicleIds = userVehicles
-        .filter(uv => uv.userId === user.id)
-        .map(uv => uv.vehicleId);
 
       return {
         ...userWithoutPassword,
-        assigned_vehicles: assignedVehicleIds.length,
+        assigned_vehicles: 0, // TODO: Implementar asignación de equipos/activos a usuarios
       };
     });
   },
@@ -45,13 +41,10 @@ export const usersApi = {
     if (!user) return null;
 
     const { password, ...userWithoutPassword } = user;
-    const assignedVehicleIds = userVehicles
-      .filter(uv => uv.userId === id)
-      .map(uv => uv.vehicleId);
 
     return {
       ...userWithoutPassword,
-      assigned_vehicles: assignedVehicleIds.length,
+      assigned_vehicles: 0, // TODO: Implementar asignación de equipos/activos a usuarios
     };
   },
 
@@ -79,14 +72,12 @@ export const usersApi = {
 
     users.push(newUser);
 
-    // Asignar vehículos si se especifican
-    if (data.vehicle_ids && data.vehicle_ids.length > 0) {
-      data.vehicle_ids.forEach(vehicleId => {
-        userVehicles.push({ userId: newUser.id, vehicleId });
-      });
-    }
+    // TODO: Implementar asignación de equipos/activos a operadores
+    // if (data.vehicle_ids && data.vehicle_ids.length > 0) {
+    //   // Asignar equipos
+    // }
 
-    // Registrar actividad solo si el nuevo usuario es admin
+    // Registrar actividad
     if (data.role === 'admin') {
       const user = getCurrentUser();
       if (user && user.role === 'superuser') {
@@ -112,7 +103,7 @@ export const usersApi = {
     username?: string;
     password?: string;
     name?: string;
-    role?: 'superuser' | 'admin' | 'client';
+    role?: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
     email?: string;
     client_id?: string;
     vehicle_ids?: string[];
@@ -133,16 +124,10 @@ export const usersApi = {
       id, // Asegurar que el ID no cambie
     };
 
-    // Si se especifican vehicle_ids, actualizar asignaciones
-    if (data.vehicle_ids !== undefined) {
-      // Eliminar asignaciones antiguas
-      userVehicles = userVehicles.filter(uv => uv.userId !== id);
-
-      // Añadir nuevas asignaciones
-      data.vehicle_ids.forEach(vehicleId => {
-        userVehicles.push({ userId: id, vehicleId });
-      });
-    }
+    // TODO: Implementar asignación de equipos/activos a operadores
+    // if (data.vehicle_ids !== undefined) {
+    //   // Actualizar asignaciones de equipos
+    // }
 
     // Registrar actividad solo si el usuario actualizado es admin
     if (oldUser.role === 'admin' || data.role === 'admin') {
@@ -173,7 +158,7 @@ export const usersApi = {
     const userToDelete = users.find(u => u.id === id);
 
     users = users.filter(u => u.id !== id);
-    userVehicles = userVehicles.filter(uv => uv.userId !== id);
+    // TODO: Implementar eliminación de asignaciones de equipos/activos
 
     // Registrar actividad solo si el usuario eliminado es admin
     if (userToDelete && userToDelete.role === 'admin') {
@@ -193,35 +178,22 @@ export const usersApi = {
     }
   },
 
+  // TODO: Reemplazar con equipos/activos asignados
   getUserVehicles: async (id: string): Promise<any[]> => {
     await delay(150);
-
-    const assignedVehicleIds = userVehicles
-      .filter(uv => uv.userId === id)
-      .map(uv => uv.vehicleId);
-
-    return mockVehicles.filter(v => assignedVehicleIds.includes(v.id));
+    return [];
   },
 
+  // TODO: Reemplazar con asignación de equipos/activos
   assignVehicle: async (userId: string, vehicleId: string): Promise<void> => {
     await delay(150);
-
-    // Verificar que no exista ya la asignación
-    const exists = userVehicles.some(
-      uv => uv.userId === userId && uv.vehicleId === vehicleId
-    );
-
-    if (!exists) {
-      userVehicles.push({ userId, vehicleId });
-    }
+    // No implementado - usar asignación de equipos
   },
 
+  // TODO: Reemplazar con desasignación de equipos/activos
   unassignVehicle: async (userId: string, vehicleId: string): Promise<void> => {
     await delay(150);
-
-    userVehicles = userVehicles.filter(
-      uv => !(uv.userId === userId && uv.vehicleId === vehicleId)
-    );
+    // No implementado - usar desasignación de equipos
   },
 
   // Obtener solo usuarios admin
@@ -232,13 +204,10 @@ export const usersApi = {
 
     return admins.map(user => {
       const { password, ...userWithoutPassword } = user;
-      const assignedVehicleIds = userVehicles
-        .filter(uv => uv.userId === user.id)
-        .map(uv => uv.vehicleId);
 
       return {
         ...userWithoutPassword,
-        assigned_vehicles: assignedVehicleIds.length,
+        assigned_vehicles: 0, // TODO: Implementar conteo de equipos/activos asignados
       };
     });
   },

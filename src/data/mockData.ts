@@ -16,8 +16,8 @@ import type {
   EquipmentHistoryPoint,
   ActivityLog,
   Vehicle,
-  equipmentToVehicle,
 } from '../lib/types';
+import { equipmentToVehicle } from '../lib/types';
 
 // ==================== USUARIOS ====================
 export const mockUsers: User[] = [

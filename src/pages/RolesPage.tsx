@@ -79,10 +79,11 @@ export function RolesPage() {
   const getRoleBadge = (role: string) => {
     const config = {
       superuser: { label: 'Super Usuario', variant: 'default' as const, color: 'bg-purple-100 text-purple-700' },
-      admin: { label: 'Administrador', variant: 'default' as const, color: 'bg-blue-100 text-blue-700' },
-      client: { label: 'Cliente', variant: 'default' as const, color: 'bg-green-100 text-green-700' },
+      admin: { label: 'Administrador (Cliente)', variant: 'default' as const, color: 'bg-blue-100 text-blue-700' },
+      'operator-admin': { label: 'Operador Admin', variant: 'default' as const, color: 'bg-green-100 text-green-700' },
+      'operator-monitor': { label: 'Operador Monitor', variant: 'default' as const, color: 'bg-gray-100 text-gray-700' },
     };
-    const roleConfig = config[role as keyof typeof config] || config.client;
+    const roleConfig = config[role as keyof typeof config] || config['operator-monitor'];
     return (
       <Badge variant={roleConfig.variant} className={roleConfig.color}>
         {roleConfig.label}

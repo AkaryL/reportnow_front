@@ -29,8 +29,8 @@ export function VehiclesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Determine if current user is a client for conditional styling
-  const isClient = user?.role === 'client';
+  // Determine if current user is a client/admin for conditional styling
+  const isClient = user?.role === 'admin';
   const CardComponent = isClient ? ClientCard : Card;
   const ButtonComponent = isClient ? ClientButton : Button;
   const BadgeComponent = isClient ? ClientBadge : Badge;
@@ -47,14 +47,14 @@ export function VehiclesPage() {
 
   // Get vehicles based on user role
   const { data: vehicles, isLoading } = useQuery({
-    queryKey: user?.role === 'client' ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
+    queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
     queryFn: async () => {
-      if (user?.role === 'client' && user.client_id) {
-        // Get only vehicles for this client
+      if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
+        // Get only vehicles for this client/tenant
         const allVehicles = await vehiclesApi.getAll();
         return allVehicles.filter(v => v.clientId === user.client_id);
       } else {
-        // Get all vehicles for admin and superuser
+        // Get all vehicles for superuser
         return vehiclesApi.getAll();
       }
     },

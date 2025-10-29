@@ -44,8 +44,8 @@ export function HomePage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Determine if current user is a client for conditional styling
-  const isClient = user?.role === 'client';
+  // Determine if current user is a client/admin for conditional styling
+  const isClient = user?.role === 'admin';
   const CardComponent = isClient ? ClientCard : Card;
   const BadgeComponent = isClient ? ClientBadge : Badge;
   const ButtonComponent = isClient ? ClientButton : Button;

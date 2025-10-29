@@ -12,7 +12,7 @@ export function AccountPage() {
     return null;
   }
 
-  const isClient = user.role === 'client';
+  const isClient = user.role === 'admin';
   const CardComponent = isClient ? ClientCard : Card;
 
   return (
@@ -49,7 +49,7 @@ export function AccountPage() {
                 {user.name}
               </h2>
               <p className={`text-sm capitalize mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
-                {user.role === 'client' ? 'Cliente' : user.role}
+                {user.role === 'admin' ? 'Administrador (Cliente)' : user.role === 'operator-admin' ? 'Operador Administrador' : user.role === 'operator-monitor' ? 'Operador Monitor' : user.role}
               </p>
             </div>
           </div>
@@ -97,7 +97,7 @@ export function AccountPage() {
                   Rol
                 </p>
                 <p className={`text-sm font-medium capitalize ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
-                  {user.role === 'client' ? 'Cliente' : user.role}
+                  {user.role === 'admin' ? 'Administrador (Cliente)' : user.role === 'operator-admin' ? 'Operador Administrador' : user.role === 'operator-monitor' ? 'Operador Monitor' : user.role}
                 </p>
               </div>
             </div>

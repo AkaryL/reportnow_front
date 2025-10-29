@@ -27,18 +27,18 @@ export function VehicleDetailPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showGeofences, setShowGeofences] = useState(false);
 
-  // Determine if current user is a client for conditional styling
-  const isClient = user?.role === 'client';
+  // Determine if current user is a client/admin for conditional styling
+  const isClient = user?.role === 'admin';
   const CardComponent = isClient ? ClientCard : Card;
   const BadgeComponent = isClient ? ClientBadge : Badge;
   const ButtonComponent = isClient ? ClientButton : Button;
 
   // Obtener todos los vehículos
   const { data: vehicles, isLoading } = useQuery({
-    queryKey: user?.role === 'client' ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
+    queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
     queryFn: async () => {
-      if (user?.role === 'client' && user.client_id) {
-        // Get only vehicles for this client
+      if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
+        // Get only vehicles for this client/tenant
         const allVehicles = await vehiclesApi.getAll();
         return allVehicles.filter(v => v.clientId === user.client_id);
       }
@@ -52,15 +52,15 @@ export function VehicleDetailPage() {
 
   // Obtener geocercas filtradas según el rol del usuario
   const { data: geofences = [] } = useQuery({
-    queryKey: user?.role === 'client' ? ['geofences', 'all'] : ['geofences'],
+    queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['geofences', 'all'] : ['geofences'],
     queryFn: async () => {
       const allGeofences = await geofencesApi.getAll();
 
-      if (user?.role === 'client' && user.client_id) {
-        // Para clientes: obtener sus geocercas + las asignadas + las globales
+      if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
+        // Para admin/operadores: obtener sus geocercas + las asignadas + las globales
         return allGeofences.filter(g => g.is_global || g.client_id === user.client_id);
       }
-      // Para admin/superuser: obtener todas las geocercas
+      // Para superuser: obtener todas las geocercas
       return allGeofences;
     },
     enabled: !!user,
