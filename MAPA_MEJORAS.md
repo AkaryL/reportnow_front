@@ -44,7 +44,6 @@ Se ha mejorado significativamente el componente de mapa para ofrecer una experie
   - Placa del vehículo
   - Conductor
   - Velocidad actual
-  - Nivel de combustible
   - Estado
 
 **Archivo:** `src/components/map/MapView.tsx` (líneas 236-246)
@@ -63,7 +62,6 @@ Se ha mejorado significativamente el componente de mapa para ofrecer una experie
 - Velocidades realistas entre 30-70 km/h
 - Cambios de estado dinámicos (movimiento ⟷ detenido)
 - Actualización cada 2 segundos para animaciones más fluidas
-- Consumo gradual de combustible
 
 **Archivo:** `server/index.ts` (líneas 469-551)
 

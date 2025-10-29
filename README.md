@@ -159,7 +159,7 @@ El proyecto incluye datos de prueba realistas:
 - **5 Geocercas** predefinidas
 - **8 Notificaciones** de ejemplo
 - **Historial de rutas** para los últimos 7 días
-- **Eventos de vehículos** (alertas de combustible, temperatura, etc.)
+- **Eventos de vehículos** (alertas de velocidad, geocercas, etc.)
 
 Todos los datos se encuentran en `src/data/mockData.ts` y pueden ser modificados fácilmente.
 
