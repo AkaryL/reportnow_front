@@ -9,7 +9,6 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import {
-  Sim,
   Plus,
   Edit,
   Trash2,
@@ -233,7 +232,7 @@ export function SIMsPage() {
                 <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
               </div>
               <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
-                <Sim className="w-6 h-6" />
+                <CreditCard className="w-6 h-6" />
               </div>
             </div>
           </Card>
@@ -314,7 +313,7 @@ export function SIMsPage() {
                       <TableCell>
                         <div>
                           <div className="flex items-center gap-2">
-                            <Sim className="w-4 h-4 text-gray-400" />
+                            <CreditCard className="w-4 h-4 text-gray-400" />
                             <span className="font-medium text-gray-900">{sim.iccid}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">

@@ -17,7 +17,7 @@ import {
   Radio,
   Box,
   User,
-  Sim,
+  CreditCard,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
@@ -30,7 +30,7 @@ const navigation = [
   { name: 'Lugares', href: ROUTES.PLACES, icon: MapPin, roles: ['admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Equipos GPS', href: ROUTES.EQUIPMENTS, icon: Radio, roles: ['superuser'] },
-  { name: 'Tarjetas SIM', href: ROUTES.SIMS, icon: Sim, roles: ['superuser'] },
+  { name: 'Tarjetas SIM', href: ROUTES.SIMS, icon: CreditCard, roles: ['superuser'] },
   { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser'] },
   { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser', 'admin', 'operator-admin'] },
   { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'operator-admin'] },
