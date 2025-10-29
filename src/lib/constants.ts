@@ -261,6 +261,7 @@ export const ROUTES = {
   DRIVERS: '/conductores',
   DRIVER_DETAIL: '/conductores/:id',
   PLACES: '/lugares',
+  SIMS: '/sims',
   GEOFENCES: '/geocercas',
   CLIENTS: '/clientes',
   CLIENT_DETAIL: '/clientes/:id',

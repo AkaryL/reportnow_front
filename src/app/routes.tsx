@@ -18,6 +18,11 @@ const RolesPage = lazy(() => import('../pages/RolesPage').then(m => ({ default: 
 const AccountPage = lazy(() => import('../pages/AccountPage').then(m => ({ default: m.AccountPage })));
 const AdminUsersPage = lazy(() => import('../pages/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })));
 const AdminProfilePage = lazy(() => import('../pages/AdminProfilePage').then(m => ({ default: m.AdminProfilePage })));
+const EquipmentsPage = lazy(() => import('../pages/EquipmentsPage').then(m => ({ default: m.EquipmentsPage })));
+const AssetsPage = lazy(() => import('../pages/AssetsPage').then(m => ({ default: m.AssetsPage })));
+const DriversPage = lazy(() => import('../pages/DriversPage').then(m => ({ default: m.DriversPage })));
+const PlacesPage = lazy(() => import('../pages/PlacesPage').then(m => ({ default: m.PlacesPage })));
+const SIMsPage = lazy(() => import('../pages/SIMsPage').then(m => ({ default: m.SIMsPage })));
 
 // Loading spinner component
 function PageLoader() {
@@ -93,6 +98,56 @@ export function AppRoutes() {
             element={
               <RequireRole allowedRoles={['superuser']}>
                 <AdminProfilePage />
+              </RequireRole>
+            }
+          />
+
+          {/* Equipos GPS - Solo para superuser */}
+          <Route
+            path={ROUTES.EQUIPMENTS}
+            element={
+              <RequireRole allowedRoles={['superuser']}>
+                <EquipmentsPage />
+              </RequireRole>
+            }
+          />
+
+          {/* SIMs - Solo para superuser */}
+          <Route
+            path={ROUTES.SIMS}
+            element={
+              <RequireRole allowedRoles={['superuser']}>
+                <SIMsPage />
+              </RequireRole>
+            }
+          />
+
+          {/* Activos - Para admin y operators */}
+          <Route
+            path={ROUTES.ASSETS}
+            element={
+              <RequireRole allowedRoles={['admin', 'operator-admin', 'operator-monitor']}>
+                <AssetsPage />
+              </RequireRole>
+            }
+          />
+
+          {/* Conductores - Para admin y operators */}
+          <Route
+            path={ROUTES.DRIVERS}
+            element={
+              <RequireRole allowedRoles={['admin', 'operator-admin', 'operator-monitor']}>
+                <DriversPage />
+              </RequireRole>
+            }
+          />
+
+          {/* Lugares - Para admin y operators */}
+          <Route
+            path={ROUTES.PLACES}
+            element={
+              <RequireRole allowedRoles={['admin', 'operator-admin', 'operator-monitor']}>
+                <PlacesPage />
               </RequireRole>
             }
           />

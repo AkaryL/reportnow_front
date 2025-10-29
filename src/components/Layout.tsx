@@ -14,6 +14,10 @@ import {
   X,
   MapPin,
   UserCircle,
+  Radio,
+  Box,
+  User,
+  Sim,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
@@ -22,7 +26,12 @@ import { ClientLayout } from './ClientLayout';
 const navigation = [
   { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Vehículos', href: ROUTES.VEHICLES, icon: Truck, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Activos', href: ROUTES.ASSETS, icon: Box, roles: ['admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Conductores', href: ROUTES.DRIVERS, icon: User, roles: ['admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Lugares', href: ROUTES.PLACES, icon: MapPin, roles: ['admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Equipos GPS', href: ROUTES.EQUIPMENTS, icon: Radio, roles: ['superuser'] },
+  { name: 'Tarjetas SIM', href: ROUTES.SIMS, icon: Sim, roles: ['superuser'] },
   { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser'] },
   { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser', 'admin', 'operator-admin'] },
   { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'operator-admin'] },
