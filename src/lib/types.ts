@@ -47,18 +47,28 @@ export interface Client {
 }
 
 // ==================== SIM ====================
+export type SIMStatus = 'available' | 'active' | 'suspended' | 'inactive';
+
 export interface SIM {
   id: string;
   company: string; // Compañía (Telcel, AT&T, Movistar, etc.)
+  carrier: string; // Operador (Telcel, AT&T, Movistar, etc.)
   iccid: string; // ICCID único
-  phone_line: string; // Línea telefónica
-  assigned_to_equipment_id?: string; // ID del equipo al que está asignado
+  phone_number: string; // Número telefónico
+  phone_line: string; // Línea telefónica (legacy - mantener por compatibilidad)
+  status: SIMStatus;
+  equipment_id?: string; // ID del equipo al que está asignado
+  assigned_to_equipment_id?: string; // Legacy - mantener por compatibilidad
+  data_used_mb: number; // Datos consumidos en MB
+  data_limit_mb?: number; // Límite de datos en MB
+  activation_date?: string;
+  expiry_date?: string;
   created_at: string;
   updated_at?: string;
 }
 
 // ==================== Equipo (GPS Device) ====================
-export type EquipmentStatus = 'active' | 'inactive';
+export type EquipmentStatus = 'active' | 'inactive' | 'available';
 
 export interface Equipment {
   id: string;
@@ -157,12 +167,16 @@ export interface OtherAsset extends AssetBase {
 export type Asset = VehicleAsset | CargoAsset | ContainerAsset | PersonAsset | OtherAsset;
 
 // ==================== Conductor (Driver - solo para vehículos) ====================
+export type DriverStatus = 'available' | 'on_trip' | 'inactive';
+
 export interface Driver {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   license_number: string; // No. de licencia - Único
   license_expiry: string; // Fecha de expiración ISO
+  status: DriverStatus;
   emergency_phone: string;
   address: string;
   client_id: string; // Tenant propietario
@@ -171,6 +185,8 @@ export interface Driver {
 }
 
 // ==================== Lugar (Place/POI) ====================
+export type PlaceStatus = 'active' | 'inactive';
+
 export interface Place {
   id: string;
   name: string;
@@ -183,6 +199,7 @@ export interface Place {
   radius: number; // Radio en metros (invisible en mapa, solo para cálculo)
   color: string;
   icon?: string; // Ícono opcional del catálogo (8 opciones de React Icons)
+  status: PlaceStatus;
 
   // Eventos
   event_type: 'entry' | 'exit' | 'both'; // Solo entrada, Solo salida, Entrada/Salida
@@ -193,7 +210,7 @@ export interface Place {
   notes?: string;
 
   // Tenant
-  client_id: string; // Tenant propietario
+  client_id?: string; // Tenant propietario (opcional si es global)
   is_global?: boolean; // Si es visible para todos (solo superuser puede crear globales)
 
   created_at: string;
