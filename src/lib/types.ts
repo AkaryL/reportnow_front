@@ -411,6 +411,7 @@ export type ActivityType =
   | 'delete_driver'
   | 'assign_driver'
   | 'assign_vehicle'
+  | 'unassign_vehicle'
   // Usuarios
   | 'create_user'
   | 'update_user'
