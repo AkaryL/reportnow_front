@@ -22,21 +22,49 @@ import { formatDate } from '../lib/utils';
 import type { ActivityType } from '../lib/types';
 
 const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  // Clientes
   create_client: 'Crear Cliente',
   update_client: 'Actualizar Cliente',
   delete_client: 'Eliminar Cliente',
-  create_geofence: 'Crear Geocerca',
-  update_geofence: 'Actualizar Geocerca',
-  delete_geofence: 'Eliminar Geocerca',
+  // Equipos
+  create_equipment: 'Crear Equipo',
+  update_equipment: 'Actualizar Equipo',
+  delete_equipment: 'Eliminar Equipo',
+  assign_equipment_to_client: 'Asignar Equipo a Cliente',
+  assign_equipment_to_asset: 'Asignar Equipo a Activo',
+  unassign_equipment: 'Desasignar Equipo',
+  activate_equipment: 'Activar Equipo',
+  deactivate_equipment: 'Desactivar Equipo',
+  // Activos
+  create_asset: 'Crear Activo',
+  update_asset: 'Actualizar Activo',
+  delete_asset: 'Eliminar Activo',
   create_vehicle: 'Crear Vehículo',
   update_vehicle: 'Actualizar Vehículo',
   delete_vehicle: 'Eliminar Vehículo',
-  send_notification: 'Enviar Notificación',
+  // Geocercas
+  create_geofence: 'Crear Geocerca',
+  update_geofence: 'Actualizar Geocerca',
+  delete_geofence: 'Eliminar Geocerca',
+  add_geofence_point: 'Agregar Punto a Geocerca',
+  // Lugares
+  create_place: 'Crear Lugar',
+  update_place: 'Actualizar Lugar',
+  delete_place: 'Eliminar Lugar',
+  // Conductores
+  create_driver: 'Crear Conductor',
+  update_driver: 'Actualizar Conductor',
+  delete_driver: 'Eliminar Conductor',
+  assign_driver: 'Asignar Conductor',
   assign_vehicle: 'Asignar Vehículo',
   unassign_vehicle: 'Desasignar Vehículo',
+  // Usuarios
   create_user: 'Crear Usuario',
   update_user: 'Actualizar Usuario',
   delete_user: 'Eliminar Usuario',
+  change_user_role: 'Cambiar Rol de Usuario',
+  // Notificaciones
+  send_notification: 'Enviar Notificación',
 };
 
 const ACTIVITY_TYPE_ICONS: Record<string, any> = {
