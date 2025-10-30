@@ -105,8 +105,8 @@ export function RolesPage() {
       color: 'bg-blue-100 text-blue-600',
     },
     {
-      label: 'Clientes',
-      value: users.filter((u) => u.role === 'client').length,
+      label: 'Administradores de Cliente',
+      value: users.filter((u) => u.role === 'admin').length,
       icon: Shield,
       color: 'bg-green-100 text-green-600',
     },
@@ -195,7 +195,7 @@ export function RolesPage() {
                     </TableCell>
                     <TableCell>{getRoleBadge(user.role)}</TableCell>
                     <TableCell>
-                      {user.role === 'client' ? (
+                      {user.role === 'admin' ? (
                         <Badge variant="default">
                           {user.assigned_vehicles || 0} asignados
                         </Badge>

@@ -168,6 +168,8 @@ export function ClientDetailPage() {
         created_at: new Date().toISOString(),
         is_global: geofenceData.is_global || false,
         client_id: geofenceData.client_id || id,
+        creation_mode: 'coordinates' as const,
+        event_type: 'both' as const,
       };
       await geofencesApi.create(geofence);
     },
@@ -443,7 +445,7 @@ export function ClientDetailPage() {
           : `¿Estás seguro de que deseas activar el servicio del cliente "${client.company_name}"?`,
       confirmText: newStatus === 'suspended' ? 'Suspender' : 'Activar',
       cancelText: 'Cancelar',
-      variant: newStatus === 'suspended' ? 'danger' : 'default',
+      variant: newStatus === 'suspended' ? 'danger' : 'info',
     });
 
     if (confirmed) {
@@ -748,9 +750,9 @@ export function ClientDetailPage() {
           ) : (
             <div className="h-[500px] rounded-xl overflow-hidden shadow-md border border-gray-200">
               <LeafletMap
-                vehicles={clientEquipments}
+                vehicles={clientEquipments as any}
                 geofences={showGeofences ? geofences : []}
-                onVehicleClick={(eq) => setSelectedEquipment(eq as Equipment)}
+                onVehicleClick={(eq) => setSelectedEquipment(eq as any)}
                 center={clientEquipments.length > 0 ? [clientEquipments[0].lat, clientEquipments[0].lng] : [20.7167, -103.3830]}
                 zoom={13}
                 showGeofences={showGeofences}

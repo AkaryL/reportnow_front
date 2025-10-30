@@ -219,7 +219,7 @@ export function EquipmentDetailPage() {
               </p>
             </div>
           </div>
-          <BadgeComponent variant={equipment.status === 'active' ? 'success' : 'default'} className="self-start sm:self-center">
+          <BadgeComponent variant={equipment.status === 'active' ? 'moving' : 'default'} className="self-start sm:self-center">
             {EQUIPMENT_STATUS_CONFIG[equipment.status]?.label || equipment.status}
           </BadgeComponent>
         </div>
@@ -363,7 +363,7 @@ export function EquipmentDetailPage() {
               </div>
               <div className="flex justify-between items-center py-3">
                 <span className={`font-medium ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>Estado</span>
-                <BadgeComponent variant={equipment.status === 'active' ? 'success' : 'default'} className="text-sm px-4 py-1">
+                <BadgeComponent variant={equipment.status === 'active' ? 'moving' : 'default'} className="text-sm px-4 py-1">
                   {EQUIPMENT_STATUS_CONFIG[equipment.status]?.label || equipment.status}
                 </BadgeComponent>
               </div>

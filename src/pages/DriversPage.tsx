@@ -77,16 +77,17 @@ export function DriversPage() {
     },
   });
 
-  const toggleStatusMutation = useMutation({
-    mutationFn: driversApi.toggleStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRIVERS });
-      toast.success('Estado actualizado exitosamente');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Error al cambiar el estado del conductor');
-    },
-  });
+  // TODO: Implement toggleStatus in driversApi
+  // const toggleStatusMutation = useMutation({
+  //   mutationFn: driversApi.toggleStatus,
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRIVERS });
+  //     toast.success('Estado actualizado exitosamente');
+  //   },
+  //   onError: (error: any) => {
+  //     toast.error(error.message || 'Error al cambiar el estado del conductor');
+  //   },
+  // });
 
   // Filtrar conductores
   const filteredDrivers = drivers.filter((driver) => {
@@ -134,7 +135,9 @@ export function DriversPage() {
   };
 
   const handleToggleStatus = (id: string) => {
-    toggleStatusMutation.mutate(id);
+    // TODO: Implement toggleStatus
+    toast.error('Funcionalidad no implementada');
+    console.log('Toggle status for driver:', id);
   };
 
   const getStatusBadge = (status: Driver['status']) => {

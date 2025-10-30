@@ -355,17 +355,17 @@ export function AssetsPage() {
                           )}
                           {asset.type === 'cargo' && 'tracking_number' in asset && asset.tracking_number && (
                             <p className="text-sm text-gray-500 mt-0.5">
-                              Tracking: {asset.tracking_number}
+                              Tracking: {String(asset.tracking_number)}
                             </p>
                           )}
                           {asset.type === 'container' && 'container_number' in asset && asset.container_number && (
                             <p className="text-sm text-gray-500 mt-0.5">
-                              Contenedor: {asset.container_number}
+                              Contenedor: {String(asset.container_number)}
                             </p>
                           )}
                           {asset.type === 'person' && 'employee_id' in asset && asset.employee_id && (
                             <p className="text-sm text-gray-500 mt-0.5">
-                              ID: {asset.employee_id}
+                              ID: {String(asset.employee_id)}
                             </p>
                           )}
                         </div>
@@ -417,6 +417,7 @@ export function AssetsPage() {
         onClose={handleCloseModal}
         onSubmit={handleSubmit}
         asset={selectedAsset}
+        clientId={user?.client_id || ''}
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
