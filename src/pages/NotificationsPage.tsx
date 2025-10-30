@@ -51,7 +51,7 @@ export function NotificationsPage() {
     },
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read_by.includes(user?.id || '')).length;
 
   const markAsRead = (id: string) => {
     markAsReadMutation.mutate(id);
@@ -62,9 +62,9 @@ export function NotificationsPage() {
   };
 
   const handleNotificationClick = (notification: Notification) => {
-    // Navigate to vehicle detail page to see the problem
-    if (notification.vehicleId) {
-      navigate(`/vehiculos/${notification.vehicleId}`);
+    // Navigate to equipment detail page to see the problem
+    if (notification.equipment_id) {
+      navigate(`/equipos/${notification.equipment_id}`);
     }
   };
 
@@ -167,12 +167,14 @@ export function NotificationsPage() {
               </TableRowComponent>
             </TableHeaderComponent>
             <TableBodyComponent>
-              {notifications.map((notification) => (
+              {notifications.map((notification) => {
+                const isRead = notification.read_by.includes(user?.id || '');
+                return (
                 <TableRowComponent
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={`cursor-pointer transition-colors ${
-                    !notification.read && !isClient
+                    !isRead && !isClient
                       ? 'bg-blue-50/50 hover:bg-blue-100/50'
                       : isClient
                         ? 'hover:bg-white/5'
@@ -183,7 +185,7 @@ export function NotificationsPage() {
                     {formatDate(notification.ts)}
                   </TableCellComponent>
                   <TableCellComponent className={isClient ? '' : 'font-medium'}>
-                    {notification.vehiclePlate}
+                    {notification.resource_name || '-'}
                   </TableCellComponent>
                   <TableCellComponent>
                     <div className="flex items-center gap-2">
@@ -198,17 +200,17 @@ export function NotificationsPage() {
                     </div>
                   </TableCellComponent>
                   <TableCellComponent className="max-w-md">
-                    <p className={`text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.text}</p>
+                    <p className={`text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.description}</p>
                   </TableCellComponent>
                   <TableCellComponent>
-                    {notification.read ? (
+                    {isRead ? (
                       <BadgeComponent variant="default">Leída</BadgeComponent>
                     ) : (
                       <BadgeComponent variant={isClient ? 'default' : 'warning'}>Pendiente</BadgeComponent>
                     )}
                   </TableCellComponent>
                   <TableCellComponent className="text-right">
-                    {!notification.read && (
+                    {!isRead && (
                       <ButtonComponent
                         variant="ghost"
                         size="sm"
@@ -223,7 +225,8 @@ export function NotificationsPage() {
                     )}
                   </TableCellComponent>
                 </TableRowComponent>
-              ))}
+                );
+              })}
             </TableBodyComponent>
           </TableComponent>
         </CardContent>

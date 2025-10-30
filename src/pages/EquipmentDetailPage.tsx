@@ -452,15 +452,11 @@ export function EquipmentDetailPage() {
                       <div className={`p-2 rounded-lg ${
                         notification.priority === 'high'
                           ? 'bg-red-100'
-                          : notification.priority === 'medium'
-                          ? 'bg-amber-100'
                           : 'bg-blue-100'
                       }`}>
                         <AlertTriangle className={`w-5 h-5 ${
                           notification.priority === 'high'
                             ? 'text-red-600'
-                            : notification.priority === 'medium'
-                            ? 'text-amber-600'
                             : 'text-blue-600'
                         }`} />
                       </div>
