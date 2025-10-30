@@ -121,7 +121,7 @@ export function ClientLayout() {
                       {user?.name}
                     </p>
                     <p className="text-xs text-white/60 truncate">
-                      {user?.client_name || 'Cliente'}
+                      Cliente
                     </p>
                   </div>
                 </div>

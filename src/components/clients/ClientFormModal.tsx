@@ -45,9 +45,9 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
     if (client) {
       setFormData({
         company_name: client.company_name,
-        name: client.name,
+        name: client.contact_name,
         email: client.email,
-        phone: client.phone,
+        phone: client.contact_phone,
         whatsapp: (client as any).whatsapp || '',
         password: '',
         rfc: (client as any).rfc || '',

@@ -25,6 +25,23 @@ export const geofencesApi = {
     return { ...newGeofence };
   },
 
+  update: async (id: string, data: Partial<Omit<Geofence, 'id'>>): Promise<Geofence> => {
+    await delay(250);
+
+    const index = geofences.findIndex(g => g.id === id);
+    if (index === -1) {
+      throw new Error('Geocerca no encontrada');
+    }
+
+    geofences[index] = {
+      ...geofences[index],
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
+
+    return { ...geofences[index] };
+  },
+
   delete: async (id: string): Promise<void> => {
     await delay(150);
     geofences = geofences.filter(g => g.id !== id);

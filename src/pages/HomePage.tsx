@@ -318,12 +318,14 @@ export function HomePage() {
 
       const payload = {
         name: geofenceData.name,
-        type: 'zone',
+        creation_mode: 'address' as const,
+        center_lat: geofenceData.center[0],
+        center_lng: geofenceData.center[1],
+        radius: geofenceData.radius,
         color: geofenceData.color,
-        geom: {
-          type: 'Polygon',
-          coordinates: [coordinates],
-        },
+        event_type: 'both' as const,
+        client_id: user?.client_id || '',
+        created_at: new Date().toISOString(),
       };
 
       await geofencesApi.create(payload);
@@ -698,7 +700,7 @@ export function HomePage() {
                     <option value="">Todos los clientes</option>
                     {clients.map((client) => (
                       <option key={client.id} value={client.id}>
-                        {client.name}
+                        {client.company_name}
                       </option>
                     ))}
                   </select>

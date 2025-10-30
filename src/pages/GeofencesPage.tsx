@@ -107,15 +107,15 @@ export function GeofencesPage() {
 
       const geofence = {
         name: geofenceData.name,
-        type: 'zona-permitida',
+        creation_mode: 'address' as const,
+        center_lat: lat,
+        center_lng: lng,
+        radius: geofenceData.radius,
         color: geofenceData.color,
-        geom: {
-          type: 'Circle',
-          coordinates: [[[lng, lat]]],
-        },
+        event_type: geofenceData.alert_type,
         created_at: new Date().toISOString(),
-        is_global: geofenceData.is_global,
-        client_id: geofenceData.client_id,
+        is_global: geofenceData.is_global || false,
+        client_id: geofenceData.client_id || '',
       };
 
       await geofencesApi.create(geofence);

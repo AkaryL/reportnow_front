@@ -144,9 +144,9 @@ export function ClientsPage() {
     const matchesSearch =
       searchQuery === '' ||
       client.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.contact_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone.includes(searchQuery);
+      client.contact_phone.includes(searchQuery);
 
     // Filtro de estatus
     const matchesStatus =
@@ -297,7 +297,7 @@ export function ClientsPage() {
                           >
                             {client.company_name}
                           </button>
-                          <p className="text-sm text-gray-500">{client.name}</p>
+                          <p className="text-sm text-gray-500">{client.contact_name}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -309,7 +309,7 @@ export function ClientsPage() {
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                           <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{client.phone}</span>
+                          <span className="text-gray-600">{client.contact_phone}</span>
                         </div>
                       </div>
                     </TableCell>
@@ -352,7 +352,7 @@ export function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      {formatDate(client.lastActivity || new Date().toISOString())}
+                      {formatDate(client.created_at)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">

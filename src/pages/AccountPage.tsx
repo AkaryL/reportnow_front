@@ -71,7 +71,7 @@ export function AccountPage() {
             </div>
 
             {/* Cliente/Organización */}
-            {user.client_name && (
+            {user.client_id && (
               <div className={`flex items-start gap-3 p-4 rounded-lg ${
                 isClient ? 'bg-white/5 border border-white/10' : 'bg-gray-50'
               }`}>
@@ -81,7 +81,7 @@ export function AccountPage() {
                     Organización
                   </p>
                   <p className={`text-sm font-medium ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
-                    {user.client_name}
+                    Cliente ID: {user.client_id}
                   </p>
                 </div>
               </div>

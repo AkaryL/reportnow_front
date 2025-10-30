@@ -83,12 +83,14 @@ export function TableHead({ children, className, ...props }: TableHeadProps) {
 interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   className?: string;
+  colSpan?: number;
 }
 
-export function TableCell({ children, className, ...props }: TableCellProps) {
+export function TableCell({ children, className, colSpan, ...props }: TableCellProps) {
   return (
     <td
       className={cn('px-6 py-4 whitespace-nowrap text-sm text-gray-900', className)}
+      colSpan={colSpan}
       {...props}
     >
       {children}
