@@ -20,6 +20,7 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
     iccid: '',
     phone_number: '',
     carrier: '',
+    apn: '',
     status: 'available' as SIM['status'],
     data_limit_mb: '',
     activation_date: '',

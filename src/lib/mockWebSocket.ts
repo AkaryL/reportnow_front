@@ -90,7 +90,7 @@ class MockWebSocket {
           lat: newLat,
           lng: newLng,
           speed: vehicle.speed + (Math.random() - 0.5) * 5,
-          status: vehicle.status,
+          bearing: 0,
           timestamp: new Date().toISOString(),
         };
 

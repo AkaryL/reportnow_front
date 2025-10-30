@@ -98,6 +98,7 @@ export const assetsApi = {
     year: number;
     color: string;
     vin?: string;
+    economic_id?: string;
     driver_id?: string;
   }): Promise<VehicleAsset> => {
     await delay(300);

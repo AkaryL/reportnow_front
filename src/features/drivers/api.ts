@@ -108,6 +108,8 @@ export const driversApi = {
       license_expiry: data.license_expiry,
       phone: data.phone,
       email: data.email,
+      emergency_phone: data.emergency_phone || '',
+      address: data.address || '',
       client_id: data.client_id,
       photo_url: data.photo_url,
       status: data.status || 'available',

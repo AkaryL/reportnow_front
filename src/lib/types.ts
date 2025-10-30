@@ -147,16 +147,21 @@ export interface VehicleAsset extends AssetBase {
 export interface CargoAsset extends AssetBase {
   type: 'cargo';
   cargo_type: string; // Tipo de mercancía
-  box_id: string; // ID de caja - Único
+  box_id?: string; // ID de caja - Único
+  tracking_number?: string;
+  weight_kg?: number;
+  dimensions?: string;
+  value?: number;
 }
 
 // Contenedor
 export interface ContainerAsset extends AssetBase {
   type: 'container';
   container_type: string; // Tipo de contenedor (20ft, 40ft, etc.)
-  box_plate: string; // Placa de caja
-  economic_id: string; // ID económico - Único
-  color: string;
+  container_number?: string;
+  box_plate?: string; // Placa de caja
+  economic_id?: string; // ID económico - Único
+  color?: string;
 }
 
 // Persona
@@ -387,6 +392,7 @@ export type ActivityType =
   | 'update_asset'
   | 'delete_asset'
   | 'create_vehicle'
+  | 'update_vehicle'
   // Geocercas
   | 'create_geofence'
   | 'update_geofence'
