@@ -457,7 +457,7 @@ export function SIMsPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <CardTitle>Lista de SIMs</CardTitle>
         </CardHeader>
         <CardContent className="p-0">

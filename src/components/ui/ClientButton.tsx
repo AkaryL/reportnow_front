@@ -20,8 +20,8 @@ export function ClientButton({
   const variantStyles = {
     primary: 'client-btn-primary',
     secondary: 'client-btn-secondary',
-    ghost: 'bg-transparent hover:bg-white/5 text-white/70 hover:text-white/92',
-    outline: 'bg-transparent border border-white/20 text-white/92 hover:bg-white/5 hover:border-white/30',
+    ghost: 'bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900',
+    outline: 'bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400',
   };
 
   const sizeStyles = {

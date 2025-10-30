@@ -91,6 +91,13 @@ export function DriversPage() {
 
   // Filtrar conductores
   const filteredDrivers = drivers.filter((driver) => {
+    // Si el usuario no es superuser, solo mostrar conductores de su cliente
+    if (user?.role !== 'superuser' && user?.client_id) {
+      if (driver.client_id !== user.client_id) {
+        return false;
+      }
+    }
+
     const matchesSearch =
       !searchQuery ||
       driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

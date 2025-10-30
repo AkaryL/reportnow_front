@@ -3,24 +3,27 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
-import type { AssetType } from '../../lib/types';
+import type { AssetType, Client, User } from '../../lib/types';
 
 interface AssetFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
   asset?: any;
-  clientId: string;
+  clientId?: string;
   isLoading?: boolean;
+  user?: User;
+  clients?: Client[];
 }
 
-export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isLoading }: AssetFormModalProps) {
+export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isLoading, user, clients = [] }: AssetFormModalProps) {
   const [formData, setFormData] = useState({
     type: 'vehicle' as AssetType,
     name: '',
     photo_url: '',
     icon: '',
     notes: '',
+    client_id: clientId || '',
     // Vehicle specific
     brand: '',
     model: '',
@@ -56,6 +59,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         photo_url: '',
         icon: '',
         notes: '',
+        client_id: clientId || '',
         brand: '',
         model: '',
         year: '',
@@ -84,6 +88,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         photo_url: asset.photo_url || '',
         icon: asset.icon || '',
         notes: asset.notes || '',
+        client_id: asset.client_id || clientId || '',
         brand: '',
         model: '',
         year: '',
@@ -139,7 +144,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
     e.preventDefault();
 
     const basePayload: any = {
-      client_id: clientId,
+      client_id: formData.client_id || clientId,
       photo_url: formData.photo_url || undefined,
       icon: formData.icon || undefined,
       notes: formData.notes || undefined,
@@ -237,6 +242,27 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
             <option value="other">Otro</option>
           </select>
         </div>
+
+        {/* Client Selector (only for superuser) */}
+        {user?.role === 'superuser' && (
+          <div>
+            <Label htmlFor="client_id">Cliente *</Label>
+            <select
+              id="client_id"
+              value={formData.client_id}
+              onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required
+            >
+              <option value="">Seleccionar cliente...</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.company_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Vehicle Fields */}
         {formData.type === 'vehicle' && (

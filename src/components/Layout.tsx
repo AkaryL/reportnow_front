@@ -24,7 +24,7 @@ import { cn } from '../lib/utils';
 
 const navigation = [
   { name: 'Inicio', href: ROUTES.HOME, icon: LayoutDashboard, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
-  { name: 'Activos', href: ROUTES.ASSETS, icon: Box, roles: ['admin', 'operator-admin', 'operator-monitor'] },
+  { name: 'Activos', href: ROUTES.ASSETS, icon: Box, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Conductores', href: ROUTES.DRIVERS, icon: User, roles: ['admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Lugares', href: ROUTES.PLACES, icon: MapPin, roles: ['admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Geocercas', href: ROUTES.GEOFENCES, icon: MapPin, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },

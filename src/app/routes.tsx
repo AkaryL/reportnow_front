@@ -80,9 +80,9 @@ export function AppRoutes() {
             }
           />
 
-          {/* Admin Users Management - Solo para superuser */}
+          {/* Users Management - Solo para superuser */}
           <Route
-            path="/admin/usuarios"
+            path={ROUTES.USERS}
             element={
               <RequireRole allowedRoles={['superuser']}>
                 <AdminUsersPage />
@@ -91,7 +91,7 @@ export function AppRoutes() {
           />
 
           <Route
-            path="/admin/usuarios/:id"
+            path="/usuarios/:id"
             element={
               <RequireRole allowedRoles={['superuser']}>
                 <AdminProfilePage />
@@ -129,11 +129,11 @@ export function AppRoutes() {
             }
           />
 
-          {/* Activos - Para admin y operators */}
+          {/* Activos - Para superuser, admin y operators */}
           <Route
             path={ROUTES.ASSETS}
             element={
-              <RequireRole allowedRoles={['admin', 'operator-admin', 'operator-monitor']}>
+              <RequireRole allowedRoles={['superuser', 'admin', 'operator-admin', 'operator-monitor']}>
                 <AssetsPage />
               </RequireRole>
             }

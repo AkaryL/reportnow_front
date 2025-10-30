@@ -68,14 +68,19 @@ export function GeofencesPage() {
         );
       }
 
-      // For clients, show their own + global geofences
-      if (isClient && user?.id) {
+      // For clients (admin), show their own + global geofences
+      if (isClient && user?.client_id) {
         if (filter === 'own') {
-          return allGeofences.filter(g => g.client_id === user.id && !g.is_global);
+          return allGeofences.filter(g => g.client_id === user.client_id && !g.is_global);
         } else if (filter === 'assigned') {
-          return allGeofences.filter(g => g.client_id !== user.id && g.is_global);
+          return allGeofences.filter(g => g.client_id !== user.client_id && g.is_global);
         }
-        return allGeofences.filter(g => g.is_global || g.client_id === user.id);
+        return allGeofences.filter(g => g.is_global || g.client_id === user.client_id);
+      }
+
+      // For non-superuser operators, also filter by client_id
+      if (user?.role !== 'superuser' && user?.client_id) {
+        return allGeofences.filter(g => g.is_global || g.client_id === user.client_id);
       }
 
       return allGeofences;

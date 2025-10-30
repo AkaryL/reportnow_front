@@ -17,6 +17,7 @@ import { GeofenceModal } from '../components/GeofenceModal';
 import { OperatorFormModal } from '../components/operators/OperatorFormModal';
 import { ClientFormModal } from '../components/clients/ClientFormModal';
 import { AssetFormModal } from '../components/assets/AssetFormModal';
+import { AssetDetailModal } from '../components/assets/AssetDetailModal';
 import {
   ArrowLeft,
   Building2,
@@ -63,6 +64,8 @@ export function ClientDetailPage() {
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [isAssetDetailModalOpen, setIsAssetDetailModalOpen] = useState(false);
+  const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
 
   const { data: client, isLoading: isLoadingClient } = useQuery({
     queryKey: ['client', id],
@@ -105,6 +108,35 @@ export function ClientDetailPage() {
   // Filtrar activos del cliente
   const clientAssets = allAssets.filter((asset) => asset.client_id === id);
 
+  // Transformar equipos a formato de vehículos para el mapa
+  // Solo incluir equipos con coordenadas válidas
+  const equipmentsForMap = clientEquipments
+    .filter((eq: any) => eq.lat != null && eq.lng != null && !isNaN(eq.lat) && !isNaN(eq.lng))
+    .map((eq: any) => {
+      const asset = allAssets.find(a => a.id === eq.asset_id);
+      const assetName = asset?.name || 'Sin activo';
+
+      // Determinar el estado del equipo basado en última señal
+      const lastSeenDate = new Date(eq.last_seen);
+      const minutesAgo = (Date.now() - lastSeenDate.getTime()) / 1000 / 60;
+      let status: 'moving' | 'stopped' | 'offline' = 'offline';
+
+      if (minutesAgo < 30) {
+        status = eq.speed > 5 ? 'moving' : 'stopped';
+      }
+
+      return {
+        id: eq.id,
+        plate: `${eq.brand} ${eq.model}`,
+        driver: assetName,
+        status: status,
+        lat: eq.lat,
+        lng: eq.lng,
+        speed: eq.speed || 0,
+        bearing: eq.bearing || 0,
+      };
+    });
+
   const sendAlertMutation = useMutation({
     mutationFn: (message: string) => clientsApi.sendAlert(id!, message),
     onSuccess: () => {
@@ -113,6 +145,34 @@ export function ClientDetailPage() {
       alert('Alerta enviada exitosamente por WhatsApp');
     },
   });
+
+  const toggleEquipmentStatusMutation = useMutation({
+    mutationFn: async ({ equipmentId, newStatus }: { equipmentId: string; newStatus: 'active' | 'inactive' }) => {
+      await equipmentsApi.update(equipmentId, { status: newStatus });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
+      toast.success('Estado del equipo actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al actualizar el estado del equipo');
+    },
+  });
+
+  const handleToggleEquipmentStatus = async (equipment: Equipment) => {
+    const newStatus = equipment.status === 'active' ? 'inactive' : 'active';
+    const confirmed = await confirmDialog.confirm({
+      title: `${newStatus === 'active' ? 'Activar' : 'Desactivar'} Equipo`,
+      message: `¿Estás seguro de que deseas ${newStatus === 'active' ? 'activar' : 'desactivar'} el equipo ${equipment.imei}?`,
+      confirmText: newStatus === 'active' ? 'Activar' : 'Desactivar',
+      cancelText: 'Cancelar',
+      variant: newStatus === 'inactive' ? 'danger' : 'info',
+    });
+
+    if (confirmed) {
+      toggleEquipmentStatusMutation.mutate({ equipmentId: equipment.id, newStatus });
+    }
+  };
 
   const addEquipmentMutation = useMutation({
     mutationFn: async (equipmentId: string) => {
@@ -464,6 +524,16 @@ export function ClientDetailPage() {
     setIsAssetModalOpen(true);
   };
 
+  const handleViewAssetDetails = (asset: Asset) => {
+    setViewingAsset(asset);
+    setIsAssetDetailModalOpen(true);
+  };
+
+  const handleSaveAssetFromDetail = (updatedAsset: Asset) => {
+    updateAssetMutation.mutate({ id: updatedAsset.id, data: updatedAsset });
+    setIsAssetDetailModalOpen(false);
+  };
+
   const handleSubmitAsset = (payload: any) => {
     if (selectedAsset) {
       updateAssetMutation.mutate({ id: selectedAsset.id, data: payload });
@@ -742,18 +812,18 @@ export function ClientDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          {clientEquipments.length === 0 ? (
+          {equipmentsForMap.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <Radio className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm">No hay equipos para mostrar en el mapa</p>
+              <p className="text-sm">No hay equipos con ubicación para mostrar en el mapa</p>
             </div>
           ) : (
             <div className="h-[500px] rounded-xl overflow-hidden shadow-md border border-gray-200">
               <LeafletMap
-                vehicles={clientEquipments as any}
+                vehicles={equipmentsForMap as any}
                 geofences={showGeofences ? geofences : []}
                 onVehicleClick={(eq) => setSelectedEquipment(eq as any)}
-                center={clientEquipments.length > 0 ? [clientEquipments[0].lat, clientEquipments[0].lng] : [20.7167, -103.3830]}
+                center={equipmentsForMap.length > 0 ? [equipmentsForMap[0].lat, equipmentsForMap[0].lng] : [20.7167, -103.3830]}
                 zoom={13}
                 showGeofences={showGeofences}
               />
@@ -810,6 +880,11 @@ export function ClientDetailPage() {
                       <div>
                         <p className="font-medium text-gray-900">{equipment.brand} {equipment.model}</p>
                         <p className="text-xs text-gray-500">S/N: {equipment.serial}</p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {equipment.asset_id
+                            ? `Activo: ${allAssets.find(a => a.id === equipment.asset_id)?.name || 'Desconocido'}`
+                            : 'Sin asignar'}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -822,6 +897,15 @@ export function ClientDetailPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
+                        <Button
+                          variant={equipment.status === 'active' ? 'outline' : 'primary'}
+                          size="sm"
+                          onClick={() => handleToggleEquipmentStatus(equipment)}
+                          className={equipment.status === 'active' ? 'text-orange-600 hover:text-orange-700' : ''}
+                          title={equipment.status === 'active' ? 'Desactivar equipo' : 'Activar equipo'}
+                        >
+                          {equipment.status === 'active' ? 'Desactivar' : 'Activar'}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1004,7 +1088,11 @@ export function ClientDetailPage() {
                         const equipment = equipments.find((eq) => eq.id === asset.equipment_id);
 
                         return (
-                          <TableRow key={asset.id}>
+                          <TableRow
+                            key={asset.id}
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => handleViewAssetDetails(asset)}
+                          >
                             <TableCell className="font-medium">{asset.name}</TableCell>
                             <TableCell>
                               <Badge variant="default">
@@ -1041,7 +1129,7 @@ export function ClientDetailPage() {
                               {formatDate(asset.created_at)}
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex gap-2 justify-end">
+                              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -1321,6 +1409,17 @@ export function ClientDetailPage() {
         asset={selectedAsset}
         clientId={id!}
         isLoading={createAssetMutation.isPending || updateAssetMutation.isPending}
+      />
+
+      {/* Asset Detail Modal */}
+      <AssetDetailModal
+        asset={viewingAsset}
+        isOpen={isAssetDetailModalOpen}
+        onClose={() => {
+          setIsAssetDetailModalOpen(false);
+          setViewingAsset(null);
+        }}
+        onSave={handleSaveAssetFromDetail}
       />
 
       {/* Confirm Dialog */}

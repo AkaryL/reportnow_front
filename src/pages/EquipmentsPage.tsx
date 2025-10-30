@@ -343,7 +343,7 @@ export function EquipmentsPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <CardTitle>Lista de equipos GPS</CardTitle>
         </CardHeader>
         <CardContent className="p-0">

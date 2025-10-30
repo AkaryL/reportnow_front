@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import * as XLSX from 'xlsx';
 
 /**
  * Utility function to merge Tailwind CSS classes
@@ -118,4 +119,114 @@ export function debounce<T extends (...args: any[]) => any>(
     }
     timeout = setTimeout(later, wait);
   };
+}
+
+/**
+ * Export multi-sheet data to Excel with professional styling
+ */
+export function exportToExcel(
+  sheets: { sheetName: string; data: any[]; headers?: Record<string, string> }[],
+  filename: string
+): void {
+  if (sheets.length === 0) {
+    console.warn('No sheets to export');
+    return;
+  }
+
+  const workbook = XLSX.utils.book_new();
+
+  sheets.forEach(({ sheetName, data, headers }) => {
+    if (data.length === 0) {
+      // Add empty sheet with headers if no data
+      const ws = XLSX.utils.json_to_sheet([]);
+      XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+      return;
+    }
+
+    // Create worksheet from data
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // Get the range of the worksheet
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+    // Set column widths
+    const colWidths: any[] = [];
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      let maxWidth = 10;
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = ws[cellAddress];
+        if (cell && cell.v) {
+          const cellLength = String(cell.v).length;
+          maxWidth = Math.max(maxWidth, Math.min(cellLength + 2, 50));
+        }
+      }
+      colWidths.push({ wch: maxWidth });
+    }
+    ws['!cols'] = colWidths;
+
+    // Style header row (first row)
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!ws[cellAddress]) continue;
+
+      ws[cellAddress].s = {
+        font: {
+          bold: true,
+          color: { rgb: "FFFFFF" },
+          sz: 12
+        },
+        fill: {
+          fgColor: { rgb: "4472C4" }
+        },
+        alignment: {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        }
+      };
+    }
+
+    // Style data rows with alternating colors
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      const isEvenRow = R % 2 === 0;
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellAddress]) continue;
+
+        ws[cellAddress].s = {
+          font: {
+            sz: 11
+          },
+          fill: {
+            fgColor: { rgb: isEvenRow ? "F2F2F2" : "FFFFFF" }
+          },
+          alignment: {
+            horizontal: "left",
+            vertical: "center",
+            wrapText: false
+          },
+          border: {
+            top: { style: "thin", color: { rgb: "D3D3D3" } },
+            bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+            left: { style: "thin", color: { rgb: "D3D3D3" } },
+            right: { style: "thin", color: { rgb: "D3D3D3" } }
+          }
+        };
+      }
+    }
+
+    // Freeze the header row
+    ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+    XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+  });
+
+  XLSX.writeFile(workbook, `${filename}.xlsx`, { cellStyles: true });
 }

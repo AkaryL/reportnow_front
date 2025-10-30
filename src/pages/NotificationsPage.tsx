@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { notificationsApi } from '../features/notifications/api';
+import { equipmentsApi } from '../features/equipments/api';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
@@ -37,6 +38,20 @@ export function NotificationsPage() {
     queryFn: notificationsApi.getAll,
   });
 
+  const { data: equipments = [] } = useQuery({
+    queryKey: QUERY_KEYS.EQUIPMENTS,
+    queryFn: equipmentsApi.getAll,
+  });
+
+  // Filtrar notificaciones por cliente del usuario
+  const filteredNotifications = notifications.filter((n) => {
+    if (user?.role === 'superuser') return true;
+    if (!user?.client_id) return true;
+    // Filtrar notificaciones de equipos del cliente
+    const equipment = equipments.find(eq => eq.id === n.equipment_id);
+    return equipment && equipment.client_id === user.client_id;
+  });
+
   const markAsReadMutation = useMutation({
     mutationFn: notificationsApi.markAsRead,
     onSuccess: () => {
@@ -51,7 +66,7 @@ export function NotificationsPage() {
     },
   });
 
-  const unreadCount = notifications.filter((n) => !n.read_by.includes(user?.id || '')).length;
+  const unreadCount = filteredNotifications.filter((n) => !n.read_by.includes(user?.id || '')).length;
 
   const markAsRead = (id: string) => {
     markAsReadMutation.mutate(id);
@@ -135,7 +150,7 @@ export function NotificationsPage() {
             <div>
               <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Críticas</p>
               <p className={`text-2xl font-bold mt-1 ${isClient ? 'text-red-400' : 'text-crit-600'}`}>
-                {notifications.filter((n) => n.type === 'crit').length}
+                {filteredNotifications.filter((n) => n.type === 'crit').length}
               </p>
             </div>
             <AlertTriangle className={`w-6 h-6 ${isClient ? 'text-red-400' : 'text-crit-600'}`} />
@@ -167,7 +182,7 @@ export function NotificationsPage() {
               </TableRowComponent>
             </TableHeaderComponent>
             <TableBodyComponent>
-              {notifications.map((notification) => {
+              {filteredNotifications.map((notification) => {
                 const isRead = notification.read_by.includes(user?.id || '');
                 return (
                 <TableRowComponent

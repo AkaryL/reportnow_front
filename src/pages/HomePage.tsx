@@ -19,8 +19,9 @@ import { LeafletMap } from '../components/map/LeafletMap';
 import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
 import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
 import { GeofenceModal } from '../components/GeofenceModal';
+import { Modal } from '../components/ui/Modal';
 import { Topbar } from '../components/Topbar';
-import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock, Radio } from 'lucide-react';
+import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock, Radio, MessageSquare, Package, ShieldAlert } from 'lucide-react';
 import type { Vehicle, VehicleStatus } from '../lib/types';
 import { formatSpeed, formatRelativeTime } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
@@ -38,6 +39,7 @@ export function HomePage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<any | null>(null);
   const [mapFilters, setMapFilters] = useState({
     moving: false,
     insideGeofence: false,
@@ -233,6 +235,11 @@ export function HomePage() {
 
   // Filter vehicles
   const filteredVehicles = userVehicles.filter((vehicle) => {
+    // Filtrar vehículos sin coordenadas válidas (equipos disponibles sin ubicación)
+    // Solo mostrar si tiene coordenadas reales (no 0,0)
+    const hasValidCoordinates = vehicle.lat !== 0 && vehicle.lng !== 0;
+    if (!hasValidCoordinates) return false;
+
     // Search filter
     const matchesSearch =
       !searchQuery ||
@@ -384,10 +391,40 @@ export function HomePage() {
   };
 
   const handleNotificationClick = (notification: any) => {
-    // Navigate to vehicle detail page to see the problem
-    if (notification.vehicleId) {
-      navigate(`/vehiculos/${notification.vehicleId}`);
+    // Navegar según el tipo de recurso relacionado
+
+    // Si es sobre un equipo GPS, ir a la página de equipos (solo superuser)
+    if (notification.equipment_id) {
+      if (user?.role === 'superuser') {
+        navigate(`/equipos/${notification.equipment_id}`);
+      } else {
+        // Para otros usuarios, mostrar modal con detalles
+        setSelectedNotification(notification);
+      }
+      return;
     }
+
+    // Si es sobre un activo, ir a la página de activos
+    if (notification.asset_id) {
+      navigate('/activos');
+      // TODO: En el futuro, cuando haya página de detalle de activo, navegar a `/activos/${notification.asset_id}`
+      return;
+    }
+
+    // Si es sobre una geocerca, ir a la página de geocercas
+    if (notification.geofence_id) {
+      navigate('/geocercas');
+      return;
+    }
+
+    // Si es sobre un lugar, ir a la página de lugares
+    if (notification.place_id) {
+      navigate('/lugares');
+      return;
+    }
+
+    // Para otros tipos de notificaciones (mensajes WhatsApp, etc), mostrar modal
+    setSelectedNotification(notification);
   };
 
   // Helper function to get notification icon and colors
@@ -662,9 +699,7 @@ export function HomePage() {
             {/* Buscador y filtros del mapa */}
             <div className="flex gap-2 items-center">
               <form onSubmit={handleMapSearch} className="relative flex-1">
-                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                  isClient ? 'text-white/50' : 'text-gray-400'
-                }`} />
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400`} />
                 <InputComponent
                   type="text"
                   value={mapSearchQuery}
@@ -678,9 +713,7 @@ export function HomePage() {
                   <button
                     type="button"
                     onClick={clearMapSearch}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
-                      isClient ? 'text-white/50 hover:text-white/70' : 'text-gray-400 hover:text-gray-600'
-                    }`}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -768,7 +801,7 @@ export function HomePage() {
               {filteredVehicles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-4">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isClient ? 'bg-white/10' : 'bg-slate-100'}`}>
-                    <Search className={`w-8 h-8 ${isClient ? 'text-white/30' : 'text-slate-400'}`} />
+                    <Search className="w-8 h-8 text-slate-400" />
                   </div>
                   <h4 className={`text-sm font-semibold mb-2 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
                     No se encontraron equipos
@@ -852,11 +885,7 @@ export function HomePage() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                   disabled={currentPage === 0}
-                  className={`text-xs font-medium ${
-                    isClient
-                      ? 'text-cyan-400 hover:text-cyan-300 disabled:text-white/20 disabled:cursor-not-allowed'
-                      : 'text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed'
-                  }`}
+                  className="text-xs font-medium text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                 >
                   ← Anterior
                 </button>
@@ -866,11 +895,7 @@ export function HomePage() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredVehicles.length / 4) - 1, prev + 1))}
                   disabled={currentPage >= Math.ceil(filteredVehicles.length / 4) - 1}
-                  className={`text-xs font-medium ${
-                    isClient
-                      ? 'text-cyan-400 hover:text-cyan-300 disabled:text-white/20 disabled:cursor-not-allowed'
-                      : 'text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed'
-                  }`}
+                  className="text-xs font-medium text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                 >
                   Siguiente →
                 </button>
@@ -889,12 +914,10 @@ export function HomePage() {
       <CardComponent className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Bell className={`w-5 h-5 ${isClient ? 'text-cyan-400' : 'text-gray-700'}`} />
+            <Bell className="w-5 h-5 text-gray-700" />
             <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Notificaciones Recientes</h3>
           </div>
-          <button className={`text-xs font-medium ${
-            isClient ? 'text-cyan-400 hover:text-cyan-300' : 'text-primary hover:text-primary/80'
-          }`}>
+          <button className="text-xs font-medium text-primary hover:text-primary/80">
             Ver todas
           </button>
         </div>
@@ -902,7 +925,7 @@ export function HomePage() {
         <div className="space-y-3">
           {notifications.length === 0 ? (
             <div className="text-center py-8">
-              <Bell className={`w-12 h-12 mx-auto mb-3 ${isClient ? 'text-white/30' : 'text-gray-300'}`} />
+              <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
               <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>No hay notificaciones recientes</p>
             </div>
           ) : (
@@ -1020,6 +1043,165 @@ export function HomePage() {
         onClose={() => setIsGeofenceModalOpen(false)}
         onSave={handleSaveGeofence}
       />
+
+      {/* Notification Detail Modal */}
+      <Modal
+        isOpen={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+        title="Detalle de Notificación"
+      >
+        {selectedNotification && (
+          <div className="space-y-4">
+            {/* Tipo y Prioridad */}
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-lg ${
+                selectedNotification.type === 'crit'
+                  ? 'bg-red-100'
+                  : selectedNotification.type === 'warn'
+                  ? 'bg-yellow-100'
+                  : 'bg-blue-100'
+              }`}>
+                {selectedNotification.type === 'crit' ? (
+                  <ShieldAlert className={`w-6 h-6 ${
+                    selectedNotification.type === 'crit'
+                      ? 'text-red-600'
+                      : selectedNotification.type === 'warn'
+                      ? 'text-yellow-600'
+                      : 'text-blue-600'
+                  }`} />
+                ) : selectedNotification.type === 'warn' ? (
+                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                ) : (
+                  <Bell className="w-6 h-6 text-blue-600" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">{selectedNotification.resource_name || 'Notificación'}</h3>
+                <p className="text-sm text-gray-500">
+                  {new Date(selectedNotification.ts).toLocaleString('es-MX', {
+                    dateStyle: 'long',
+                    timeStyle: 'short'
+                  })}
+                </p>
+              </div>
+              <BadgeComponent variant={selectedNotification.type}>
+                {selectedNotification.type === 'crit' ? 'Crítico' : selectedNotification.type === 'warn' ? 'Advertencia' : 'Info'}
+              </BadgeComponent>
+            </div>
+
+            {/* Descripción */}
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Descripción</h4>
+              <p className="text-gray-900">{selectedNotification.description}</p>
+            </div>
+
+            {/* Acción */}
+            {selectedNotification.action && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Acción</h4>
+                <p className="text-gray-600 text-sm font-mono bg-gray-50 px-3 py-2 rounded">
+                  {selectedNotification.action}
+                </p>
+              </div>
+            )}
+
+            {/* Actor (quién generó la notificación) */}
+            {selectedNotification.actor_user_name && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Generado por</h4>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-primary">
+                      {selectedNotification.actor_user_name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{selectedNotification.actor_user_name}</p>
+                    <p className="text-xs text-gray-500">{selectedNotification.actor_user_role || 'Usuario'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recursos relacionados */}
+            {(selectedNotification.equipment_id || selectedNotification.asset_id || selectedNotification.geofence_id || selectedNotification.place_id) && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Recursos relacionados</h4>
+                <div className="space-y-2">
+                  {selectedNotification.equipment_id && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Radio className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">Equipo GPS:</span>
+                      <span className="font-medium text-gray-900">{selectedNotification.equipment_id}</span>
+                    </div>
+                  )}
+                  {selectedNotification.asset_id && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Package className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">Activo:</span>
+                      <span className="font-medium text-gray-900">{selectedNotification.asset_id}</span>
+                    </div>
+                  )}
+                  {selectedNotification.geofence_id && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">Geocerca:</span>
+                      <span className="font-medium text-gray-900">{selectedNotification.geofence_id}</span>
+                    </div>
+                  )}
+                  {selectedNotification.place_id && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">Lugar:</span>
+                      <span className="font-medium text-gray-900">{selectedNotification.place_id}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mensaje de WhatsApp si existe */}
+            {selectedNotification.action?.includes('whatsapp') && (
+              <div className="border-t pt-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="w-5 h-5 text-green-600 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-green-900 mb-1">Mensaje de WhatsApp</h4>
+                      <p className="text-sm text-green-800">
+                        {selectedNotification.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Botones de acción */}
+            <div className="border-t pt-4 flex gap-3">
+              <ButtonComponent
+                variant="outline"
+                onClick={() => setSelectedNotification(null)}
+                className="flex-1"
+              >
+                Cerrar
+              </ButtonComponent>
+              {(selectedNotification.equipment_id || selectedNotification.asset_id || selectedNotification.geofence_id || selectedNotification.place_id) && (
+                <ButtonComponent
+                  variant="primary"
+                  onClick={() => {
+                    setSelectedNotification(null);
+                    handleNotificationClick(selectedNotification);
+                  }}
+                  className="flex-1"
+                >
+                  Ir al Recurso
+                </ButtonComponent>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
 
       </div>
     </div>

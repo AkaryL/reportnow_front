@@ -107,6 +107,13 @@ export function PlacesPage() {
 
   // Filtrar lugares
   const filteredPlaces = places.filter((place) => {
+    // Si el usuario no es superuser, solo mostrar lugares de su cliente (o globales)
+    if (user?.role !== 'superuser' && user?.client_id) {
+      if (!place.is_global && place.client_id !== user.client_id) {
+        return false;
+      }
+    }
+
     const matchesSearch = !searchQuery || place.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = filterStatus === 'all' || place.status === filterStatus;
@@ -183,30 +190,40 @@ export function PlacesPage() {
     return <Badge className={typeConfig.color}>{typeConfig.label}</Badge>;
   };
 
+  // Filtrar lugares por client para estadísticas
+  const placesForStats = places.filter((place) => {
+    if (user?.role !== 'superuser' && user?.client_id) {
+      if (!place.is_global && place.client_id !== user.client_id) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   const stats = [
     {
       label: 'Total Lugares',
-      value: places.length,
+      value: placesForStats.length,
       color: 'bg-blue-50 text-blue-700',
     },
     {
       label: 'Activos',
-      value: places.filter((p) => p.status === 'active').length,
+      value: placesForStats.filter((p) => p.status === 'active').length,
       color: 'bg-ok-50 text-ok-700',
     },
     {
       label: 'Inactivos',
-      value: places.filter((p) => p.status === 'inactive').length,
+      value: placesForStats.filter((p) => p.status === 'inactive').length,
       color: 'bg-gray-100 text-gray-700',
     },
     {
       label: 'Globales',
-      value: places.filter((p) => p.is_global).length,
+      value: placesForStats.filter((p) => p.is_global).length,
       color: 'bg-purple-50 text-purple-700',
     },
     {
       label: 'Del Tenant',
-      value: places.filter((p) => !p.is_global).length,
+      value: placesForStats.filter((p) => !p.is_global).length,
       color: 'bg-info-50 text-info-700',
     },
   ];

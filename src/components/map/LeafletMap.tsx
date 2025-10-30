@@ -91,35 +91,23 @@ export function LeafletMap({
 
       const color = statusColors[vehicle.status];
 
-      // Create custom icon
+      // Create custom icon - solo el punto
       const iconHtml = `
-        <div style="position: relative; display: flex; align-items: center; gap: 6px;">
-          <div style="
-            width: 12px;
-            height: 12px;
-            background-color: ${color};
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          "></div>
-          <div style="
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 12px;
-            font-weight: 500;
-            color: #374151;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            white-space: nowrap;
-          ">${vehicle.plate}</div>
-        </div>
+        <div style="
+          width: 16px;
+          height: 16px;
+          background-color: ${color};
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        "></div>
       `;
 
       const icon = L.divIcon({
         html: iconHtml,
         className: 'vehicle-marker',
-        iconSize: [100, 30],
-        iconAnchor: [6, 6],
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
       });
 
       const statusLabels = {

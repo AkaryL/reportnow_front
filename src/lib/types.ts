@@ -38,6 +38,7 @@ export interface Client {
   contact_phone: string;
   phone?: string; // Legacy - mantener por compatibilidad
   email: string;
+  address?: string; // Dirección
   authorized_phones: string[]; // Teléfonos autorizados
   authorized_emails: string[]; // Emails autorizados
 
