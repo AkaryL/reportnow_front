@@ -76,6 +76,8 @@ export const driversApi = {
     license_expiry: string;
     phone: string;
     email?: string;
+    emergency_phone?: string;
+    address?: string;
     client_id: string;
     photo_url?: string;
     status?: Driver['status'];

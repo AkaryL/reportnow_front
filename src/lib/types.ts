@@ -162,6 +162,7 @@ export interface ContainerAsset extends AssetBase {
   box_plate?: string; // Placa de caja
   economic_id?: string; // ID económico - Único
   color?: string;
+  size_ft?: number;
 }
 
 // Persona
@@ -393,6 +394,7 @@ export type ActivityType =
   | 'delete_asset'
   | 'create_vehicle'
   | 'update_vehicle'
+  | 'delete_vehicle'
   // Geocercas
   | 'create_geofence'
   | 'update_geofence'
