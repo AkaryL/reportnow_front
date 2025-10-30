@@ -66,6 +66,9 @@ export function AdminUsersPage() {
     return client?.company_name || 'Cliente desconocido';
   };
 
+  // Get current user
+  const { user: currentUser } = useAuth();
+
   // Filter users
   const filteredUsers = users.filter((user) => {
     // Si el usuario no es superuser, solo mostrar usuarios de su cliente
