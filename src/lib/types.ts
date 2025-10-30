@@ -163,6 +163,7 @@ export interface ContainerAsset extends AssetBase {
   economic_id?: string; // ID económico - Único
   color?: string;
   size_ft?: number;
+  seal_number?: string;
 }
 
 // Persona
@@ -409,6 +410,7 @@ export type ActivityType =
   | 'update_driver'
   | 'delete_driver'
   | 'assign_driver'
+  | 'assign_vehicle'
   // Usuarios
   | 'create_user'
   | 'update_user'
