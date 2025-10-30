@@ -31,10 +31,12 @@ export type ClientStatus = 'active' | 'inactive' | 'suspended';
 export interface Client {
   id: string;
   // Información de contacto
+  name?: string; // Legacy - mantener por compatibilidad
   contact_name: string;
   contact_position: string;
   company_name: string;
   contact_phone: string;
+  phone?: string; // Legacy - mantener por compatibilidad
   email: string;
   authorized_phones: string[]; // Teléfonos autorizados
   authorized_emails: string[]; // Emails autorizados
@@ -42,6 +44,8 @@ export interface Client {
   // Configuración
   equipment_quota: number; // Cuota de equipos asignada por superuser
   status: ClientStatus;
+  vehicles?: number; // Legacy - mantener por compatibilidad
+  lastActivity?: string; // Legacy - mantener por compatibilidad
 
   // Metadatos
   created_at: string;
@@ -159,16 +163,20 @@ export interface ContainerAsset extends AssetBase {
 export interface PersonAsset extends AssetBase {
   type: 'person';
   person_name: string; // Nombre de la persona
+  role?: string;
   phone: string;
-  address: string;
-  emergency_phone: string;
+  email?: string;
+  address?: string;
+  emergency_phone?: string;
   position?: string; // Cargo (opcional)
 }
 
 // Otro (genérico)
 export interface OtherAsset extends AssetBase {
   type: 'other';
-  asset_type: string; // Tipo específico (mascota, equipo, etc.)
+  asset_type?: string; // Tipo específico (mascota, equipo, etc.)
+  category?: string;
+  custom_fields?: Record<string, any>;
 }
 
 // Union type para todos los activos
@@ -182,6 +190,7 @@ export interface Driver {
   name: string;
   phone: string;
   email?: string;
+  photo_url?: string;
   license_number: string; // No. de licencia - Único
   license_expiry: string; // Fecha de expiración ISO
   status: DriverStatus;
@@ -377,6 +386,7 @@ export type ActivityType =
   | 'create_asset'
   | 'update_asset'
   | 'delete_asset'
+  | 'create_vehicle'
   // Geocercas
   | 'create_geofence'
   | 'update_geofence'
@@ -395,7 +405,9 @@ export type ActivityType =
   | 'create_user'
   | 'update_user'
   | 'delete_user'
-  | 'change_user_role';
+  | 'change_user_role'
+  // Notificaciones
+  | 'send_notification';
 
 export interface ActivityLog {
   id: string;
@@ -410,7 +422,7 @@ export interface ActivityLog {
   description: string;
 
   // Sobre qué recurso
-  target_type?: 'client' | 'equipment' | 'asset' | 'geofence' | 'place' | 'driver' | 'user';
+  target_type?: 'client' | 'equipment' | 'asset' | 'geofence' | 'place' | 'driver' | 'user' | 'notification';
   target_id?: string;
   target_name?: string;
 
@@ -456,6 +468,15 @@ export interface WSEquipmentUpdate {
   lng: number;
   speed: number;
   bearing?: number;
+  timestamp: string;
+}
+
+export interface WSPositionUpdate {
+  vehicleId: string;
+  lat: number;
+  lng: number;
+  speed: number;
+  bearing: number;
   timestamp: string;
 }
 

@@ -307,6 +307,7 @@ export const QUERY_KEYS = {
   REPORTS: ['reports'],
   USERS: ['users'],
   USER: (id: string) => ['user', id],
+  ADMINS: ['admins'],
   ACTIVITY_LOGS: ['activity_logs'],
   ACTIVITY_LOGS_BY_USER: (userId: string) => ['activity_logs', 'user', userId],
   ACTIVITY_STATS: (userId: string) => ['activity_stats', userId],

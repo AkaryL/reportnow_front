@@ -69,6 +69,24 @@ export const assetsApi = {
     return assets.filter(a => a.client_id === clientId);
   },
 
+  // Crear activo (genérico - delega según el tipo)
+  create: async (data: any): Promise<Asset> => {
+    switch (data.type) {
+      case 'vehicle':
+        return assetsApi.createVehicle(data);
+      case 'cargo':
+        return assetsApi.createCargo(data);
+      case 'container':
+        return assetsApi.createContainer(data);
+      case 'person':
+        return assetsApi.createPerson(data);
+      case 'other':
+        return assetsApi.createOther(data);
+      default:
+        throw new Error(`Tipo de activo no válido: ${data.type}`);
+    }
+  },
+
   // Crear nuevo activo de tipo vehículo
   createVehicle: async (data: {
     name: string;
@@ -314,7 +332,7 @@ export const assetsApi = {
       id, // Asegurar que el ID no cambie
       type: assets[index].type, // No se puede cambiar el tipo
       updated_at: new Date().toISOString(),
-    };
+    } as Asset;
 
     return assets[index];
   },
