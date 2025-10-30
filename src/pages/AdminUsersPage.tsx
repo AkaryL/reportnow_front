@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Plus, Eye, Trash2, Users, Shield, User } from 'lucide-react';
 import { formatDate } from '../lib/utils';
+import { useAuth } from '../features/auth/hooks';
 import type { User as UserType } from '../lib/types';
 
 const ROLE_LABELS: Record<string, string> = {
