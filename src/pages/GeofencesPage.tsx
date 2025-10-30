@@ -12,6 +12,9 @@ import { GeofenceModal } from '../components/GeofenceModal';
 import { LeafletMap } from '../components/map/LeafletMap';
 import { MapPin, Trash2, Edit, Plus, Navigation, Filter } from 'lucide-react';
 import { useAuth } from '../features/auth/hooks';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 interface Geofence {
   id: string;
@@ -35,6 +38,8 @@ export function GeofencesPage() {
   const [filter, setFilter] = useState<'own' | 'assigned' | 'all'>('own');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   const isAdmin = user?.role === 'superuser' || user?.role === 'admin' || user?.role === 'operator-admin';
   const isClient = user?.role === 'admin';
@@ -81,10 +86,10 @@ export function GeofencesPage() {
     mutationFn: (id: string) => geofencesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
-      alert('Geocerca eliminada exitosamente');
+      toast.success('Geocerca eliminada exitosamente');
     },
     onError: () => {
-      alert('Error al eliminar la geocerca');
+      toast.error('Error al eliminar la geocerca');
     },
   });
 
@@ -115,17 +120,25 @@ export function GeofencesPage() {
 
       await geofencesApi.create(geofence);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
-      alert('Geocerca creada exitosamente');
+      toast.success('Geocerca creada exitosamente');
       setIsModalOpen(false);
     } catch (error: any) {
       console.error('Error al crear geocerca:', error);
       const errorMessage = error.message || 'Error al crear la geocerca';
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar esta geocerca?')) {
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Eliminar Geocerca',
+      message: `¿Estás seguro de que deseas eliminar la geocerca "${name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };
@@ -376,7 +389,7 @@ export function GeofencesPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(geofence.id);
+                            handleDelete(geofence.id, geofence.name);
                           }}
                           className={`p-2 rounded-lg transition-colors ${
                             isClient
@@ -428,6 +441,17 @@ export function GeofencesPage() {
           setEditingGeofence(null);
         }}
         onSave={handleSaveGeofence}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.handleCancel}
+        onConfirm={confirmDialog.handleConfirm}
+        title={confirmDialog.options.title}
+        message={confirmDialog.options.message}
+        confirmText={confirmDialog.options.confirmText}
+        cancelText={confirmDialog.options.cancelText}
+        variant={confirmDialog.options.variant}
       />
     </div>
   );

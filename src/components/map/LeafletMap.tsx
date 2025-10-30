@@ -381,21 +381,7 @@ export function LeafletMap({
           .addTo(mapRef.current);
         routeMarkersRef.current.push(startMarker);
 
-        // Intermediate points (blue, small)
-        const pointIcon = L.divIcon({
-          html: '<div style="width: 8px; height: 8px; background-color: #3b82f6; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>',
-          className: 'route-point',
-          iconSize: [8, 8],
-          iconAnchor: [4, 4],
-        });
-
-        for (let i = 1; i < latLngs.length - 1; i++) {
-          const timestamp = routeHistory[i]?.ts ? `<div class="text-xs text-gray-600">⏱️ ${formatTime(routeHistory[i].ts)}</div>` : '';
-          const pointMarker = L.marker(latLngs[i], { icon: pointIcon })
-            .bindPopup(`<div class="p-2"><div class="text-xs font-medium">Punto ${i} de ${latLngs.length}</div>${timestamp}</div>`)
-            .addTo(mapRef.current);
-          routeMarkersRef.current.push(pointMarker);
-        }
+        // No mostrar puntos intermedios, solo la línea del recorrido
 
         // End marker (red, larger)
         const endIcon = L.divIcon({

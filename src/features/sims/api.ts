@@ -1,5 +1,5 @@
 import type { SIM } from '../../lib/types';
-import { mockSIMs } from '../../data/mockData';
+import { mockSIMs, mockEquipments } from '../../data/mockData';
 import { LS_USER_KEY } from '../../lib/constants';
 
 // Función auxiliar para simular delay de red
@@ -13,6 +13,9 @@ const getCurrentUser = () => {
 
 // Copia mutable
 let sims = [...mockSIMs];
+
+// Acceso a equipos para actualización bidireccional
+let equipments = mockEquipments;
 
 export const simsApi = {
   // Obtener todas las SIM (solo superuser ve todas, admin ve las de sus equipos)
@@ -84,7 +87,7 @@ export const simsApi = {
     iccid: string;
     phone_number: string;
     carrier: string;
-    plan: string;
+    company?: string;
     data_limit_mb?: number;
     activation_date?: string;
   }): Promise<SIM> => {
@@ -109,8 +112,9 @@ export const simsApi = {
       id: `sim${Date.now()}`,
       iccid: data.iccid,
       phone_number: data.phone_number,
+      phone_line: data.phone_number,
       carrier: data.carrier,
-      plan: data.plan,
+      company: data.company || data.carrier,
       data_limit_mb: data.data_limit_mb,
       data_used_mb: 0,
       status: 'available',
@@ -272,6 +276,128 @@ export const simsApi = {
     return sims[index];
   },
 
+  // Asignar SIM a equipo
+  assignToEquipment: async (simId: string, equipmentId: string): Promise<SIM> => {
+    await delay(200);
+
+    const user = getCurrentUser();
+    if (user?.role !== 'superuser') {
+      throw new Error('Solo superuser puede asignar SIM');
+    }
+
+    const simIndex = sims.findIndex(s => s.id === simId);
+    if (simIndex === -1) {
+      throw new Error('SIM no encontrada');
+    }
+
+    if (sims[simIndex].equipment_id) {
+      throw new Error('La SIM ya está asignada a un equipo');
+    }
+
+    // Verificar que el equipo existe
+    const equipmentIndex = equipments.findIndex(e => e.id === equipmentId);
+    if (equipmentIndex === -1) {
+      throw new Error('Equipo no encontrado');
+    }
+
+    // Verificar que el equipo no tenga ya una SIM
+    if (equipments[equipmentIndex].sim_id) {
+      throw new Error('El equipo ya tiene una SIM asignada');
+    }
+
+    // Actualizar la SIM
+    sims[simIndex] = {
+      ...sims[simIndex],
+      equipment_id: equipmentId,
+      assigned_to_equipment_id: equipmentId,
+      status: 'active',
+      updated_at: new Date().toISOString(),
+    };
+
+    // Actualizar el equipo
+    equipments[equipmentIndex] = {
+      ...equipments[equipmentIndex],
+      sim_id: simId,
+      updated_at: new Date().toISOString(),
+    };
+
+    return sims[simIndex];
+  },
+
+  // Desasignar SIM de equipo
+  unassignFromEquipment: async (simId: string): Promise<SIM> => {
+    await delay(200);
+
+    const user = getCurrentUser();
+    if (user?.role !== 'superuser') {
+      throw new Error('Solo superuser puede desasignar SIM');
+    }
+
+    const simIndex = sims.findIndex(s => s.id === simId);
+    if (simIndex === -1) {
+      throw new Error('SIM no encontrada');
+    }
+
+    const equipmentId = sims[simIndex].equipment_id;
+
+    // Actualizar la SIM
+    sims[simIndex] = {
+      ...sims[simIndex],
+      equipment_id: undefined,
+      assigned_to_equipment_id: undefined,
+      status: 'available',
+      updated_at: new Date().toISOString(),
+    };
+
+    // Si había un equipo asignado, quitarle la SIM
+    if (equipmentId) {
+      const equipmentIndex = equipments.findIndex(e => e.id === equipmentId);
+      if (equipmentIndex !== -1) {
+        equipments[equipmentIndex] = {
+          ...equipments[equipmentIndex],
+          sim_id: undefined,
+          updated_at: new Date().toISOString(),
+        };
+      }
+    }
+
+    return sims[simIndex];
+  },
+
+  // Cambiar estado de SIM (toggle entre active/inactive)
+  toggleStatus: async (id: string): Promise<SIM> => {
+    await delay(200);
+
+    const user = getCurrentUser();
+    if (user?.role !== 'superuser') {
+      throw new Error('Solo superuser puede cambiar el estado de SIM');
+    }
+
+    const index = sims.findIndex(s => s.id === id);
+    if (index === -1) {
+      throw new Error('SIM no encontrada');
+    }
+
+    const currentStatus = sims[index].status;
+    let newStatus: SIM['status'];
+
+    if (currentStatus === 'inactive') {
+      newStatus = 'available';
+    } else if (currentStatus === 'suspended') {
+      throw new Error('No se puede activar una SIM suspendida. Use la opción de reactivar.');
+    } else {
+      newStatus = 'inactive';
+    }
+
+    sims[index] = {
+      ...sims[index],
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    };
+
+    return sims[index];
+  },
+
   // Eliminar SIM
   delete: async (id: string): Promise<void> => {
     await delay(200);
@@ -286,9 +412,9 @@ export const simsApi = {
       throw new Error('SIM no encontrada');
     }
 
-    // No se puede eliminar si está activa
-    if (sim.status === 'active') {
-      throw new Error('No se puede eliminar una SIM activa. Primero debe suspenderla o desasignarla del equipo.');
+    // No se puede eliminar si está asignada a equipo
+    if (sim.equipment_id) {
+      throw new Error('No se puede eliminar una SIM asignada a un equipo. Primero desasígnela.');
     }
 
     sims = sims.filter(s => s.id !== id);

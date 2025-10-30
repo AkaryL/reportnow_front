@@ -9,8 +9,10 @@ export interface User {
   email: string;
   role: UserRole;
   client_id?: string; // Tenant al que pertenece (null para superuser)
+  phone?: string; // Teléfono del usuario
   created_at: string;
   updated_at?: string;
+  last_activity?: string; // Última actividad del usuario
 }
 
 export interface AuthResponse {

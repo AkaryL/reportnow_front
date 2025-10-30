@@ -18,9 +18,10 @@ interface GeofenceModalProps {
     client_id?: string;
   }) => void;
   defaultClientId?: string;
+  editingGeofence?: any;
 }
 
-export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId }: GeofenceModalProps) {
+export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editingGeofence }: GeofenceModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3BA2E8');
@@ -51,6 +52,63 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId }: Geof
       setSelectedClientId(defaultClientId);
     }
   }, [isOpen, defaultClientId]);
+
+  // Cargar datos de geocerca cuando se está editando
+  useEffect(() => {
+    if (isOpen && editingGeofence) {
+      setName(editingGeofence.name || '');
+      setColor(editingGeofence.color || '#3BA2E8');
+
+      // Extraer coordenadas del geom
+      if (editingGeofence.geom && editingGeofence.geom.coordinates) {
+        const coords = editingGeofence.geom.coordinates[0][0];
+        if (coords && coords.length >= 2) {
+          setLongitude(String(coords[0]));
+          setLatitude(String(coords[1]));
+        }
+      }
+
+      // El radio no está almacenado en el mock actual, usar default
+      setRadius('500');
+
+      // Cargar tipo de alerta si existe
+      if (editingGeofence.alert_type) {
+        setAlertType(editingGeofence.alert_type);
+      }
+
+      // Si hay defaultClientId, forzar asignación a cliente
+      if (defaultClientId) {
+        setAssignmentType('client');
+        setSelectedClientId(defaultClientId);
+      } else {
+        // Cargar tipo de asignación normal
+        if (editingGeofence.is_global) {
+          setAssignmentType('global');
+        } else if (editingGeofence.client_id) {
+          setAssignmentType('client');
+          setSelectedClientId(editingGeofence.client_id);
+        }
+      }
+    } else if (isOpen && !editingGeofence) {
+      // Limpiar formulario al abrir para crear nueva geocerca
+      setName('');
+      setColor('#3BA2E8');
+      setLatitude('');
+      setLongitude('');
+      setRadius('500');
+      setAddress('');
+      setAlertType('both');
+
+      // Si hay defaultClientId, forzar asignación a cliente
+      if (defaultClientId) {
+        setAssignmentType('client');
+        setSelectedClientId(defaultClientId);
+      } else {
+        setAssignmentType('global');
+        setSelectedClientId('');
+      }
+    }
+  }, [isOpen, editingGeofence, defaultClientId]);
 
   if (!isOpen) return null;
 
@@ -181,7 +239,9 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId }: Geof
         <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 z-[9999] max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Nueva Geocerca</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {editingGeofence ? 'Editar Geocerca' : 'Nueva Geocerca'}
+            </h2>
             <button
               onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -387,8 +447,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId }: Geof
               </div>
             </div>
 
-            {/* Asignación (solo para admin/superuser) */}
-            {isAdmin && (
+            {/* Asignación (solo para admin/superuser y cuando no hay defaultClientId) */}
+            {isAdmin && !defaultClientId && (
               <div className="border-t border-gray-200 pt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Asignación
@@ -463,7 +523,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId }: Geof
                 variant="primary"
                 className="flex-1"
               >
-                Crear Geocerca
+                {editingGeofence ? 'Actualizar Geocerca' : 'Crear Geocerca'}
               </Button>
             </div>
           </form>

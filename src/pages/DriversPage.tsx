@@ -7,6 +7,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
+import { DriverFormModal } from '../components/drivers/DriverFormModal';
 import {
   UserCircle,
   Plus,
@@ -20,6 +21,9 @@ import {
 } from 'lucide-react';
 import type { Driver } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export function DriversPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,19 +32,48 @@ export function DriversPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   const { data: drivers = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.DRIVERS,
     queryFn: driversApi.getAll,
   });
 
+  const createMutation = useMutation({
+    mutationFn: driversApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRIVERS });
+      setIsModalOpen(false);
+      setSelectedDriver(null);
+      toast.success('Conductor creado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al crear el conductor');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => driversApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRIVERS });
+      setIsModalOpen(false);
+      setSelectedDriver(null);
+      toast.success('Conductor actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al actualizar el conductor');
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: driversApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRIVERS });
+      toast.success('Conductor eliminado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al eliminar el conductor');
+      toast.error(error.message || 'Error al eliminar el conductor');
     },
   });
 
@@ -48,9 +81,10 @@ export function DriversPage() {
     mutationFn: driversApi.toggleStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRIVERS });
+      toast.success('Estado actualizado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al cambiar el estado del conductor');
+      toast.error(error.message || 'Error al cambiar el estado del conductor');
     },
   });
 
@@ -67,10 +101,36 @@ export function DriversPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`¿Estás seguro de eliminar el conductor ${name}?`)) {
+  const handleSubmit = (data: any) => {
+    if (selectedDriver) {
+      updateMutation.mutate({ id: selectedDriver.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (driver: Driver) => {
+    setSelectedDriver(driver);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Eliminar Conductor',
+      message: `¿Estás seguro de que deseas eliminar al conductor ${name}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedDriver(null);
   };
 
   const handleToggleStatus = (id: string) => {
@@ -151,7 +211,7 @@ export function DriversPage() {
             Gestión de conductores • {filteredDrivers.length} conductores
           </p>
         </div>
-        <Button variant="primary" onClick={() => alert('TODO: Implementar modal de creación')}>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Nuevo Conductor
         </Button>
@@ -320,7 +380,7 @@ export function DriversPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => alert('TODO: Editar conductor')}
+                                  onClick={() => handleEdit(driver)}
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
@@ -345,6 +405,25 @@ export function DriversPage() {
           </div>
         </CardContent>
       </Card>
+
+      <DriverFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+        driver={selectedDriver}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.handleCancel}
+        onConfirm={confirmDialog.handleConfirm}
+        title={confirmDialog.options.title}
+        message={confirmDialog.options.message}
+        confirmText={confirmDialog.options.confirmText}
+        cancelText={confirmDialog.options.cancelText}
+        variant={confirmDialog.options.variant}
+      />
     </div>
   );
 }

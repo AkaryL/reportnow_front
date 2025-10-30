@@ -20,11 +20,12 @@ import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
 import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
 import { GeofenceModal } from '../components/GeofenceModal';
 import { Topbar } from '../components/Topbar';
-import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock } from 'lucide-react';
+import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock, Radio } from 'lucide-react';
 import type { Vehicle, VehicleStatus } from '../lib/types';
 import { formatSpeed, formatRelativeTime } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import { useAuth } from '../features/auth/hooks';
+import { useToast } from '../hooks/useToast';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export function HomePage() {
   });
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const toast = useToast();
 
   // Determine if current user is a client/admin for conditional styling
   const isClient = user?.role === 'admin';
@@ -329,10 +331,10 @@ export function HomePage() {
       // Refrescar la lista de geocercas
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
 
-      alert('Geocerca creada exitosamente');
+      toast.success('Geocerca creada exitosamente');
     } catch (error) {
       console.error('Error al crear geocerca:', error);
-      alert('Error al crear la geocerca');
+      toast.error('Error al crear la geocerca');
     }
   };
 
@@ -369,14 +371,14 @@ export function HomePage() {
     if (!selectedVehicle) return;
     // TODO: Implementar navegación a página de historial de ruta
     console.log('Ver historial de ruta para:', selectedVehicle.plate);
-    alert(`Función de historial de ruta para ${selectedVehicle.plate} - Por implementar`);
+    toast.success(`Función de historial de ruta para ${selectedVehicle.plate} - Por implementar`);
   };
 
   const handleViewAlerts = () => {
     if (!selectedVehicle) return;
     // TODO: Implementar navegación a página de alertas
     console.log('Ver alertas para:', selectedVehicle.plate);
-    alert(`Función de alertas para ${selectedVehicle.plate} - Por implementar`);
+    toast.success(`Función de alertas para ${selectedVehicle.plate} - Por implementar`);
   };
 
   const handleNotificationClick = (notification: any) => {
@@ -491,7 +493,7 @@ export function HomePage() {
                 {userVehicles.filter((v) => v.status === 'moving').length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
-                Vehículos transmitiendo posición
+                Equipos transmitiendo posición
               </p>
             </div>
           </div>
@@ -602,7 +604,7 @@ export function HomePage() {
                 {userVehicles.filter((v) => v.status === 'critical').length}
               </p>
               <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
-                Vehículos con alertas críticas
+                Equipos con alertas críticas
               </p>
             </div>
           </div>
@@ -654,19 +656,6 @@ export function HomePage() {
           <div className="pb-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Mapa</h3>
-              {(user?.role === 'superuser' || user?.role === 'admin') && (
-                <button
-                  onClick={handleAddGeofence}
-                  className={`h-8 px-3 text-xs rounded-full transition-colors font-medium flex items-center gap-1.5 ${
-                    isClient
-                      ? 'bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/30'
-                      : 'bg-[#3BA2E8] text-white hover:bg-[#2386CF]'
-                  }`}
-                >
-                  <MapPin className="w-3 h-3" />
-                  + Geocerca
-                </button>
-              )}
             </div>
             {/* Buscador y filtros del mapa */}
             <div className="flex gap-2 items-center">
@@ -678,7 +667,7 @@ export function HomePage() {
                   type="text"
                   value={mapSearchQuery}
                   onChange={(e) => setMapSearchQuery(e.target.value)}
-                  placeholder="Buscar vehículo en mapa..."
+                  placeholder="Buscar equipo en mapa..."
                   className={`w-full h-9 pl-10 pr-9 rounded-full text-[13px] transition-all ${
                     !isClient && 'border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none'
                   }`}
@@ -764,12 +753,12 @@ export function HomePage() {
           </div>
         </CardComponent>
 
-        {/* Derecha: Lista de Vehículos */}
+        {/* Derecha: Lista de Equipos */}
         <div className="relative">
           <CardComponent className="h-[440px] p-5">
             <div className="pb-4">
               <div className="flex items-center justify-between">
-                <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Vehículos en mapa</h3>
+                <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Equipos en mapa</h3>
                 <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>{filteredVehicles.length} total</span>
               </div>
             </div>
@@ -780,12 +769,12 @@ export function HomePage() {
                     <Search className={`w-8 h-8 ${isClient ? 'text-white/30' : 'text-slate-400'}`} />
                   </div>
                   <h4 className={`text-sm font-semibold mb-2 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
-                    No se encontraron vehículos
+                    No se encontraron equipos
                   </h4>
                   <p className={`text-xs mb-4 ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
                     {mapFilters.insideGeofence || mapFilters.moving || mapSearchQuery || selectedClientId
-                      ? 'No hay vehículos que coincidan con los filtros seleccionados.'
-                      : 'No hay vehículos disponibles en este momento.'}
+                      ? 'No hay equipos que coincidan con los filtros seleccionados.'
+                      : 'No hay equipos disponibles en este momento.'}
                   </p>
                   {(mapFilters.insideGeofence || mapFilters.moving || mapSearchQuery || selectedClientId) && (
                     <Button
@@ -827,7 +816,7 @@ export function HomePage() {
                     >
                       <div className="flex items-start gap-3">
                         <div className={`w-10 h-10 rounded-lg ${statusColor.bg} border ${statusColor.border} flex items-center justify-center flex-shrink-0`}>
-                          <Truck className={`w-5 h-5 ${statusColor.text}`} />
+                          <Radio className={`w-5 h-5 ${statusColor.text}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
@@ -925,8 +914,8 @@ export function HomePage() {
                   onClick={() => handleNotificationClick(notification)}
                   className={`flex gap-3 p-3 rounded-lg transition-colors cursor-pointer border ${
                     isClient
-                      ? `border-white/10 hover:bg-white/5 ${!notification.read ? 'bg-cyan-500/10' : ''}`
-                      : `border-gray-100 hover:bg-gray-50 ${!notification.read ? 'bg-blue-50/30' : ''}`
+                      ? `border-white/10 hover:bg-white/5 ${!notification.read_by?.includes(user?.id || '') ? 'bg-cyan-500/10' : ''}`
+                      : `border-gray-100 hover:bg-gray-50 ${!notification.read_by?.includes(user?.id || '') ? 'bg-blue-50/30' : ''}`
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full ${style.bg} border ${style.border} flex items-center justify-center flex-shrink-0`}>
@@ -936,12 +925,12 @@ export function HomePage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className={`text-sm font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.vehiclePlate}</h4>
-                          {!notification.read && (
+                          <h4 className={`text-sm font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.resource_name}</h4>
+                          {!notification.read_by?.includes(user?.id || '') && (
                             <span className={`w-2 h-2 rounded-full ${isClient ? 'bg-cyan-400' : 'bg-primary'}`}></span>
                           )}
                         </div>
-                        <p className={`text-xs mt-0.5 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{notification.text}</p>
+                        <p className={`text-xs mt-0.5 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{notification.description}</p>
                       </div>
                       <span className={`text-xs whitespace-nowrap flex items-center gap-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
                         <Clock className="w-3 h-3" />
@@ -956,15 +945,19 @@ export function HomePage() {
         </div>
       </CardComponent>
 
-      {/* Vehicle Details Drawer */}
+      {/* Equipment Details Drawer */}
       {selectedVehicle && (
         <DrawerComponent
           isOpen={!!selectedVehicle}
           onClose={() => setSelectedVehicle(null)}
-          title={`Vehículo ${selectedVehicle.plate}`}
+          title={`Equipo GPS - ${selectedVehicle.plate}`}
         >
-          <DrawerSectionComponent title="Estado actual">
+          <DrawerSectionComponent title="Información del Equipo">
             <div className="space-y-3">
+              <DrawerItemComponent
+                label="Identificador"
+                value={selectedVehicle.plate}
+              />
               <DrawerItemComponent
                 label="Estado"
                 value={
@@ -974,8 +967,8 @@ export function HomePage() {
                 }
               />
               <DrawerItemComponent
-                label="Conductor"
-                value={selectedVehicle.driver}
+                label="Asignado a"
+                value={selectedVehicle.driver || 'Sin asignar'}
               />
               <DrawerItemComponent
                 label="Última señal"
@@ -984,16 +977,16 @@ export function HomePage() {
             </div>
           </DrawerSectionComponent>
 
-          <DrawerSectionComponent title="Telemetría">
+          <DrawerSectionComponent title="Datos de Transmisión">
             <div className="space-y-3">
               <DrawerItemComponent
-                label="Velocidad"
+                label="Velocidad actual"
                 value={formatSpeed(selectedVehicle.speed)}
               />
             </div>
           </DrawerSectionComponent>
 
-          <DrawerSectionComponent title="Ubicación">
+          <DrawerSectionComponent title="Coordenadas GPS">
             <div className="space-y-3">
               <DrawerItemComponent
                 label="Latitud"
@@ -1013,7 +1006,7 @@ export function HomePage() {
             </ButtonComponent>
             <ButtonComponent className="w-full" variant={isClient ? 'secondary' : 'outline'} onClick={handleViewAlerts}>
               <AlertTriangle className="w-4 h-4" />
-              Ver alertas
+              Ver alertas del equipo
             </ButtonComponent>
           </div>
         </DrawerComponent>

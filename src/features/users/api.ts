@@ -54,6 +54,7 @@ export const usersApi = {
     name: string;
     role: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
     email?: string;
+    phone?: string;
     client_id?: string;
     vehicle_ids?: string[];
   }): Promise<User> => {
@@ -66,6 +67,7 @@ export const usersApi = {
       name: data.name,
       role: data.role,
       email: data.email,
+      phone: data.phone,
       client_id: data.client_id,
       created_at: new Date().toISOString(),
     };
@@ -105,6 +107,7 @@ export const usersApi = {
     name?: string;
     role?: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
     email?: string;
+    phone?: string;
     client_id?: string;
     vehicle_ids?: string[];
   }): Promise<User> => {

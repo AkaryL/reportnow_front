@@ -9,6 +9,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
+import { AssetFormModal } from '../components/assets/AssetFormModal';
 import {
   Truck,
   Package,
@@ -24,6 +25,9 @@ import {
 } from 'lucide-react';
 import type { Asset } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export function AssetsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,6 +37,8 @@ export function AssetsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   const { data: assets = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.ASSETS,
@@ -49,13 +55,40 @@ export function AssetsPage() {
     queryFn: equipmentsApi.getAll,
   });
 
+  const createMutation = useMutation({
+    mutationFn: assetsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ASSETS });
+      setIsModalOpen(false);
+      setSelectedAsset(null);
+      toast.success('Activo creado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al crear el activo');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => assetsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ASSETS });
+      setIsModalOpen(false);
+      setSelectedAsset(null);
+      toast.success('Activo actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al actualizar el activo');
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: assetsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ASSETS });
+      toast.success('Activo eliminado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al eliminar el activo');
+      toast.error(error.message || 'Error al eliminar el activo');
     },
   });
 
@@ -72,10 +105,36 @@ export function AssetsPage() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`¿Estás seguro de eliminar el activo ${name}?`)) {
+  const handleSubmit = (data: any) => {
+    if (selectedAsset) {
+      updateMutation.mutate({ id: selectedAsset.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (asset: Asset) => {
+    setSelectedAsset(asset);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Eliminar Activo',
+      message: `¿Estás seguro de que deseas eliminar el activo "${name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedAsset(null);
   };
 
   const getTypeIcon = (type: Asset['type']) => {
@@ -175,7 +234,7 @@ export function AssetsPage() {
             Gestión de activos rastreados • {filteredAssets.length} activos
           </p>
         </div>
-        <Button variant="primary" onClick={() => alert('TODO: Implementar modal de creación')}>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Nuevo Activo
         </Button>
@@ -331,7 +390,7 @@ export function AssetsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => alert('TODO: Editar activo')}>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(asset)}>
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
@@ -352,6 +411,25 @@ export function AssetsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AssetFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+        asset={selectedAsset}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.handleCancel}
+        onConfirm={confirmDialog.handleConfirm}
+        title={confirmDialog.options.title}
+        message={confirmDialog.options.message}
+        confirmText={confirmDialog.options.confirmText}
+        cancelText={confirmDialog.options.cancelText}
+        variant={confirmDialog.options.variant}
+      />
     </div>
   );
 }

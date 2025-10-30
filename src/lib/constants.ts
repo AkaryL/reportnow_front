@@ -122,6 +122,12 @@ export const EQUIPMENT_STATUS_CONFIG: Record<EquipmentStatus, {
     bgColor: 'bg-gray-100',
     textColor: 'text-gray-700',
   },
+  available: {
+    label: 'Disponible',
+    color: '#8b5cf6',
+    bgColor: 'bg-purple-50',
+    textColor: 'text-purple-700',
+  },
 };
 
 // Asset Type Configuration

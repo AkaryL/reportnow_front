@@ -7,6 +7,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
+import { PlaceFormModal } from '../components/places/PlaceFormModal';
 import {
   MapPin,
   Plus,
@@ -25,6 +26,9 @@ import {
 } from 'lucide-react';
 import type { Place } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 const ICON_MAP = {
   home: Home,
@@ -45,19 +49,48 @@ export function PlacesPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   const { data: places = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.PLACES,
     queryFn: placesApi.getAll,
   });
 
+  const createMutation = useMutation({
+    mutationFn: placesApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PLACES });
+      setIsModalOpen(false);
+      setSelectedPlace(null);
+      toast.success('Lugar creado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al crear el lugar');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => placesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PLACES });
+      setIsModalOpen(false);
+      setSelectedPlace(null);
+      toast.success('Lugar actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al actualizar el lugar');
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: placesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PLACES });
+      toast.success('Lugar eliminado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al eliminar el lugar');
+      toast.error(error.message || 'Error al eliminar el lugar');
     },
   });
 
@@ -65,9 +98,10 @@ export function PlacesPage() {
     mutationFn: placesApi.toggleStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PLACES });
+      toast.success('Estado actualizado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al cambiar el estado del lugar');
+      toast.error(error.message || 'Error al cambiar el estado del lugar');
     },
   });
 
@@ -85,10 +119,36 @@ export function PlacesPage() {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`¿Estás seguro de eliminar el lugar ${name}?`)) {
+  const handleSubmit = (data: any) => {
+    if (selectedPlace) {
+      updateMutation.mutate({ id: selectedPlace.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (place: Place) => {
+    setSelectedPlace(place);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Eliminar Lugar',
+      message: `¿Estás seguro de que deseas eliminar el lugar "${name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPlace(null);
   };
 
   const handleToggleStatus = (id: string) => {
@@ -166,7 +226,7 @@ export function PlacesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Lugares</h1>
           <p className="text-gray-600 mt-1">Gestión de lugares de interés • {filteredPlaces.length} lugares</p>
         </div>
-        <Button variant="primary" onClick={() => alert('TODO: Implementar modal de creación')}>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Nuevo Lugar
         </Button>
@@ -327,7 +387,7 @@ export function PlacesPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => alert('TODO: Editar lugar')}
+                                      onClick={() => handleEdit(place)}
                                     >
                                       <Edit className="w-4 h-4" />
                                     </Button>
@@ -356,6 +416,25 @@ export function PlacesPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PlaceFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+        place={selectedPlace}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.handleCancel}
+        onConfirm={confirmDialog.handleConfirm}
+        title={confirmDialog.options.title}
+        message={confirmDialog.options.message}
+        confirmText={confirmDialog.options.confirmText}
+        cancelText={confirmDialog.options.cancelText}
+        variant={confirmDialog.options.variant}
+      />
     </div>
   );
 }

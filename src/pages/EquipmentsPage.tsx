@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { equipmentsApi } from '../features/equipments/api';
 import { clientsApi } from '../features/clients/api';
 import { QUERY_KEYS, EQUIPMENT_STATUS_CONFIG } from '../lib/constants';
@@ -8,19 +9,29 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
-import { Radio, MapPin, Plus, Edit, Trash2, Search, Building2, Link as LinkIcon, Unlink } from 'lucide-react';
+import { EquipmentFormModal } from '../components/equipments/EquipmentFormModal';
+import { AssignEquipmentModal } from '../components/equipments/AssignEquipmentModal';
+import { Radio, MapPin, Plus, Edit, Trash2, Search, Building2, Link as LinkIcon, Unlink, Eye, Box } from 'lucide-react';
 import { formatRelativeTime } from '../lib/utils';
 import type { Equipment } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export function EquipmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  const [equipmentToAssign, setEquipmentToAssign] = useState<Equipment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   const { data: equipments = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.EQUIPMENTS,
@@ -33,13 +44,48 @@ export function EquipmentsPage() {
     enabled: user?.role === 'superuser',
   });
 
+  const { data: assets = [] } = useQuery({
+    queryKey: QUERY_KEYS.ASSETS,
+    queryFn: async () => {
+      const { assetsApi } = await import('../features/assets/api');
+      return assetsApi.getAll();
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: equipmentsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
+      setIsModalOpen(false);
+      setSelectedEquipment(null);
+      toast.success('Equipo creado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al crear el equipo');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => equipmentsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
+      setIsModalOpen(false);
+      setSelectedEquipment(null);
+      toast.success('Equipo actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al actualizar el equipo');
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: equipmentsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
+      toast.success('Equipo eliminado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al eliminar el equipo');
+      toast.error(error.message || 'Error al eliminar el equipo');
     },
   });
 
@@ -48,10 +94,10 @@ export function EquipmentsPage() {
       equipmentsApi.assignToClient(equipmentId, clientId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
-      alert('Equipo asignado exitosamente');
+      toast.success('Equipo asignado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al asignar el equipo');
+      toast.error(error.message || 'Error al asignar el equipo');
     },
   });
 
@@ -59,10 +105,10 @@ export function EquipmentsPage() {
     mutationFn: equipmentsApi.unassignFromClient,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
-      alert('Equipo desasignado exitosamente');
+      toast.success('Equipo desasignado exitosamente');
     },
     onError: (error: any) => {
-      alert(error.message || 'Error al desasignar el equipo');
+      toast.error(error.message || 'Error al desasignar el equipo');
     },
   });
 
@@ -84,21 +130,66 @@ export function EquipmentsPage() {
     return matchesSearch && matchesStatus && matchesClient;
   });
 
-  const handleDelete = (id: string, imei: string) => {
-    if (confirm(`¿Estás seguro de eliminar el equipo ${imei}?`)) {
+  const handleSubmit = (data: any) => {
+    if (selectedEquipment) {
+      updateMutation.mutate({ id: selectedEquipment.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (equipment: Equipment) => {
+    setSelectedEquipment(equipment);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, imei: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Eliminar Equipo',
+      message: `¿Estás seguro de que deseas eliminar el equipo ${imei}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };
 
-  const handleAssignToClient = (equipmentId: string) => {
-    const clientId = prompt('Ingresa el ID del cliente:');
-    if (clientId) {
-      assignToClientMutation.mutate({ equipmentId, clientId });
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEquipment(null);
+  };
+
+  const handleAssignToClient = (equipment: Equipment) => {
+    setEquipmentToAssign(equipment);
+    setIsAssignModalOpen(true);
+  };
+
+  const handleAssignSubmit = (clientId: string) => {
+    if (equipmentToAssign) {
+      assignToClientMutation.mutate({ equipmentId: equipmentToAssign.id, clientId });
+      setIsAssignModalOpen(false);
+      setEquipmentToAssign(null);
     }
   };
 
-  const handleUnassignFromClient = (equipmentId: string, imei: string) => {
-    if (confirm(`¿Desasignar el equipo ${imei} del cliente actual?`)) {
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
+    setEquipmentToAssign(null);
+  };
+
+  const handleUnassignFromClient = async (equipmentId: string, imei: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Desasignar Equipo',
+      message: `¿Desasignar el equipo ${imei} del cliente actual?`,
+      confirmText: 'Desasignar',
+      cancelText: 'Cancelar',
+      variant: 'warning',
+    });
+
+    if (confirmed) {
       unassignFromClientMutation.mutate(equipmentId);
     }
   };
@@ -107,6 +198,12 @@ export function EquipmentsPage() {
     if (!clientId) return 'Sin asignar';
     const client = clients.find((c) => c.id === clientId);
     return client?.company_name || clientId;
+  };
+
+  const getAssetName = (assetId?: string) => {
+    if (!assetId) return null;
+    const asset = assets.find((a) => a.id === assetId);
+    return asset?.name || null;
   };
 
   const getStatusBadge = (status: Equipment['status']) => {
@@ -163,7 +260,7 @@ export function EquipmentsPage() {
             Gestión global de dispositivos GPS • {filteredEquipments.length} equipos
           </p>
         </div>
-        <Button variant="primary" onClick={() => alert('TODO: Implementar modal de creación')}>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Nuevo Equipo
         </Button>
@@ -285,11 +382,21 @@ export function EquipmentsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400" />
-                          <span className={equipment.client_id ? 'text-gray-900' : 'text-gray-400'}>
-                            {getClientName(equipment.client_id)}
-                          </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-gray-400" />
+                            <span className={equipment.client_id ? 'text-gray-900' : 'text-gray-400'}>
+                              {getClientName(equipment.client_id)}
+                            </span>
+                          </div>
+                          {equipment.asset_id && getAssetName(equipment.asset_id) && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Box className="w-3 h-3 text-gray-400" />
+                              <span className="text-xs text-gray-500">
+                                {getAssetName(equipment.asset_id)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(equipment.status)}</TableCell>
@@ -318,6 +425,14 @@ export function EquipmentsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/equipos/${equipment.id}`)}
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
                           {equipment.client_id ? (
                             <Button
                               variant="ghost"
@@ -331,13 +446,13 @@ export function EquipmentsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleAssignToClient(equipment.id)}
+                              onClick={() => handleAssignToClient(equipment)}
                               title="Asignar a cliente"
                             >
                               <LinkIcon className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="sm" onClick={() => alert('TODO: Editar equipo')}>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(equipment)}>
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
@@ -358,6 +473,34 @@ export function EquipmentsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <EquipmentFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+        equipment={selectedEquipment}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <AssignEquipmentModal
+        isOpen={isAssignModalOpen}
+        onClose={handleCloseAssignModal}
+        onAssign={handleAssignSubmit}
+        equipment={equipmentToAssign}
+        clients={clients}
+        isLoading={assignToClientMutation.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.handleCancel}
+        onConfirm={confirmDialog.handleConfirm}
+        title={confirmDialog.options.title}
+        message={confirmDialog.options.message}
+        confirmText={confirmDialog.options.confirmText}
+        cancelText={confirmDialog.options.cancelText}
+        variant={confirmDialog.options.variant}
+      />
     </div>
   );
 }

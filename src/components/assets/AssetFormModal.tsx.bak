@@ -1,0 +1,558 @@
+import { useState, useEffect } from 'react';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/Label';
+import type { Asset, AssetType } from '../../lib/types';
+
+interface AssetFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+  asset?: Asset | null;
+  clientId: string;
+  isLoading?: boolean;
+}
+
+export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isLoading }: AssetFormModalProps) {
+  const [formData, setFormData] = useState({
+    type: 'vehicle' as AssetType,
+    name: '',
+    photo_url: '',
+    icon: '',
+    notes: '',
+    // Vehicle specific
+    brand: '',
+    model: '',
+    year: '',
+    plate: '',
+    economic_id: '',
+    vin: '',
+    color: '',
+    // Cargo specific
+    cargo_type: '',
+    box_id: '',
+    // Container specific
+    container_type: '',
+    box_plate: '',
+    container_economic_id: '',
+    container_color: '',
+    // Person specific
+    person_name: '',
+    phone: '',
+    address: '',
+    emergency_phone: '',
+    position: '',
+    // Other specific
+    asset_type: '',
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset form when modal closes
+      setFormData({
+        type: 'vehicle',
+        name: '',
+        photo_url: '',
+        icon: '',
+        notes: '',
+        brand: '',
+        model: '',
+        year: '',
+        plate: '',
+        economic_id: '',
+        vin: '',
+        color: '',
+        cargo_type: '',
+        box_id: '',
+        container_type: '',
+        box_plate: '',
+        container_economic_id: '',
+        container_color: '',
+        person_name: '',
+        phone: '',
+        address: '',
+        emergency_phone: '',
+        position: '',
+        asset_type: '',
+      });
+    } else if (asset) {
+      // Edit mode - load asset data
+      const baseData: any = {
+        type: asset.type,
+        name: asset.name,
+        photo_url: asset.photo_url || '',
+        icon: asset.icon || '',
+        notes: asset.notes || '',
+        brand: '',
+        model: '',
+        year: '',
+        plate: '',
+        economic_id: '',
+        vin: '',
+        color: '',
+        cargo_type: '',
+        box_id: '',
+        container_type: '',
+        box_plate: '',
+        container_economic_id: '',
+        container_color: '',
+        person_name: '',
+        phone: '',
+        address: '',
+        emergency_phone: '',
+        position: '',
+        asset_type: '',
+      };
+
+      if (asset.type === 'vehicle') {
+        baseData.brand = (asset as any).brand || '';
+        baseData.model = (asset as any).model || '';
+        baseData.year = (asset as any).year?.toString() || '';
+        baseData.plate = (asset as any).plate || '';
+        baseData.economic_id = (asset as any).economic_id || '';
+        baseData.vin = (asset as any).vin || '';
+        baseData.color = (asset as any).color || '';
+      } else if (asset.type === 'cargo') {
+        baseData.cargo_type = (asset as any).cargo_type || '';
+        baseData.box_id = (asset as any).box_id || '';
+      } else if (asset.type === 'container') {
+        baseData.container_type = (asset as any).container_type || '';
+        baseData.box_plate = (asset as any).box_plate || '';
+        baseData.container_economic_id = (asset as any).economic_id || '';
+        baseData.container_color = (asset as any).color || '';
+      } else if (asset.type === 'person') {
+        baseData.person_name = (asset as any).person_name || '';
+        baseData.phone = (asset as any).phone || '';
+        baseData.address = (asset as any).address || '';
+        baseData.emergency_phone = (asset as any).emergency_phone || '';
+        baseData.position = (asset as any).position || '';
+      } else if (asset.type === 'other') {
+        baseData.asset_type = (asset as any).asset_type || '';
+      }
+
+      setFormData(baseData);
+    }
+  }, [isOpen, asset]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const basePayload: any = {
+      client_id: clientId,
+      name: formData.name,
+      photo_url: formData.photo_url || undefined,
+      icon: formData.icon || undefined,
+      notes: formData.notes || undefined,
+    };
+
+    // Add type-specific fields based on asset type
+    if (formData.type === 'vehicle') {
+      basePayload.brand = formData.brand || undefined;
+      basePayload.model = formData.model || undefined;
+      basePayload.year = formData.year ? Number(formData.year) : undefined;
+      basePayload.plate = formData.plate || undefined;
+      basePayload.economic_id = formData.economic_id || undefined;
+      basePayload.vin = formData.vin || undefined;
+      basePayload.color = formData.color || undefined;
+    } else if (formData.type === 'cargo') {
+      basePayload.cargo_type = formData.cargo_type || undefined;
+      basePayload.box_id = formData.box_id || undefined;
+    } else if (formData.type === 'container') {
+      basePayload.container_type = formData.container_type || undefined;
+      basePayload.box_plate = formData.box_plate || undefined;
+      basePayload.economic_id = formData.container_economic_id || undefined;
+      basePayload.color = formData.container_color || undefined;
+    } else if (formData.type === 'person') {
+      basePayload.person_name = formData.person_name;
+      basePayload.phone = formData.phone || undefined;
+      basePayload.address = formData.address || undefined;
+      basePayload.emergency_phone = formData.emergency_phone || undefined;
+      basePayload.position = formData.position || undefined;
+    } else if (formData.type === 'other') {
+      basePayload.asset_type = formData.asset_type || undefined;
+    }
+
+    onSubmit({ type: formData.type, data: basePayload });
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={asset ? 'Editar Activo' : 'Nuevo Activo'}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Tipo de Activo (solo en creación) */}
+        {!asset && (
+          <div>
+            <Label htmlFor="assetType">Tipo de Activo *</Label>
+            <select
+              id="assetType"
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as AssetType })}
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              required
+            >
+              <option value="vehicle">Vehículo</option>
+              <option value="cargo">Mercancía</option>
+              <option value="container">Contenedor</option>
+              <option value="person">Persona</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+        )}
+
+        {/* Campos de Vehículo */}
+        {formData.type === 'vehicle' && (
+          <>
+            <div>
+              <Label htmlFor="vehicleName">Nombre del activo *</Label>
+              <Input
+                id="vehicleName"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Camión de carga 1"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="brand">Marca</Label>
+                <Input
+                  id="brand"
+                  type="text"
+                  value={formData.brand}
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  placeholder="Freightliner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="model">Modelo</Label>
+                <Input
+                  id="model"
+                  type="text"
+                  value={formData.model}
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  placeholder="Cascadia"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="year">Año</Label>
+                <Input
+                  id="year"
+                  type="number"
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  placeholder="2022"
+                  min="1900"
+                  max={new Date().getFullYear() + 1}
+                />
+              </div>
+              <div>
+                <Label htmlFor="plate">Placas</Label>
+                <Input
+                  id="plate"
+                  type="text"
+                  value={formData.plate}
+                  onChange={(e) => setFormData({ ...formData, plate: e.target.value })}
+                  placeholder="JAL-123-A"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="economic_id">ID económico</Label>
+                <Input
+                  id="economic_id"
+                  type="text"
+                  value={formData.economic_id}
+                  onChange={(e) => setFormData({ ...formData, economic_id: e.target.value })}
+                  placeholder="ECO-001"
+                />
+              </div>
+              <div>
+                <Label htmlFor="vin">VIN</Label>
+                <Input
+                  id="vin"
+                  type="text"
+                  value={formData.vin}
+                  onChange={(e) => setFormData({ ...formData, vin: e.target.value })}
+                  placeholder="1FUJGHDV8NLAA1234"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="color">Color</Label>
+              <Input
+                id="color"
+                type="text"
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                placeholder="Blanco"
+              />
+            </div>
+          </>
+        )}
+
+        {/* Campos de Mercancía */}
+        {formData.type === 'cargo' && (
+          <>
+            <div>
+              <Label htmlFor="cargoName">Nombre del activo *</Label>
+              <Input
+                id="cargoName"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Mercancía general"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cargo_type">Tipo de mercancía</Label>
+              <Input
+                id="cargo_type"
+                type="text"
+                value={formData.cargo_type}
+                onChange={(e) => setFormData({ ...formData, cargo_type: e.target.value })}
+                placeholder="Electrónica, Alimentos, etc."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="box_id">ID de caja</Label>
+              <Input
+                id="box_id"
+                type="text"
+                value={formData.box_id}
+                onChange={(e) => setFormData({ ...formData, box_id: e.target.value })}
+                placeholder="BOX-001"
+              />
+            </div>
+          </>
+        )}
+
+        {/* Campos de Contenedor */}
+        {formData.type === 'container' && (
+          <>
+            <div>
+              <Label htmlFor="containerName">Nombre del activo *</Label>
+              <Input
+                id="containerName"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Contenedor 1"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="container_type">Tipo de contenedor</Label>
+                <Input
+                  id="container_type"
+                  type="text"
+                  value={formData.container_type}
+                  onChange={(e) => setFormData({ ...formData, container_type: e.target.value })}
+                  placeholder="20ft, 40ft, etc."
+                />
+              </div>
+              <div>
+                <Label htmlFor="box_plate">Placa de caja</Label>
+                <Input
+                  id="box_plate"
+                  type="text"
+                  value={formData.box_plate}
+                  onChange={(e) => setFormData({ ...formData, box_plate: e.target.value })}
+                  placeholder="JAL-456-B"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="container_economic_id">ID económico</Label>
+                <Input
+                  id="container_economic_id"
+                  type="text"
+                  value={formData.container_economic_id}
+                  onChange={(e) => setFormData({ ...formData, container_economic_id: e.target.value })}
+                  placeholder="CONT-001"
+                />
+              </div>
+              <div>
+                <Label htmlFor="container_color">Color</Label>
+                <Input
+                  id="container_color"
+                  type="text"
+                  value={formData.container_color}
+                  onChange={(e) => setFormData({ ...formData, container_color: e.target.value })}
+                  placeholder="Azul"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Campos de Persona */}
+        {formData.type === 'person' && (
+          <>
+            <div>
+              <Label htmlFor="person_name">Nombre de persona *</Label>
+              <Input
+                id="person_name"
+                type="text"
+                value={formData.person_name}
+                onChange={(e) => setFormData({ ...formData, person_name: e.target.value })}
+                placeholder="Juan Pérez García"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+52 33 1234 5678"
+                />
+              </div>
+              <div>
+                <Label htmlFor="emergency_phone">Tel. de emergencia</Label>
+                <Input
+                  id="emergency_phone"
+                  type="tel"
+                  value={formData.emergency_phone}
+                  onChange={(e) => setFormData({ ...formData, emergency_phone: e.target.value })}
+                  placeholder="+52 33 9876 5432"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="address">Dirección</Label>
+              <Input
+                id="address"
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Av. Principal 123, Guadalajara"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="position">Cargo</Label>
+              <Input
+                id="position"
+                type="text"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                placeholder="Operador, Supervisor, etc."
+              />
+            </div>
+          </>
+        )}
+
+        {/* Campos de Otro */}
+        {formData.type === 'other' && (
+          <>
+            <div>
+              <Label htmlFor="otherName">Nombre del activo *</Label>
+              <Input
+                id="otherName"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nombre del activo"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="asset_type">Tipo</Label>
+              <Input
+                id="asset_type"
+                type="text"
+                value={formData.asset_type}
+                onChange={(e) => setFormData({ ...formData, asset_type: e.target.value })}
+                placeholder="Mascota, Equipo, etc."
+              />
+            </div>
+          </>
+        )}
+
+        {/* Campos comunes para todos los tipos */}
+        <div className="border-t pt-4 mt-4 space-y-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Datos adicionales (opcionales)</h3>
+
+          <div>
+            <Label htmlFor="icon">Ícono</Label>
+            <Input
+              id="icon"
+              type="text"
+              value={formData.icon}
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+              placeholder="Nombre del ícono (opcional)"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="photo_url">Foto del activo</Label>
+            <Input
+              id="photo_url"
+              type="text"
+              value={formData.photo_url}
+              onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
+              placeholder="URL de la foto (opcional)"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="notes">Notas</Label>
+            <textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              rows={3}
+              placeholder="Notas adicionales sobre el activo..."
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            className="flex-1"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Guardando...' : asset ? 'Actualizar' : 'Crear Activo'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

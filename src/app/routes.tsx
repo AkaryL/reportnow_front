@@ -7,8 +7,6 @@ import { Layout } from '../components/Layout';
 
 // Lazy load de páginas para mejorar code splitting
 const HomePage = lazy(() => import('../pages/HomePage').then(m => ({ default: m.HomePage })));
-const VehiclesPage = lazy(() => import('../pages/VehiclesPage').then(m => ({ default: m.VehiclesPage })));
-const VehicleDetailPage = lazy(() => import('../pages/VehicleDetailPage').then(m => ({ default: m.VehicleDetailPage })));
 const ClientsPage = lazy(() => import('../pages/ClientsPage').then(m => ({ default: m.ClientsPage })));
 const ClientDetailPage = lazy(() => import('../pages/ClientDetailPage').then(m => ({ default: m.ClientDetailPage })));
 const GeofencesPage = lazy(() => import('../pages/GeofencesPage').then(m => ({ default: m.GeofencesPage })));
@@ -19,6 +17,7 @@ const AccountPage = lazy(() => import('../pages/AccountPage').then(m => ({ defau
 const AdminUsersPage = lazy(() => import('../pages/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })));
 const AdminProfilePage = lazy(() => import('../pages/AdminProfilePage').then(m => ({ default: m.AdminProfilePage })));
 const EquipmentsPage = lazy(() => import('../pages/EquipmentsPage').then(m => ({ default: m.EquipmentsPage })));
+const EquipmentDetailPage = lazy(() => import('../pages/EquipmentDetailPage').then(m => ({ default: m.EquipmentDetailPage })));
 const AssetsPage = lazy(() => import('../pages/AssetsPage').then(m => ({ default: m.AssetsPage })));
 const DriversPage = lazy(() => import('../pages/DriversPage').then(m => ({ default: m.DriversPage })));
 const PlacesPage = lazy(() => import('../pages/PlacesPage').then(m => ({ default: m.PlacesPage })));
@@ -48,8 +47,6 @@ export function AppRoutes() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
-          <Route path={ROUTES.VEHICLE_DETAIL} element={<VehicleDetailPage />} />
           <Route path={ROUTES.GEOFENCES} element={<GeofencesPage />} />
 
           <Route
@@ -108,6 +105,16 @@ export function AppRoutes() {
             element={
               <RequireRole allowedRoles={['superuser']}>
                 <EquipmentsPage />
+              </RequireRole>
+            }
+          />
+
+          {/* Detalle de Equipo GPS - Solo para superuser */}
+          <Route
+            path="/equipos/:id"
+            element={
+              <RequireRole allowedRoles={['superuser']}>
+                <EquipmentDetailPage />
               </RequireRole>
             }
           />

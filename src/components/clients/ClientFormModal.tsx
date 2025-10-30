@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { vehiclesApi } from '../../features/vehicles/api';
+import { equipmentsApi } from '../../features/equipments/api';
 import { QUERY_KEYS } from '../../lib/constants';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -19,68 +19,93 @@ interface ClientFormModalProps {
 
 export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }: ClientFormModalProps) {
   const [formData, setFormData] = useState({
+    company_name: '',
     name: '',
     email: '',
     phone: '',
     whatsapp: '',
     password: '',
+    rfc: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
   });
 
-  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
-  const [vehicleSearch, setVehicleSearch] = useState('');
-  const [showVehiclePicker, setShowVehiclePicker] = useState(false);
+  const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
+  const [equipmentSearch, setEquipmentSearch] = useState('');
+  const [showEquipmentPicker, setShowEquipmentPicker] = useState(false);
 
-  const { data: vehicles = [] } = useQuery({
-    queryKey: QUERY_KEYS.VEHICLES,
-    queryFn: vehiclesApi.getAll,
+  const { data: equipments = [] } = useQuery({
+    queryKey: QUERY_KEYS.EQUIPMENTS,
+    queryFn: equipmentsApi.getAll,
   });
 
   useEffect(() => {
     if (client) {
       setFormData({
+        company_name: client.company_name,
         name: client.name,
         email: client.email,
         phone: client.phone,
         whatsapp: (client as any).whatsapp || '',
         password: '',
+        rfc: (client as any).rfc || '',
+        address: (client as any).address || '',
+        city: (client as any).city || '',
+        state: (client as any).state || '',
+        zip_code: (client as any).zip_code || '',
       });
-      // TODO: Load assigned vehicles for this client
-      setSelectedVehicles([]);
+      // Load assigned equipments for this client
+      const clientEquipments = equipments.filter((eq) => eq.client_id === client.id).map((eq) => eq.id);
+      setSelectedEquipments(clientEquipments);
     } else {
       setFormData({
+        company_name: '',
         name: '',
         email: '',
         phone: '',
         whatsapp: '',
         password: '',
+        rfc: '',
+        address: '',
+        city: '',
+        state: '',
+        zip_code: '',
       });
-      setSelectedVehicles([]);
+      setSelectedEquipments([]);
     }
-  }, [client]);
+  }, [client, equipments]);
 
-  const filteredVehicles = vehicles.filter((v) =>
-    v.plate.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-    v.driver.toLowerCase().includes(vehicleSearch.toLowerCase())
+  // Filtrar equipos disponibles (sin cliente asignado) o los ya asignados a este cliente
+  const availableEquipments = equipments.filter(
+    (eq) => !eq.client_id || (client && eq.client_id === client.id)
+  );
+
+  const filteredEquipments = availableEquipments.filter((eq) =>
+    eq.imei.toLowerCase().includes(equipmentSearch.toLowerCase()) ||
+    eq.serial.toLowerCase().includes(equipmentSearch.toLowerCase()) ||
+    `${eq.brand} ${eq.model}`.toLowerCase().includes(equipmentSearch.toLowerCase())
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
-      vehicle_ids: selectedVehicles,
+      equipment_ids: selectedEquipments,
     });
   };
 
-  const toggleVehicle = (vehicleId: string) => {
-    setSelectedVehicles((prev) =>
-      prev.includes(vehicleId)
-        ? prev.filter((id) => id !== vehicleId)
-        : [...prev, vehicleId]
+  const toggleEquipment = (equipmentId: string) => {
+    setSelectedEquipments((prev) =>
+      prev.includes(equipmentId)
+        ? prev.filter((id) => id !== equipmentId)
+        : [...prev, equipmentId]
     );
   };
 
-  const getSelectedVehiclesInfo = () => {
-    return vehicles.filter((v) => selectedVehicles.includes(v.id));
+  const getSelectedEquipmentsInfo = () => {
+    return equipments.filter((eq) => selectedEquipments.includes(eq.id));
   };
 
   return (
@@ -89,50 +114,67 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
       onClose={onClose}
       title={client ? 'Editar Cliente' : 'Nuevo Cliente'}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del Cliente *
-          </label>
-          <Input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-            placeholder="Ej: Coca-Cola, Barcel, etc."
-          />
+      <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre de la Empresa *
+            </label>
+            <Input
+              type="text"
+              value={formData.company_name}
+              onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+              required
+              placeholder="Ej: Coca-Cola, Barcel, etc."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre del Contacto *
+            </label>
+            <Input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="Nombre del administrador"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email *
-          </label>
-          <Input
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required
-            placeholder="contacto@cliente.com"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Se usará como nombre de usuario para iniciar sesión
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              placeholder="contacto@cliente.com"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Se usará como nombre de usuario para iniciar sesión
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {client ? 'Nueva Contraseña (opcional)' : 'Contraseña *'}
+            </label>
+            <Input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required={!client}
+              placeholder={client ? 'Dejar en blanco para mantener actual' : 'Contraseña'}
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {client ? 'Nueva Contraseña (opcional)' : 'Contraseña *'}
-          </label>
-          <Input
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required={!client}
-            placeholder={client ? 'Dejar en blanco para mantener actual' : 'Por defecto: 123'}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Teléfono *
@@ -154,25 +196,89 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
               type="tel"
               value={formData.whatsapp}
               onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-              placeholder="+523312345678"
+              placeholder="+52 33 1234 5678"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            RFC
+          </label>
+          <Input
+            type="text"
+            value={formData.rfc}
+            onChange={(e) => setFormData({ ...formData, rfc: e.target.value.toUpperCase() })}
+            placeholder="ABC123456XYZ"
+            maxLength={13}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Dirección
+          </label>
+          <Input
+            type="text"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            placeholder="Calle, número, colonia"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ciudad
+            </label>
+            <Input
+              type="text"
+              value={formData.city}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              placeholder="Guadalajara"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Estado
+            </label>
+            <Input
+              type="text"
+              value={formData.state}
+              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              placeholder="Jalisco"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Código Postal
+            </label>
+            <Input
+              type="text"
+              value={formData.zip_code}
+              onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+              placeholder="44100"
+              maxLength={5}
             />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Vehículos Asignados ({selectedVehicles.length})
+            Equipos GPS Asignados ({selectedEquipments.length})
           </label>
 
-          {/* Selected Vehicles */}
-          {selectedVehicles.length > 0 && (
+          {/* Selected Equipments */}
+          {selectedEquipments.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
-              {getSelectedVehiclesInfo().map((vehicle) => (
-                <Badge key={vehicle.id} variant="default" className="flex items-center gap-1">
-                  {vehicle.plate}
+              {getSelectedEquipmentsInfo().map((equipment) => (
+                <Badge key={equipment.id} variant="default" className="flex items-center gap-1">
+                  {equipment.imei}
                   <button
                     type="button"
-                    onClick={() => toggleVehicle(vehicle.id)}
+                    onClick={() => toggleEquipment(equipment.id)}
                     className="ml-1 hover:text-crit-600"
                   >
                     <X className="w-3 h-3" />
@@ -182,36 +288,38 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
             </div>
           )}
 
-          {/* Vehicle Picker */}
+          {/* Equipment Picker */}
           <div className="border border-gray-300 rounded-md p-3">
             <div className="relative mb-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Buscar vehículos por placa o conductor..."
-                value={vehicleSearch}
+                placeholder="Buscar equipos por IMEI, serial o modelo..."
+                value={equipmentSearch}
                 onChange={(e) => {
-                  setVehicleSearch(e.target.value);
-                  setShowVehiclePicker(true);
+                  setEquipmentSearch(e.target.value);
+                  setShowEquipmentPicker(true);
                 }}
-                onFocus={() => setShowVehiclePicker(true)}
+                onFocus={() => setShowEquipmentPicker(true)}
                 className="pl-9"
               />
             </div>
 
-            {showVehiclePicker && (
+            {showEquipmentPicker && (
               <div className="max-h-48 overflow-y-auto space-y-1">
-                {filteredVehicles.length === 0 ? (
+                {filteredEquipments.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-2">
-                    No se encontraron vehículos
+                    {availableEquipments.length === 0
+                      ? 'No hay equipos disponibles'
+                      : 'No se encontraron equipos'}
                   </p>
                 ) : (
-                  filteredVehicles.map((vehicle) => {
-                    const isSelected = selectedVehicles.includes(vehicle.id);
+                  filteredEquipments.map((equipment) => {
+                    const isSelected = selectedEquipments.includes(equipment.id);
                     return (
                       <div
-                        key={vehicle.id}
-                        onClick={() => toggleVehicle(vehicle.id)}
+                        key={equipment.id}
+                        onClick={() => toggleEquipment(equipment.id)}
                         className={`p-2 rounded cursor-pointer flex items-center justify-between ${
                           isSelected
                             ? 'bg-primary-50 border border-primary-200'
@@ -219,12 +327,12 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{vehicle.plate}</p>
-                          <p className="text-xs text-gray-500">{vehicle.driver}</p>
+                          <p className="text-sm font-medium text-gray-900">{equipment.imei}</p>
+                          <p className="text-xs text-gray-500">
+                            {equipment.brand} {equipment.model} • S/N: {equipment.serial}
+                          </p>
                         </div>
-                        {isSelected && (
-                          <Check className="w-4 h-4 text-primary-600" />
-                        )}
+                        {isSelected && <Check className="w-4 h-4 text-primary-600" />}
                       </div>
                     );
                   })
@@ -233,11 +341,14 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
             )}
           </div>
 
-          {selectedVehicles.length === 0 && (
+          {selectedEquipments.length === 0 && (
             <p className="text-xs text-gray-500 mt-1">
-              Este cliente no tendrá vehículos asignados
+              Este cliente no tendrá equipos asignados
             </p>
           )}
+          <p className="text-xs text-info-600 mt-1">
+            Solo se muestran equipos disponibles (sin cliente asignado)
+          </p>
         </div>
 
         <div className="flex gap-3 pt-4">
