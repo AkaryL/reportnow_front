@@ -111,6 +111,7 @@ export const assetsApi = {
       year: data.year,
       color: data.color,
       vin: data.vin,
+      economic_id: data.economic_id,
       driver_id: data.driver_id,
       created_at: new Date().toISOString(),
     };

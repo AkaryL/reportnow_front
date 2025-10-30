@@ -58,6 +58,7 @@ export interface SIM {
   iccid: string; // ICCID único
   phone_number: string; // Número telefónico
   phone_line: string; // Línea telefónica (legacy - mantener por compatibilidad)
+  apn?: string; // Access Point Name
   status: SIMStatus;
   equipment_id?: string; // ID del equipo al que está asignado
   assigned_to_equipment_id?: string; // Legacy - mantener por compatibilidad
@@ -79,6 +80,7 @@ export interface Equipment {
   serial: string; // Único
   brand: string;
   model: string;
+  firmware_version?: string;
 
   // Asignaciones
   sim_id: string; // SIM asignada (obligatorio)
@@ -96,6 +98,9 @@ export interface Equipment {
   last_seen?: string; // ISO timestamp de última comunicación
 
   // Metadatos
+  purchase_date?: string;
+  warranty_expiry?: string;
+  notes?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -109,6 +114,7 @@ export interface AssetBase {
   id: string;
   type: AssetType;
   name: string;
+  description?: string;
   client_id: string; // Tenant propietario
   equipment_id?: string; // Equipo GPS asignado (null si no tiene)
   photo_url?: string; // URL de foto del activo
@@ -205,6 +211,8 @@ export interface Place {
 
   // Eventos
   event_type: 'entry' | 'exit' | 'both'; // Solo entrada, Solo salida, Entrada/Salida
+  notify_entry?: boolean;
+  notify_exit?: boolean;
 
   // Metadata
   manager?: string; // Encargado (opcional)
@@ -242,6 +250,10 @@ export interface Geofence {
 
   // Configuración visual
   color: string;
+
+  // Geometría GeoJSON (para compatibilidad con mapas)
+  geom?: any;
+  policy?: string;
 
   // Configuración de eventos
   event_type: GeofenceEventType; // Solo entrada, Solo salida, Entrada/Salida

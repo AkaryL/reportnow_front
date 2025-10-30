@@ -461,6 +461,7 @@ export const mockEquipments: Equipment[] = [
     serial: 'GPS-009',
     brand: 'Queclink',
     model: 'GV300',
+    sim_id: 'sim9',
     client_id: '2',
     status: 'inactive',
     lat: 20.7100,
@@ -476,6 +477,7 @@ export const mockEquipments: Equipment[] = [
     serial: 'GPS-010',
     brand: 'Teltonika',
     model: 'FMB920',
+    sim_id: 'sim10',
     status: 'available',
     created_at: new Date('2024-01-20').toISOString(),
   },
@@ -485,6 +487,7 @@ export const mockEquipments: Equipment[] = [
     serial: 'GPS-011',
     brand: 'Concox',
     model: 'GT06N',
+    sim_id: 'sim11',
     status: 'available',
     created_at: new Date('2024-01-22').toISOString(),
   },
@@ -494,6 +497,7 @@ export const mockEquipments: Equipment[] = [
     serial: 'GPS-012',
     brand: 'Queclink',
     model: 'GV300',
+    sim_id: 'sim12',
     status: 'available',
     created_at: new Date('2024-01-23').toISOString(),
   },
@@ -858,7 +862,6 @@ export const mockNotifications: Notification[] = [
     read_by: [],
     channels: ['in-app'],
     priority: 'high',
-    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
   },
   {
     id: 'n2',
@@ -876,7 +879,6 @@ export const mockNotifications: Notification[] = [
     read_by: ['2'],
     channels: ['in-app'],
     priority: 'normal',
-    created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
   },
   {
     id: 'n3',
@@ -893,7 +895,6 @@ export const mockNotifications: Notification[] = [
     read_by: [],
     channels: ['in-app', 'email'],
     priority: 'high',
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
   },
   {
     id: 'n4',
@@ -912,7 +913,6 @@ export const mockNotifications: Notification[] = [
     read_by: ['1'],
     channels: ['in-app'],
     priority: 'normal',
-    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
   },
 ];
 
