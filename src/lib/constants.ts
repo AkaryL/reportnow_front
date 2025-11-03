@@ -49,7 +49,7 @@ export const ROLE_CONFIG: Record<UserRole, {
   },
   admin: {
     label: 'Administrador',
-    description: 'Gestiona su tenant completo',
+    description: 'Gestiona su cliente completo',
     color: '#0ea5e9',
     bgColor: 'bg-info-50',
     textColor: 'text-info-700',

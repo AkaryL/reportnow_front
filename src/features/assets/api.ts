@@ -21,7 +21,7 @@ export const assetsApi = {
 
     const user = getCurrentUser();
 
-    // Si es admin, operator-admin o operator-monitor, filtrar por su tenant
+    // Si es admin, operator-admin o operator-monitor, filtrar por su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
       return assets.filter(a => a.client_id === user.client_id);
     }
@@ -110,7 +110,7 @@ export const assetsApi = {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
-    // Admin/operadores solo pueden crear en su tenant
+    // Admin/operadores solo pueden crear en su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (data.client_id !== user.client_id) {
         throw new Error('No puede crear activos para otro cliente');
@@ -320,7 +320,7 @@ export const assetsApi = {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
-    // Admin/operadores solo pueden actualizar activos de su tenant
+    // Admin/operadores solo pueden actualizar activos de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (asset.client_id !== user.client_id) {
         throw new Error('No tiene permiso para actualizar este activo');
@@ -354,7 +354,7 @@ export const assetsApi = {
       throw new Error('Activo no encontrado');
     }
 
-    // Admin/operadores solo pueden eliminar activos de su tenant
+    // Admin/operadores solo pueden eliminar activos de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (asset.client_id !== user.client_id) {
         throw new Error('No tiene permiso para eliminar este activo');

@@ -149,7 +149,7 @@ export const mockUsers: User[] = [
   },
 ];
 
-// ==================== CLIENTES (Tenants) ====================
+// ==================== CLIENTES ====================
 export const mockClients: Client[] = [
   {
     id: '1',

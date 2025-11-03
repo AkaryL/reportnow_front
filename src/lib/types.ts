@@ -8,7 +8,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  client_id?: string; // Tenant al que pertenece (null para superuser)
+  client_id?: string; // Cliente al que pertenece (null para superuser)
   phone?: string; // Teléfono del usuario
   created_at: string;
   updated_at?: string;
@@ -25,7 +25,7 @@ export interface LoginCredentials {
   password: string;
 }
 
-// ==================== Cliente (Tenant/Account) ====================
+// ==================== Cliente ====================
 export type ClientStatus = 'active' | 'inactive' | 'suspended';
 
 export interface Client {
@@ -89,7 +89,7 @@ export interface Equipment {
 
   // Asignaciones
   sim_id: string; // SIM asignada (obligatorio)
-  client_id?: string; // Cliente/tenant al que está asignado
+  client_id?: string; // Cliente al que está asignado
   asset_id?: string; // Activo al que está asignado actualmente (null si no está asignado)
 
   // Estado
@@ -120,7 +120,7 @@ export interface AssetBase {
   type: AssetType;
   name: string;
   description?: string;
-  client_id: string; // Tenant propietario
+  client_id: string; // Cliente propietario
   equipment_id?: string; // Equipo GPS asignado (null si no tiene)
   photo_url?: string; // URL de foto del activo
   icon?: string; // Ícono personalizado (opcional)
@@ -204,7 +204,7 @@ export interface Driver {
   status: DriverStatus;
   emergency_phone: string;
   address: string;
-  client_id: string; // Tenant propietario
+  client_id: string; // Cliente propietario
   created_at: string;
   updated_at?: string;
 }
@@ -236,8 +236,8 @@ export interface Place {
   manager_phone?: string;
   notes?: string;
 
-  // Tenant
-  client_id?: string; // Tenant propietario (opcional si es global)
+  // Cliente
+  client_id?: string; // Cliente propietario (opcional si es global)
   is_global?: boolean; // Si es visible para todos (solo superuser puede crear globales)
 
   created_at: string;
@@ -278,8 +278,8 @@ export interface Geofence {
   // Metadata
   notes?: string;
 
-  // Tenant
-  client_id: string; // Tenant propietario
+  // Cliente
+  client_id: string; // Cliente propietario
   is_global?: boolean; // Si es visible para todos (solo superuser puede crear globales)
 
   created_at: string;
@@ -358,7 +358,7 @@ export interface Notification {
   place_id?: string;
   resource_name?: string; // Nombre del recurso afectado
 
-  // Tenant
+  // Cliente
   client_id?: string; // null para notificaciones globales (superuser)
 
   // Destinatarios
@@ -438,7 +438,7 @@ export interface ActivityLog {
   target_id?: string;
   target_name?: string;
 
-  // Dónde (tenant)
+  // Cliente
   client_id?: string; // null para acciones globales de superuser
 
   // Cuándo

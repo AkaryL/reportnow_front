@@ -21,7 +21,7 @@ export const equipmentsApi = {
 
     const user = getCurrentUser();
 
-    // Si es admin, operator-admin o operator-monitor, filtrar por su tenant
+    // Si es admin, operator-admin o operator-monitor, filtrar por su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
       return equipments.filter(e => e.client_id === user.client_id);
     }
@@ -39,7 +39,7 @@ export const equipmentsApi = {
 
     const user = getCurrentUser();
 
-    // Verificar permisos: admin/operadores solo ven equipos de su tenant
+    // Verificar permisos: admin/operadores solo ven equipos de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
       if (equipment.client_id !== user.client_id) {
         return null; // No tiene permiso
@@ -124,7 +124,7 @@ export const equipmentsApi = {
     const user = getCurrentUser();
     const equipment = equipments[index];
 
-    // Admin/operadores solo pueden actualizar equipos de su tenant
+    // Admin/operadores solo pueden actualizar equipos de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (equipment.client_id !== user.client_id) {
         throw new Error('No tiene permiso para actualizar este equipo');
@@ -215,7 +215,7 @@ export const equipmentsApi = {
       throw new Error('No tiene permisos para asignar equipos a activos');
     }
 
-    // Admin/operadores solo pueden asignar equipos de su tenant
+    // Admin/operadores solo pueden asignar equipos de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (equipment.client_id !== user.client_id) {
         throw new Error('No tiene permiso para asignar este equipo');
@@ -249,7 +249,7 @@ export const equipmentsApi = {
       throw new Error('No tiene permisos para desasignar equipos');
     }
 
-    // Admin/operadores solo pueden desasignar equipos de su tenant
+    // Admin/operadores solo pueden desasignar equipos de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (equipment.client_id !== user.client_id) {
         throw new Error('No tiene permiso para desasignar este equipo');

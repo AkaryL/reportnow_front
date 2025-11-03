@@ -31,7 +31,7 @@ const navigation = [
   { name: 'Equipos GPS', href: ROUTES.EQUIPMENTS, icon: Radio, roles: ['superuser'] },
   { name: 'Tarjetas SIM', href: ROUTES.SIMS, icon: CreditCard, roles: ['superuser'] },
   { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser'] },
-  { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser', 'admin', 'operator-admin'] },
+  { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser'] },
   { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'operator-admin'] },
   { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['admin', 'operator-admin', 'operator-monitor'] },

@@ -1,12 +1,124 @@
+import { useState } from 'react';
 import { useAuth } from '../features/auth/hooks';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { usersApi } from '../features/users/api';
+import { QUERY_KEYS } from '../lib/constants';
 import { Card } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
 import { Topbar } from '../components/Topbar';
-import { UserCircle, Mail, Building2, Shield, Calendar } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { Badge } from '../components/ui/Badge';
+import { UserFormModal } from '../components/users/UserFormModal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { UserCircle, Mail, Building2, Shield, Calendar, Plus, Edit, Trash2, Users as UsersIcon } from 'lucide-react';
 import { formatDate } from '../lib/utils';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
+import type { UserWithVehicles } from '../features/users/api';
 
 export function AccountPage() {
   const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithVehicles | null>(null);
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
+
+  const isAdmin = user?.role === 'admin';
+
+  // Query para obtener todos los usuarios (solo si es admin)
+  const { data: allUsers = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: QUERY_KEYS.USERS,
+    queryFn: usersApi.getAll,
+    enabled: isAdmin,
+  });
+
+  // Filtrar solo operadores del mismo cliente que el admin
+  const operators = allUsers.filter(
+    (u) =>
+      u.client_id === user?.client_id &&
+      (u.role === 'operator-admin' || u.role === 'operator-monitor')
+  );
+
+  const createMutation = useMutation({
+    mutationFn: usersApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      setIsModalOpen(false);
+      setSelectedUser(null);
+      toast.success('Operador creado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al crear el operador');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => usersApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      setIsModalOpen(false);
+      setSelectedUser(null);
+      toast.success('Operador actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al actualizar el operador');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: usersApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      toast.success('Operador eliminado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al eliminar el operador');
+    },
+  });
+
+  const handleSubmit = (data: any) => {
+    if (selectedUser) {
+      updateMutation.mutate({ id: selectedUser.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (operator: UserWithVehicles) => {
+    setSelectedUser(operator);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Eliminar Operador',
+      message: `¿Estás seguro de que deseas eliminar al operador "${name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  const getRoleBadge = (role: string) => {
+    const config = {
+      'operator-admin': { label: 'Admin', color: 'bg-blue-50 text-blue-700' },
+      'operator-monitor': { label: 'Monitor', color: 'bg-purple-50 text-purple-700' },
+    };
+    const roleConfig = config[role as keyof typeof config];
+    if (!roleConfig) return null;
+    return <Badge className={roleConfig.color}>{roleConfig.label}</Badge>;
+  };
 
   if (!user) {
     return null;
@@ -171,7 +283,131 @@ export function AccountPage() {
             </p>
           </div>
         </CardComponent>
+
+        {/* Gestión de Operadores - Solo para Admin */}
+        {isAdmin && (
+          <CardComponent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  isClient ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-primary/10'
+                }`}>
+                  <UsersIcon className={`w-5 h-5 ${isClient ? 'text-white' : 'text-primary'}`} />
+                </div>
+                <div>
+                  <h3 className={`text-lg font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>
+                    Mis Operadores
+                  </h3>
+                  <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
+                    Gestiona los operadores de tu organización
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="primary"
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Nuevo Operador
+              </Button>
+            </div>
+
+            {isLoadingUsers ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : operators.length === 0 ? (
+              <div className={`text-center py-12 rounded-lg ${
+                isClient ? 'bg-white/5 border border-white/10' : 'bg-gray-50'
+              }`}>
+                <UsersIcon className={`w-12 h-12 mx-auto mb-3 ${
+                  isClient ? 'text-cyan-400' : 'text-gray-400'
+                }`} />
+                <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
+                  No tienes operadores registrados aún
+                </p>
+                <p className={`text-xs mt-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
+                  Haz clic en "Nuevo Operador" para crear uno
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className={isClient ? 'client-text-secondary' : ''}>Nombre</TableHead>
+                      <TableHead className={isClient ? 'client-text-secondary' : ''}>Usuario</TableHead>
+                      <TableHead className={isClient ? 'client-text-secondary' : ''}>Email</TableHead>
+                      <TableHead className={isClient ? 'client-text-secondary' : ''}>Rol del operador</TableHead>
+                      <TableHead className={`text-right ${isClient ? 'client-text-secondary' : ''}`}>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {operators.map((operator) => (
+                      <TableRow key={operator.id}>
+                        <TableCell className={isClient ? 'client-text-primary' : ''}>
+                          <div className="font-medium">{operator.name}</div>
+                        </TableCell>
+                        <TableCell className={isClient ? 'client-text-secondary' : ''}>
+                          {operator.username}
+                        </TableCell>
+                        <TableCell className={isClient ? 'client-text-secondary' : ''}>
+                          {operator.email || '-'}
+                        </TableCell>
+                        <TableCell>{getRoleBadge(operator.role)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(operator)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(operator.id, operator.name)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardComponent>
+        )}
       </div>
+
+      {/* User Form Modal */}
+      {isAdmin && (
+        <>
+          <UserFormModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onSubmit={handleSubmit}
+            user={selectedUser}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+
+          <ConfirmDialog
+            isOpen={confirmDialog.isOpen}
+            onClose={confirmDialog.handleCancel}
+            onConfirm={confirmDialog.handleConfirm}
+            title={confirmDialog.options.title}
+            message={confirmDialog.options.message}
+            confirmText={confirmDialog.options.confirmText}
+            cancelText={confirmDialog.options.cancelText}
+            variant={confirmDialog.options.variant}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -50,7 +50,7 @@ export function VehiclesPage() {
     queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
     queryFn: async () => {
       if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
-        // Get only vehicles for this client/tenant
+        // Get only vehicles for this client/cliente
         const allVehicles = await vehiclesApi.getAll();
         return allVehicles.filter(v => v.clientId === user.client_id);
       } else {

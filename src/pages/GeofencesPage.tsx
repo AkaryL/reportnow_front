@@ -35,24 +35,25 @@ export function GeofencesPage() {
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
   const [selectedGeofence, setSelectedGeofence] = useState<Geofence | null>(null);
   const [focusedGeofenceId, setFocusedGeofenceId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'own' | 'assigned' | 'all'>('own');
+  const [filter, setFilter] = useState<'own' | 'global' | 'all'>('own');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const queryClient = useQueryClient();
   const toast = useToast();
   const confirmDialog = useConfirm();
 
-  const isAdmin = user?.role === 'superuser' || user?.role === 'admin' || user?.role === 'operator-admin';
+  const isSuperuser = user?.role === 'superuser';
+  const isAdmin = user?.role === 'admin';
   const isClient = user?.role === 'admin';
 
   // Componentes condicionales para glassmorphism
   const CardComponent = isClient ? ClientCard : Card;
   const ButtonComponent = isClient ? ClientButton : Button;
 
-  // Obtener lista de clientes (solo para admin/superuser)
+  // Obtener lista de clientes (solo para superuser)
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsApi.getAll(),
-    enabled: isAdmin,
+    enabled: isSuperuser,
   });
 
   const { data: geofences = [], isLoading } = useQuery({
@@ -72,8 +73,8 @@ export function GeofencesPage() {
       if (isClient && user?.client_id) {
         if (filter === 'own') {
           return allGeofences.filter(g => g.client_id === user.client_id && !g.is_global);
-        } else if (filter === 'assigned') {
-          return allGeofences.filter(g => g.client_id !== user.client_id && g.is_global);
+        } else if (filter === 'global') {
+          return allGeofences.filter(g => g.is_global);
         }
         return allGeofences.filter(g => g.is_global || g.client_id === user.client_id);
       }
@@ -221,8 +222,8 @@ export function GeofencesPage() {
             </div>
 
             <div className="space-y-3">
-              {/* Filtro de tipo */}
-              {!isAdmin ? (
+              {/* Filtro de tipo para admin/operadores */}
+              {(isAdmin || !isSuperuser) && (
                 <div className="flex gap-2">
                   <ButtonComponent
                     variant={filter === 'own' ? 'primary' : 'secondary'}
@@ -232,11 +233,11 @@ export function GeofencesPage() {
                     Propias
                   </ButtonComponent>
                   <ButtonComponent
-                    variant={filter === 'assigned' ? 'primary' : 'secondary'}
+                    variant={filter === 'global' ? 'primary' : 'secondary'}
                     size="sm"
-                    onClick={() => setFilter('assigned')}
+                    onClick={() => setFilter('global')}
                   >
-                    Asignadas
+                    Globales
                   </ButtonComponent>
                   <ButtonComponent
                     variant={filter === 'all' ? 'primary' : 'secondary'}
@@ -246,9 +247,11 @@ export function GeofencesPage() {
                     Todas
                   </ButtonComponent>
                 </div>
-              ) : (
+              )}
+
+              {/* Selector de cliente para superuser */}
+              {isSuperuser && (
                 <div className="space-y-3">
-                  {/* Selector de cliente para admin */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ver geocercas de:

@@ -22,7 +22,6 @@ import {
   Fuel,
   ParkingCircle,
   Circle,
-  Globe,
 } from 'lucide-react';
 import type { Place } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
@@ -121,7 +120,7 @@ export function PlacesPage() {
     const matchesType =
       filterType === 'all' ||
       (filterType === 'global' && place.is_global) ||
-      (filterType === 'tenant' && !place.is_global);
+      (filterType === 'cliente' && !place.is_global);
 
     return matchesSearch && matchesStatus && matchesType;
   });
@@ -222,7 +221,7 @@ export function PlacesPage() {
       color: 'bg-purple-50 text-purple-700',
     },
     {
-      label: 'Del Tenant',
+      label: 'Del Cliente',
       value: placesForStats.filter((p) => !p.is_global).length,
       color: 'bg-info-50 text-info-700',
     },
@@ -300,7 +299,7 @@ export function PlacesPage() {
           >
             <option value="all">Todos los tipos</option>
             <option value="global">Globales</option>
-            <option value="tenant">Del Tenant</option>
+            <option value="cliente">Del Cliente</option>
           </select>
 
           {/* Clear Filters */}
@@ -334,14 +333,13 @@ export function PlacesPage() {
                   <TableHead>Radio</TableHead>
                   <TableHead>Tipo de Evento</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Alcance</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPlaces.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                       No se encontraron lugares
                     </TableCell>
                   </TableRow>
@@ -377,16 +375,6 @@ export function PlacesPage() {
                         </TableCell>
                         <TableCell>{getEventTypeBadge(place.event_type)}</TableCell>
                         <TableCell>{getStatusBadge(place.status)}</TableCell>
-                        <TableCell>
-                          {place.is_global ? (
-                            <Badge className="bg-purple-50 text-purple-700">
-                              <Globe className="w-3 h-3 mr-1" />
-                              Global
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-info-50 text-info-700">Tenant</Badge>
-                          )}
-                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             {user?.role !== 'operator-monitor' && (

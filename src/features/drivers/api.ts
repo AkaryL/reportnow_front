@@ -21,7 +21,7 @@ export const driversApi = {
 
     const user = getCurrentUser();
 
-    // Si es admin, operator-admin o operator-monitor, filtrar por su tenant
+    // Si es admin, operator-admin o operator-monitor, filtrar por su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
       return drivers.filter(d => d.client_id === user.client_id);
     }
@@ -91,7 +91,7 @@ export const driversApi = {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
-    // Admin/operadores solo pueden crear en su tenant
+    // Admin/operadores solo pueden crear en su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (data.client_id !== user.client_id) {
         throw new Error('No puede crear conductores para otro cliente');
@@ -139,7 +139,7 @@ export const driversApi = {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
-    // Admin/operadores solo pueden actualizar conductores de su tenant
+    // Admin/operadores solo pueden actualizar conductores de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (driver.client_id !== user.client_id) {
         throw new Error('No tiene permiso para actualizar este conductor');
@@ -179,7 +179,7 @@ export const driversApi = {
       throw new Error('Conductor no encontrado');
     }
 
-    // Admin/operadores solo pueden eliminar conductores de su tenant
+    // Admin/operadores solo pueden eliminar conductores de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (driver.client_id !== user.client_id) {
         throw new Error('No tiene permiso para eliminar este conductor');

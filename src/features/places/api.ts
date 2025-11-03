@@ -21,7 +21,7 @@ export const placesApi = {
 
     const user = getCurrentUser();
 
-    // Si es admin, operator-admin o operator-monitor, filtrar por su tenant + globales
+    // Si es admin, operator-admin o operator-monitor, filtrar por su cliente + globales
     if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
       return places.filter(p => p.is_global || p.client_id === user.client_id);
     }
@@ -94,7 +94,7 @@ export const placesApi = {
       throw new Error('Solo superuser puede crear lugares globales');
     }
 
-    // Admin/operadores solo pueden crear en su tenant
+    // Admin/operadores solo pueden crear en su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       data.client_id = user.client_id;
       data.is_global = false;
@@ -147,7 +147,7 @@ export const placesApi = {
       throw new Error('Solo superuser puede actualizar lugares globales');
     }
 
-    // Admin/operadores solo pueden actualizar lugares de su tenant
+    // Admin/operadores solo pueden actualizar lugares de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (!place.is_global && place.client_id !== user.client_id) {
         throw new Error('No tiene permiso para actualizar este lugar');
@@ -198,7 +198,7 @@ export const placesApi = {
       throw new Error('Solo superuser puede eliminar lugares globales');
     }
 
-    // Admin/operadores solo pueden eliminar lugares de su tenant
+    // Admin/operadores solo pueden eliminar lugares de su cliente
     if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
       if (!place.is_global && place.client_id !== user.client_id) {
         throw new Error('No tiene permiso para eliminar este lugar');

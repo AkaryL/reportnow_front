@@ -21,7 +21,7 @@ export const notificationsApi = {
     try {
       const user = JSON.parse(userStr);
 
-      // Si es admin, operator-admin o operator-monitor, filtrar notificaciones de su tenant
+      // Si es admin, operator-admin o operator-monitor, filtrar notificaciones de su cliente
       if ((user.role === 'admin' || user.role === 'operator-admin' || user.role === 'operator-monitor') && user.client_id) {
         // Filtrar por client_id y por destinatarios
         return notifications.filter(n =>

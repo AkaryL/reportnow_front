@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { vehiclesApi } from '../../features/vehicles/api';
 import { clientsApi } from '../../features/clients/api';
 import { QUERY_KEYS } from '../../lib/constants';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { Search, X, Check } from 'lucide-react';
 import type { UserWithVehicles } from '../../features/users/api';
 import { useAuth } from '../../features/auth/hooks';
 
@@ -30,16 +27,6 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
     client_id: '',
   });
 
-  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
-  const [vehicleSearch, setVehicleSearch] = useState('');
-  const [showVehiclePicker, setShowVehiclePicker] = useState(false);
-
-  const { data: vehicles = [] } = useQuery({
-    queryKey: QUERY_KEYS.VEHICLES,
-    queryFn: vehiclesApi.getAll,
-    enabled: formData.role === 'operator-admin' || formData.role === 'operator-monitor',
-  });
-
   const { data: clients = [] } = useQuery({
     queryKey: QUERY_KEYS.CLIENTS,
     queryFn: clientsApi.getAll,
@@ -55,9 +42,6 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
         email: user.email || '',
         client_id: user.client_id || '',
       });
-      if (user.vehicles) {
-        setSelectedVehicles(user.vehicles.map((v: any) => v.id));
-      }
     } else {
       setFormData({
         username: '',
@@ -67,33 +51,16 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
         email: '',
         client_id: '',
       });
-      setSelectedVehicles([]);
     }
   }, [user]);
-
-  const filteredVehicles = vehicles.filter((v) =>
-    v.plate.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-    v.driver.toLowerCase().includes(vehicleSearch.toLowerCase())
-  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
-      vehicle_ids: (formData.role === 'operator-admin' || formData.role === 'operator-monitor') ? selectedVehicles : undefined,
+      // Los operadores no tienen vehículos asignados específicamente
+      // Tienen acceso a todos los equipos del cliente
     });
-  };
-
-  const toggleVehicle = (vehicleId: string) => {
-    setSelectedVehicles((prev) =>
-      prev.includes(vehicleId)
-        ? prev.filter((id) => id !== vehicleId)
-        : [...prev, vehicleId]
-    );
-  };
-
-  const getSelectedVehiclesInfo = () => {
-    return vehicles.filter((v) => selectedVehicles.includes(v.id));
   };
 
   return (
@@ -176,7 +143,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
         {(formData.role === 'admin' || formData.role === 'operator-admin' || formData.role === 'operator-monitor') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cliente (Tenant) *
+              Cliente *
             </label>
             <select
               value={formData.client_id}
@@ -195,85 +162,11 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
         )}
 
         {(formData.role === 'operator-admin' || formData.role === 'operator-monitor') && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Vehículos Asignados ({selectedVehicles.length})
-            </label>
-
-            {/* Selected Vehicles */}
-            {selectedVehicles.length > 0 && (
-              <div className="mb-2 flex flex-wrap gap-2">
-                {getSelectedVehiclesInfo().map((vehicle) => (
-                  <Badge key={vehicle.id} variant="default" className="flex items-center gap-1">
-                    {vehicle.plate}
-                    <button
-                      type="button"
-                      onClick={() => toggleVehicle(vehicle.id)}
-                      className="ml-1 hover:text-crit-600"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Vehicle Picker */}
-            <div className="border border-gray-300 rounded-md p-3">
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Buscar vehículos por placa o conductor..."
-                  value={vehicleSearch}
-                  onChange={(e) => {
-                    setVehicleSearch(e.target.value);
-                    setShowVehiclePicker(true);
-                  }}
-                  onFocus={() => setShowVehiclePicker(true)}
-                  className="pl-9"
-                />
-              </div>
-
-              {showVehiclePicker && (
-                <div className="max-h-48 overflow-y-auto space-y-1">
-                  {filteredVehicles.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-2">
-                      No se encontraron vehículos
-                    </p>
-                  ) : (
-                    filteredVehicles.map((vehicle) => {
-                      const isSelected = selectedVehicles.includes(vehicle.id);
-                      return (
-                        <div
-                          key={vehicle.id}
-                          onClick={() => toggleVehicle(vehicle.id)}
-                          className={`p-2 rounded cursor-pointer flex items-center justify-between ${
-                            isSelected
-                              ? 'bg-primary-50 border border-primary-200'
-                              : 'hover:bg-gray-50 border border-transparent'
-                          }`}
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{vehicle.plate}</p>
-                            <p className="text-xs text-gray-500">{vehicle.driver}</p>
-                          </div>
-                          {isSelected && (
-                            <Check className="w-4 h-4 text-primary-600" />
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
-
-            {selectedVehicles.length === 0 && (
-              <p className="text-xs text-gray-500 mt-1">
-                Este usuario no tendrá acceso a ningún vehículo
-              </p>
-            )}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-xs text-blue-800">
+              <strong>Nota:</strong> Los operadores tendrán acceso a todos los equipos y activos asignados al cliente.
+              {formData.role === 'operator-monitor' && ' Los operadores monitor solo podrán visualizar la información, sin permisos de edición.'}
+            </p>
           </div>
         )}
 
