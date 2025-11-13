@@ -1,51 +1,33 @@
 import type { User, ActivityLog } from '../../lib/types';
-import { mockUsers, mockActivityLogs } from '../../data/mockData';
-import { LS_USER_KEY } from '../../lib/constants';
-
-// Función auxiliar para simular delay de red
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper para obtener el usuario actual
-const getCurrentUser = (): User | null => {
-  const userStr = localStorage.getItem(LS_USER_KEY);
-  return userStr ? JSON.parse(userStr) : null;
-};
+import apiClient from '../../lib/apiClient';
 
 export interface UserWithVehicles extends User {
   vehicles?: any[];
   assigned_vehicles?: number;
 }
 
-// Copias mutables
-let users = [...mockUsers];
-let activityLogs = [...mockActivityLogs];
-
 export const usersApi = {
   getAll: async (): Promise<UserWithVehicles[]> => {
-    await delay(200);
-
-    return users.map(user => {
-      const { password, ...userWithoutPassword } = user;
-
-      return {
-        ...userWithoutPassword,
-        assigned_vehicles: 0, // TODO: Implementar asignación de equipos/activos a usuarios
-      };
-    });
+    const response = await apiClient.get<User[]>('/users');
+    return response.data.map(user => ({
+      ...user,
+      assigned_vehicles: 0,
+    }));
   },
 
   getById: async (id: string): Promise<UserWithVehicles | null> => {
-    await delay(150);
-
-    const user = users.find(u => u.id === id);
-    if (!user) return null;
-
-    const { password, ...userWithoutPassword } = user;
-
-    return {
-      ...userWithoutPassword,
-      assigned_vehicles: 0, // TODO: Implementar asignación de equipos/activos a usuarios
-    };
+    try {
+      const response = await apiClient.get<User>(`/users/${id}`);
+      return {
+        ...response.data,
+        assigned_vehicles: 0,
+      };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   create: async (data: {
@@ -53,52 +35,12 @@ export const usersApi = {
     password: string;
     name: string;
     role: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
-    email?: string;
+    email: string;
     phone?: string;
     client_id?: string;
-    vehicle_ids?: string[];
   }): Promise<User> => {
-    await delay(300);
-
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      username: data.username,
-      password: data.password, // En producción esto debería estar hasheado
-      name: data.name,
-      role: data.role,
-      email: data.email,
-      phone: data.phone,
-      client_id: data.client_id,
-      created_at: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-
-    // TODO: Implementar asignación de equipos/activos a operadores
-    // if (data.vehicle_ids && data.vehicle_ids.length > 0) {
-    //   // Asignar equipos
-    // }
-
-    // Registrar actividad
-    if (data.role === 'admin') {
-      const user = getCurrentUser();
-      if (user && user.role === 'superuser') {
-        await activityLogsApi.create({
-          user_id: user.id,
-          user_name: user.name,
-          user_role: user.role,
-          activity_type: 'create_user',
-          description: `Creó el usuario admin "${newUser.name}"`,
-          target_type: 'user',
-          target_id: newUser.id,
-          target_name: newUser.name,
-          metadata: { user_email: newUser.email },
-        });
-      }
-    }
-
-    const { password, ...userWithoutPassword } = newUser;
-    return userWithoutPassword;
+    const response = await apiClient.post<User>('/users', data);
+    return response.data;
   },
 
   update: async (id: string, data: {
@@ -109,181 +51,38 @@ export const usersApi = {
     email?: string;
     phone?: string;
     client_id?: string;
-    vehicle_ids?: string[];
   }): Promise<User> => {
-    await delay(250);
-
-    const index = users.findIndex(u => u.id === id);
-    if (index === -1) {
-      throw new Error('Usuario no encontrado');
-    }
-
-    const oldUser = { ...users[index] };
-
-    // Actualizar usuario
-    users[index] = {
-      ...users[index],
-      ...data,
-      id, // Asegurar que el ID no cambie
-    };
-
-    // TODO: Implementar asignación de equipos/activos a operadores
-    // if (data.vehicle_ids !== undefined) {
-    //   // Actualizar asignaciones de equipos
-    // }
-
-    // Registrar actividad solo si el usuario actualizado es admin
-    if (oldUser.role === 'admin' || data.role === 'admin') {
-      const user = getCurrentUser();
-      if (user && user.role === 'superuser') {
-        const updatedFields = Object.keys(data).filter(key => key !== 'password'); // No registrar cambio de password por seguridad
-        await activityLogsApi.create({
-          user_id: user.id,
-          user_name: user.name,
-          user_role: user.role,
-          activity_type: 'update_user',
-          description: `Actualizó el usuario admin "${users[index].name}"`,
-          target_type: 'user',
-          target_id: users[index].id,
-          target_name: users[index].name,
-          metadata: { updated_fields: updatedFields },
-        });
-      }
-    }
-
-    const { password, ...userWithoutPassword } = users[index];
-    return userWithoutPassword;
+    const response = await apiClient.put<User>(`/users/${id}`, data);
+    return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await delay(200);
-
-    const userToDelete = users.find(u => u.id === id);
-
-    users = users.filter(u => u.id !== id);
-    // TODO: Implementar eliminación de asignaciones de equipos/activos
-
-    // Registrar actividad solo si el usuario eliminado es admin
-    if (userToDelete && userToDelete.role === 'admin') {
-      const user = getCurrentUser();
-      if (user && user.role === 'superuser') {
-        await activityLogsApi.create({
-          user_id: user.id,
-          user_name: user.name,
-          user_role: user.role,
-          activity_type: 'delete_user',
-          description: `Eliminó el usuario admin "${userToDelete.name}"`,
-          target_type: 'user',
-          target_id: userToDelete.id,
-          target_name: userToDelete.name,
-        });
-      }
-    }
+    await apiClient.delete(`/users/${id}`);
   },
 
-  // TODO: Reemplazar con equipos/activos asignados
-  getUserVehicles: async (id: string): Promise<any[]> => {
-    await delay(150);
-    return [];
+  // Obtener logs de actividad de un usuario
+  getUserActivity: async (userId: string): Promise<ActivityLog[]> => {
+    const response = await apiClient.get<ActivityLog[]>(`/users/${userId}/activity`);
+    return response.data;
   },
 
-  // TODO: Reemplazar con asignación de equipos/activos
-  assignVehicle: async (userId: string, vehicleId: string): Promise<void> => {
-    await delay(150);
-    // No implementado - usar asignación de equipos
-  },
-
-  // TODO: Reemplazar con desasignación de equipos/activos
-  unassignVehicle: async (userId: string, vehicleId: string): Promise<void> => {
-    await delay(150);
-    // No implementado - usar desasignación de equipos
-  },
-
-  // Obtener solo usuarios admin
+  // Obtener solo usuarios admin (filtrado en frontend)
   getAdmins: async (): Promise<UserWithVehicles[]> => {
-    await delay(200);
-
-    const admins = users.filter(u => u.role === 'admin');
-
-    return admins.map(user => {
-      const { password, ...userWithoutPassword } = user;
-
-      return {
-        ...userWithoutPassword,
-        assigned_vehicles: 0, // TODO: Implementar conteo de equipos/activos asignados
-      };
-    });
+    const response = await apiClient.get<User[]>('/users');
+    const admins = response.data.filter(u => u.role === 'admin' || u.role === 'superuser');
+    return admins.map(user => ({
+      ...user,
+      assigned_vehicles: 0,
+    }));
   },
 };
 
 // ==================== ACTIVITY LOGS API ====================
+// NOTA: Los logs de actividad se obtienen a través de /users/{user_id}/activity
 export const activityLogsApi = {
-  getAll: async (): Promise<ActivityLog[]> => {
-    await delay(200);
-    // Ordenar por fecha más reciente primero
-    return [...activityLogs].sort((a, b) =>
-      new Date(b.ts).getTime() - new Date(a.ts).getTime()
-    );
-  },
-
+  // Obtener logs de actividad de un usuario específico
   getByUserId: async (userId: string): Promise<ActivityLog[]> => {
-    await delay(150);
-
-    const userLogs = activityLogs.filter(log => log.user_id === userId);
-
-    // Ordenar por fecha más reciente primero
-    return userLogs.sort((a, b) =>
-      new Date(b.ts).getTime() - new Date(a.ts).getTime()
-    );
-  },
-
-  getByUserRole: async (role: 'admin' | 'superuser'): Promise<ActivityLog[]> => {
-    await delay(150);
-
-    const roleLogs = activityLogs.filter(log => log.user_role === role);
-
-    // Ordenar por fecha más reciente primero
-    return roleLogs.sort((a, b) =>
-      new Date(b.ts).getTime() - new Date(a.ts).getTime()
-    );
-  },
-
-  create: async (log: Omit<ActivityLog, 'id' | 'ts'>): Promise<ActivityLog> => {
-    await delay(100);
-
-    const newLog: ActivityLog = {
-      ...log,
-      id: `a${Date.now()}`,
-      ts: new Date().toISOString(),
-    };
-
-    activityLogs.push(newLog);
-    return newLog;
-  },
-
-  // Obtener estadísticas de actividad por usuario
-  getStatsByUserId: async (userId: string): Promise<{
-    total_activities: number;
-    by_type: Record<string, number>;
-    recent_activity_ts?: string;
-  }> => {
-    await delay(150);
-
-    const userLogs = activityLogs.filter(log => log.user_id === userId);
-
-    const by_type: Record<string, number> = {};
-    userLogs.forEach(log => {
-      by_type[log.activity_type] = (by_type[log.activity_type] || 0) + 1;
-    });
-
-    const sortedLogs = userLogs.sort((a, b) =>
-      new Date(b.ts).getTime() - new Date(a.ts).getTime()
-    );
-
-    return {
-      total_activities: userLogs.length,
-      by_type,
-      recent_activity_ts: sortedLogs[0]?.ts,
-    };
+    const response = await apiClient.get<ActivityLog[]>(`/users/${userId}/activity`);
+    return response.data;
   },
 };

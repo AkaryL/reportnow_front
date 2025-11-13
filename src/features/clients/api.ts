@@ -1,170 +1,74 @@
-import type { Client, Vehicle, Geofence, User } from '../../lib/types';
-import {
-  mockClients,
-  getVehiclesByClient,
-  getGeofencesByClient
-} from '../../data/mockData';
-import { activityLogsApi } from '../users/api';
-import { LS_USER_KEY } from '../../lib/constants';
+import type { Client, Vehicle, Geofence } from '../../lib/types';
+import apiClient from '../../lib/apiClient';
 
-// Función auxiliar para simular delay de red
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper para obtener el usuario actual
-const getCurrentUser = (): User | null => {
-  const userStr = localStorage.getItem(LS_USER_KEY);
-  return userStr ? JSON.parse(userStr) : null;
+// Normalizar cliente del backend para el frontend
+const normalizeClient = (client: any): Client => {
+  return {
+    ...client,
+    // Aliases para mantener compatibilidad con código existente
+    name: client.company_name || client.name,
+    phone: client.contact_phone || client.phone,
+  };
 };
-
-// Copia mutable de clientes para permitir operaciones CRUD
-let clients = [...mockClients];
 
 export const clientsApi = {
   getAll: async (): Promise<Client[]> => {
-    await delay(200);
-    return [...clients];
+    const response = await apiClient.get<any[]>('/clients');
+    return response.data.map(normalizeClient);
   },
 
   getById: async (id: string): Promise<Client | null> => {
-    await delay(150);
-    const client = clients.find(c => c.id === id);
-    return client ? { ...client } : null;
+    try {
+      const response = await apiClient.get<any>(`/clients/${id}`);
+      return normalizeClient(response.data);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   create: async (data: any): Promise<Client> => {
-    await delay(300);
-
-    const newClient: Client = {
-      id: `c${Date.now()}`,
+    // Transformar datos del frontend al formato del backend
+    const backendData = {
       contact_name: data.contact_name || data.name,
-      contact_position: data.contact_position || 'Gerente',
       company_name: data.company_name || data.name,
-      contact_phone: data.phone || data.contact_phone,
+      contact_phone: data.contact_phone || data.phone,
+      contact_position: data.contact_position || 'Gerente',
       email: data.email,
-      authorized_phones: data.authorized_phones || [data.phone || data.contact_phone],
+      authorized_phones: data.authorized_phones || [data.contact_phone || data.phone],
       authorized_emails: data.authorized_emails || [data.email],
       equipment_quota: data.equipment_quota || 5,
-      status: 'active',
-      created_at: new Date().toISOString(),
+      status: data.status || 'active',
     };
-
-    clients.push(newClient);
-
-    // Registrar actividad
-    const user = getCurrentUser();
-    if (user && (user.role === 'admin' || user.role === 'superuser')) {
-      await activityLogsApi.create({
-        user_id: user.id,
-        user_name: user.name,
-        user_role: user.role,
-        activity_type: 'create_client',
-        description: `Creó el cliente "${newClient.company_name}"`,
-        target_type: 'client',
-        target_id: newClient.id,
-        target_name: newClient.company_name,
-        metadata: { client_phone: newClient.contact_phone },
-      });
-    }
-
-    return { ...newClient };
+    const response = await apiClient.post<any>('/clients', backendData);
+    return normalizeClient(response.data);
   },
 
   update: async (id: string, data: any): Promise<Client> => {
-    await delay(250);
-
-    const index = clients.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new Error('Cliente no encontrado');
+    // Transformar datos del frontend al formato del backend
+    const backendData: any = {};
+    if (data.name) {
+      backendData.company_name = data.name;
+      backendData.contact_name = data.name;
     }
+    if (data.company_name) backendData.company_name = data.company_name;
+    if (data.contact_name) backendData.contact_name = data.contact_name;
+    if (data.phone) backendData.contact_phone = data.phone;
+    if (data.contact_phone) backendData.contact_phone = data.contact_phone;
+    if (data.email) backendData.email = data.email;
+    if (data.contact_position) backendData.contact_position = data.contact_position;
+    if (data.authorized_phones) backendData.authorized_phones = data.authorized_phones;
+    if (data.authorized_emails) backendData.authorized_emails = data.authorized_emails;
+    if (data.equipment_quota) backendData.equipment_quota = data.equipment_quota;
+    if (data.status) backendData.status = data.status;
 
-    const oldClient = { ...clients[index] };
-
-    clients[index] = {
-      ...clients[index],
-      ...data,
-      id, // Asegurar que el ID no cambie
-    };
-
-    // Registrar actividad
-    const user = getCurrentUser();
-    if (user && (user.role === 'admin' || user.role === 'superuser')) {
-      const updatedFields = Object.keys(data).filter(key => data[key] !== oldClient[key as keyof Client]);
-      await activityLogsApi.create({
-        user_id: user.id,
-        user_name: user.name,
-        user_role: user.role,
-        activity_type: 'update_client',
-        description: `Actualizó la información de "${clients[index].company_name}"`,
-        target_type: 'client',
-        target_id: clients[index].id,
-        target_name: clients[index].company_name,
-        metadata: { updated_fields: updatedFields },
-      });
-    }
-
-    return { ...clients[index] };
+    const response = await apiClient.put<any>(`/clients/${id}`, backendData);
+    return normalizeClient(response.data);
   },
 
   delete: async (id: string): Promise<void> => {
-    await delay(200);
-
-    const client = clients.find(c => c.id === id);
-
-    clients = clients.filter(c => c.id !== id);
-
-    // Registrar actividad
-    const user = getCurrentUser();
-    if (user && client && (user.role === 'admin' || user.role === 'superuser')) {
-      await activityLogsApi.create({
-        user_id: user.id,
-        user_name: user.name,
-        user_role: user.role,
-        activity_type: 'delete_client',
-        description: `Eliminó el cliente "${client.company_name}"`,
-        target_type: 'client',
-        target_id: client.id,
-        target_name: client.company_name,
-      });
-    }
-  },
-
-  getVehicles: async (id: string): Promise<Vehicle[]> => {
-    await delay(150);
-    return getVehiclesByClient(id);
-  },
-
-  getGeofences: async (id: string): Promise<Geofence[]> => {
-    await delay(150);
-    return getGeofencesByClient(id);
-  },
-
-  sendAlert: async (id: string, message: string): Promise<any> => {
-    await delay(300);
-
-    const client = clients.find(c => c.id === id);
-
-    // Registrar actividad
-    const user = getCurrentUser();
-    if (user && client && (user.role === 'admin' || user.role === 'superuser')) {
-      await activityLogsApi.create({
-        user_id: user.id,
-        user_name: user.name,
-        user_role: user.role,
-        activity_type: 'send_notification',
-        description: `Envió notificación de alerta a cliente "${client.company_name}"`,
-        target_type: 'notification',
-        target_id: `alert_${Date.now()}`,
-        target_name: 'Alerta manual',
-        metadata: { client_id: client.id, message },
-      });
-    }
-
-    return {
-      success: true,
-      clientId: id,
-      message: 'Alerta enviada (modo mock)',
-      sentTo: client?.authorized_phones[0] || client?.contact_phone,
-      text: message,
-    };
+    await apiClient.delete(`/clients/${id}`);
   },
 };

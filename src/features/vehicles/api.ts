@@ -1,189 +1,119 @@
 import type { Vehicle, VehicleEvent, VehicleHistoryPoint } from '../../lib/types';
-import {
-  mockVehicles,
-  generateVehicleHistory,
-  getVehicleEvents
-} from '../../data/mockData';
+import apiClient from '../../lib/apiClient';
+import { assetsApi } from '../assets/api';
+import type { Asset } from '../../lib/types';
 
-// Función auxiliar para simular delay de red
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Función para convertir un Asset del backend a Vehicle del frontend
+const assetToVehicle = (asset: any): Vehicle => {
+  const equipment = asset.equipment;
 
-// Copia mutable de vehículos para permitir operaciones CRUD
-let vehicles = [...mockVehicles];
+  return {
+    id: asset.id,
+    plate: asset.plate || asset.name || 'SIN-PLACA',
+    driver: asset.person_name || 'Sin conductor',
+    status: determineVehicleStatus(asset, equipment),
+    lastSeenMin: equipment?.last_seen
+      ? Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000)
+      : 999,
+    lat: equipment?.lat || 0,
+    lng: equipment?.lng || 0,
+    speed: equipment?.speed || 0,
+    deviceId: equipment?.imei || asset.equipment_id,
+    clientId: asset.client_id,
+    created_at: asset.created_at,
+    updated_at: asset.updated_at,
+  };
+};
+
+// Determinar el estado del vehículo basado en los datos del asset
+const determineVehicleStatus = (asset: any, equipment: any): Vehicle['status'] => {
+  if (asset.status === 'inactive') return 'offline';
+
+  if (equipment?.last_seen) {
+    const minutesAgo = Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000);
+    if (minutesAgo > 30) return 'offline';
+    if (equipment.speed && equipment.speed > 5) return 'moving';
+    return 'stopped';
+  }
+
+  return 'offline';
+};
 
 export const vehiclesApi = {
   getAll: async (): Promise<Vehicle[]> => {
-    await delay(200);
-    return [...vehicles];
+    try {
+      // Obtener assets de tipo vehículo del backend
+      const assets = await assetsApi.getAll({ asset_type: 'vehicle' });
+      // Convertir assets a vehicles
+      return assets.map(assetToVehicle);
+    } catch (error) {
+      console.error('Error fetching vehicles from backend:', error);
+      return [];
+    }
   },
 
   getById: async (id: string): Promise<Vehicle | null> => {
-    await delay(150);
-    const vehicle = vehicles.find(v => v.id === id);
-    return vehicle ? { ...vehicle } : null;
+    try {
+      const asset = await assetsApi.getById(id);
+      if (!asset) return null;
+      return assetToVehicle(asset);
+    } catch (error) {
+      console.error('Error fetching vehicle:', error);
+      return null;
+    }
   },
 
   create: async (data: Partial<Vehicle>): Promise<Vehicle> => {
-    await delay(300);
-
-    const newVehicle: Vehicle = {
-      id: `v${Date.now()}`,
-      plate: data.plate || '',
-      driver: data.driver || '',
-      status: data.status || 'offline',
-      speed: data.speed || 0,
-      lat: data.lat || 20.6897,
-      lng: data.lng || -103.3918,
-      lastSeenMin: 0,
-      deviceId: data.deviceId,
-      clientId: data.clientId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    // Crear como asset de tipo vehículo
+    const assetData = {
+      type: 'vehicle' as const,
+      name: data.plate || 'Nuevo vehículo',
+      client_id: data.clientId || '',
+      plate: data.plate,
+      status: 'active' as const,
     };
-
-    vehicles.push(newVehicle);
-    return { ...newVehicle };
+    const asset = await assetsApi.create(assetData);
+    return assetToVehicle(asset);
   },
 
   update: async (id: string, data: Partial<Vehicle>): Promise<Vehicle> => {
-    await delay(250);
+    const assetData: any = {};
+    if (data.plate) assetData.plate = data.plate;
+    if (data.status) assetData.status = data.status === 'offline' ? 'inactive' : 'active';
 
-    const index = vehicles.findIndex(v => v.id === id);
-    if (index === -1) {
-      throw new Error('Vehículo no encontrado');
-    }
-
-    vehicles[index] = {
-      ...vehicles[index],
-      ...data,
-      id, // Asegurar que el ID no cambie
-      updated_at: new Date().toISOString(),
-    };
-
-    return { ...vehicles[index] };
+    const asset = await assetsApi.update(id, assetData);
+    return assetToVehicle(asset);
   },
 
   delete: async (id: string): Promise<void> => {
-    await delay(200);
-    vehicles = vehicles.filter(v => v.id !== id);
+    await assetsApi.delete(id);
   },
 
-  // History endpoints
+  // History endpoints (TODO: Implement with backend vehicle-history endpoints)
   getHistoryDates: async (id: string): Promise<{ date: string; points: number }[]> => {
-    await delay(150);
-
-    const history = generateVehicleHistory(id);
-    const dateGroups = new Map<string, number>();
-
-    history.forEach(point => {
-      const date = point.ts.split('T')[0];
-      dateGroups.set(date, (dateGroups.get(date) || 0) + 1);
-    });
-
-    return Array.from(dateGroups.entries())
-      .map(([date, points]) => ({ date, points }))
-      .sort((a, b) => b.date.localeCompare(a.date));
+    // TODO: Implement with /vehicle-history/routes/{imei}
+    return [];
   },
 
   getHistoryByDate: async (id: string, date: string): Promise<VehicleHistoryPoint[]> => {
-    await delay(200);
-
-    const history = generateVehicleHistory(id);
-    return history.filter(point => point.ts.startsWith(date));
+    // TODO: Implement with /vehicle-history/routes/{imei}
+    return [];
   },
 
   getHistory: async (
     id: string,
     params?: { from?: string; to?: string; limit?: number }
   ): Promise<VehicleHistoryPoint[]> => {
-    await delay(200);
-
-    let history = generateVehicleHistory(id);
-
-    if (params?.from) {
-      history = history.filter(point => point.ts >= params.from!);
-    }
-    if (params?.to) {
-      history = history.filter(point => point.ts <= params.to!);
-    }
-    if (params?.limit) {
-      history = history.slice(0, params.limit);
-    }
-
-    return history;
+    // TODO: Implement with /vehicle-history/history/{imei}
+    return [];
   },
 
-  // Track endpoints (new system)
-  getTrack: async (
-    id: string,
-    date: string
-  ): Promise<{
-    vehicleId: string;
-    date: string;
-    points: Array<{ ts: string; lat: number; lng: number; speedKmh: number }>
-  }> => {
-    await delay(200);
-
-    const history = await vehiclesApi.getHistoryByDate(id, date);
-
-    return {
-      vehicleId: id,
-      date,
-      points: history.map(point => ({
-        ts: point.ts,
-        lat: point.lat,
-        lng: point.lng,
-        speedKmh: point.speed || 0,
-      })),
-    };
-  },
-
-  simulateTrack: async (id: string, params: { date: string; count?: number }): Promise<any> => {
-    await delay(300);
-
-    // En modo mock, simplemente retornamos éxito
-    return {
-      success: true,
-      vehicleId: id,
-      date: params.date,
-      pointsGenerated: params.count || 100,
-      message: 'Track simulado generado (modo mock)',
-    };
-  },
-
-  getTrackDates: async (id: string): Promise<{ date: string; points: number }[]> => {
-    // Reutilizar la misma lógica que getHistoryDates
-    return vehiclesApi.getHistoryDates(id);
-  },
-
-  generateWeekTracks: async (id: string): Promise<any> => {
-    await delay(500);
-
-    return {
-      success: true,
-      vehicleId: id,
-      daysGenerated: 7,
-      message: 'Tracks de la semana generados (modo mock)',
-    };
-  },
-
-  // Events endpoints
+  // Events endpoints (TODO: Implement with backend equipment-events endpoints)
   getEvents: async (
     id: string,
     params?: { limit?: number; event_type?: string }
   ): Promise<VehicleEvent[]> => {
-    await delay(150);
-
-    let events = getVehicleEvents(id);
-
-    if (params?.event_type) {
-      events = events.filter(e => e.event_type === params.event_type);
-    }
-
-    if (params?.limit) {
-      events = events.slice(0, params.limit);
-    }
-
-    return events;
+    // TODO: Implement with /equipment-events
+    return [];
   },
 };

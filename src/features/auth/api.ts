@@ -1,67 +1,53 @@
 import type { AuthResponse, LoginCredentials, User } from '../../lib/types';
 import { LS_TOKEN_KEY, LS_USER_KEY } from '../../lib/constants';
-import { mockUsers } from '../../data/mockData';
-
-// Función auxiliar para simular delay de red
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Función para generar un token JWT mock
-const generateMockToken = (user: User): string => {
-  return `mock.jwt.token.${user.id}.${Date.now()}`;
-};
+import apiClient from '../../lib/apiClient';
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     console.log('🔄 authApi.login called with:', credentials);
 
     try {
-      // Simular delay de red
-      await delay(300);
+      // Llamar al backend real
+      const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
 
-      // Buscar usuario por username (usando email como username)
-      const user = mockUsers.find(
-        u => u.username === credentials.email && u.password === credentials.password
-      );
+      console.log('✅ Login exitoso:', response.data);
 
-      if (!user) {
-        throw new Error('Credenciales inválidas');
+      // Guardar token y usuario en localStorage
+      if (response.data.token) {
+        localStorage.setItem(LS_TOKEN_KEY, response.data.token);
+        localStorage.setItem(LS_USER_KEY, JSON.stringify(response.data.user));
       }
 
-      // Generar token mock
-      const token = generateMockToken(user);
-
-      // Crear objeto de usuario sin password
-      const { password, ...userWithoutPassword } = user;
-
-      console.log('✅ Login exitoso:', userWithoutPassword);
-
-      return {
-        token,
-        user: userWithoutPassword,
-      };
+      return response.data;
     } catch (error: any) {
       console.error('❌ Login error:', error);
-      throw new Error(error.message || 'Credenciales inválidas');
+      throw new Error(error.response?.data?.detail || error.message || 'Credenciales inválidas');
     }
   },
 
   getMe: async (): Promise<User> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const userStr = localStorage.getItem(LS_USER_KEY);
-        if (!userStr) {
-          reject(new Error('No autenticado'));
-          return;
-        }
-
-        const user = JSON.parse(userStr) as User;
-        resolve(user);
-      }, 200);
-    });
+    try {
+      const response = await apiClient.get<User>('/auth/me');
+      return response.data;
+    } catch (error: any) {
+      // Si falla, intentar obtener del localStorage como fallback
+      const userStr = localStorage.getItem(LS_USER_KEY);
+      if (userStr) {
+        return JSON.parse(userStr) as User;
+      }
+      throw new Error('No autenticado');
+    }
   },
 
-  logout: (): void => {
-    localStorage.removeItem(LS_TOKEN_KEY);
-    localStorage.removeItem(LS_USER_KEY);
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error('Error al hacer logout en backend:', error);
+    } finally {
+      // Siempre limpiar localStorage
+      localStorage.removeItem(LS_TOKEN_KEY);
+      localStorage.removeItem(LS_USER_KEY);
+    }
   },
 };
