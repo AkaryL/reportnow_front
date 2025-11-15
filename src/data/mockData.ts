@@ -811,7 +811,7 @@ export const mockAssets: Asset[] = [
   // Vehículos
   {
     id: 'asset1',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camión Carga 1',
     client_id: '1',
     equipment_id: 'eq1',
@@ -828,7 +828,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset2',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camioneta Reparto 1',
     client_id: '1',
     equipment_id: 'eq2',
@@ -845,7 +845,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset3',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camión Torton',
     client_id: '1',
     equipment_id: 'eq3',
@@ -862,7 +862,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset4',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Sprinter Ejecutiva',
     client_id: '1',
     equipment_id: 'eq4',
@@ -968,7 +968,7 @@ export const mockAssets: Asset[] = [
   // Vehículos
   {
     id: 'asset11',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Express 1',
     client_id: '2',
     equipment_id: 'eq5',
@@ -985,7 +985,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset12',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Express 2',
     client_id: '2',
     equipment_id: 'eq6',
@@ -1001,7 +1001,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset13',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camioneta Carga Express',
     client_id: '2',
     equipment_id: 'eq7',
@@ -1118,7 +1118,7 @@ export const mockAssets: Asset[] = [
   // Vehículos
   {
     id: 'asset21',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camión Redilas Zapopan-01',
     client_id: '3',
     equipment_id: 'eq8',
@@ -1134,7 +1134,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset22',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camioneta Pick-up Zapopan-02',
     client_id: '3',
     equipment_id: 'eq10',
@@ -1150,7 +1150,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset23',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camión Volteo Zapopan-03',
     client_id: '3',
     equipment_id: 'eq11',
@@ -1266,7 +1266,7 @@ export const mockAssets: Asset[] = [
   // Vehículos
   {
     id: 'asset31',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camión Suspendido-01',
     client_id: '4',
     equipment_id: 'eq13',
@@ -1282,7 +1282,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset32',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Camioneta Suspendida-02',
     client_id: '4',
     equipment_id: 'eq14',
@@ -1298,7 +1298,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: 'asset33',
-    type: 'vehicle',
+    type: 'vehiculo',
     name: 'Van Suspendida-03',
     client_id: '4',
     equipment_id: 'eq15',
@@ -1744,7 +1744,7 @@ export const mockActivityLogs: ActivityLog[] = [
     target_name: 'Camión Carga 1',
     client_id: '1',
     ts: new Date('2025-10-26T11:00:00').toISOString(),
-    metadata: { asset_type: 'vehicle', plate: 'JAL-123-A' },
+    metadata: { asset_type: 'vehiculo', plate: 'JAL-123-A' },
   },
   {
     id: 'act3',
@@ -1820,7 +1820,7 @@ export const getEquipmentEvents = (equipmentId: string): EquipmentEvent[] => {
 
 export const mockVehicles: Vehicle[] = mockEquipments
   .map(equipment => {
-    const asset = mockAssets.find(a => a.id === equipment.asset_id && a.type === 'vehicle') as VehicleAsset | undefined;
+    const asset = mockAssets.find(a => a.id === equipment.asset_id && a.type === 'vehiculo') as VehicleAsset | undefined;
     const driver = asset?.driver_id ? mockDrivers.find(d => d.id === asset.driver_id) : undefined;
     return equipmentToVehicle(equipment, asset, driver);
   });

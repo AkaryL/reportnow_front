@@ -1,8 +1,8 @@
 import type { VehicleStatus, NotificationType, UserRole, EquipmentStatus, AssetType } from './types';
 
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'ReportNow';
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
 export const MAP_STYLE = import.meta.env.VITE_MAP_STYLE || 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 // Local Storage Keys
@@ -138,7 +138,7 @@ export const ASSET_TYPE_CONFIG: Record<AssetType, {
   bgColor: string;
   textColor: string;
 }> = {
-  vehicle: {
+  vehiculo: {
     label: 'Vehículo',
     icon: 'truck',
     color: '#0ea5e9',
@@ -262,8 +262,8 @@ export const ROUTES = {
   // Nuevas rutas
   EQUIPMENTS: '/equipos', // Para superuser: vista global de equipos
   EQUIPMENT_DETAIL: '/equipos/:id',
-  ASSETS: '/activos', // Para superuser: vista global de activos
-  ASSET_DETAIL: '/activos/:id',
+  ASSETS: '/assets', // Para superuser: vista global de assets
+  ASSET_DETAIL: '/assets/:id',
   DRIVERS: '/conductores',
   DRIVER_DETAIL: '/conductores/:id',
   PLACES: '/lugares',

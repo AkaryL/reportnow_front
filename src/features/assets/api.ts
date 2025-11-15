@@ -44,8 +44,11 @@ export const assetsApi = {
 
   // Crear activo
   create: async (data: Partial<Asset>): Promise<Asset> => {
+    console.log(data);
+    
     const response = await apiClient.post<Asset>('/assets', data);
     return response.data;
+    // return;
   },
 
   // Actualizar activo
@@ -54,6 +57,7 @@ export const assetsApi = {
     return response.data;
   },
 
+   
   // Eliminar activo
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/assets/${id}`);

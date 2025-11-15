@@ -33,7 +33,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { cn } from '../lib/utils';
 
-type AssetTab = 'all' | 'vehicle' | 'cargo' | 'container' | 'person' | 'other';
+type AssetTab = 'all' | 'vehiculo' | 'cargo' | 'container' | 'person' | 'other';
 
 export function AssetsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -199,7 +199,7 @@ export function AssetsPage() {
 
   const tabs = [
     { id: 'all' as AssetTab, label: 'Todas', icon: Circle },
-    { id: 'vehicle' as AssetTab, label: 'Vehículos', icon: Truck },
+    { id: 'vehiculo' as AssetTab, label: 'Vehículos', icon: Truck },
     { id: 'cargo' as AssetTab, label: 'Mercancía', icon: Package },
     { id: 'container' as AssetTab, label: 'Contenedores', icon: Container },
     { id: 'person' as AssetTab, label: 'Personas', icon: UserCircle },
@@ -322,7 +322,7 @@ export function AssetsPage() {
             ) : (
               <>
                 {activeTab === 'all' && <AllAssetsTable assets={filteredAssets} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} isSuperuser={user?.role === 'superuser'} getEquipmentSerial={getEquipmentSerial} />}
-                {activeTab === 'vehicle' && <VehicleTable assets={filteredAssets as VehicleAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getDriverName={getDriverName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
+                {activeTab === 'vehiculo' && <VehicleTable assets={filteredAssets as VehicleAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getDriverName={getDriverName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
                 {activeTab === 'cargo' && <CargoTable assets={filteredAssets as CargoAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
                 {activeTab === 'container' && <ContainerTable assets={filteredAssets as ContainerAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
                 {activeTab === 'person' && <PersonTable assets={filteredAssets as PersonAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
@@ -386,7 +386,7 @@ function AllAssetsTable({ assets, onView, onEdit, onDelete, getClientName, isSup
           <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
             <TableCell className="font-medium">{asset.name}</TableCell>
             <TableCell>
-              {asset.type === 'vehicle' && <Badge variant="default" className="bg-blue-50 text-blue-700">Vehículo</Badge>}
+              {asset.type === 'vehiculo' && <Badge variant="default" className="bg-blue-50 text-blue-700">Vehículo</Badge>}
               {asset.type === 'cargo' && <Badge variant="default" className="bg-orange-50 text-orange-700">Mercancía</Badge>}
               {asset.type === 'container' && <Badge variant="default" className="bg-purple-50 text-purple-700">Contenedor</Badge>}
               {asset.type === 'person' && <Badge variant="default" className="bg-green-50 text-green-700">Persona</Badge>}

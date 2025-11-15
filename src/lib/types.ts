@@ -111,7 +111,7 @@ export interface Equipment {
 }
 
 // ==================== Activo (Asset) ====================
-export type AssetType = 'vehicle' | 'cargo' | 'container' | 'person' | 'other';
+export type AssetType = 'vehiculo' | 'cargo' | 'container' | 'person' | 'other';
 export type AssetStatus = 'active' | 'inactive';
 
 // Base común para todos los activos
@@ -132,7 +132,7 @@ export interface AssetBase {
 
 // Vehículo
 export interface VehicleAsset extends AssetBase {
-  type: 'vehicle';
+  type: 'vehiculo';
   // Campos específicos de vehículo
   brand: string;
   model: string;

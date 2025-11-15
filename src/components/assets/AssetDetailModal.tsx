@@ -54,7 +54,7 @@ export function AssetDetailModal({ asset, isOpen, onClose, onSave }: AssetDetail
   const { data: drivers = [] } = useQuery({
     queryKey: QUERY_KEYS.DRIVERS,
     queryFn: driversApi.getAll,
-    enabled: isOpen && asset?.type === 'vehicle',
+    enabled: isOpen && asset?.type === 'vehiculo',
   });
 
   const { data: equipments = [] } = useQuery({
@@ -66,11 +66,11 @@ export function AssetDetailModal({ asset, isOpen, onClose, onSave }: AssetDetail
   if (!asset || !editedAsset) return null;
 
   const equipment = equipments.find(eq => eq.id === asset.equipment_id);
-  const driver = asset.type === 'vehicle' ? drivers.find(d => d.id === (asset as VehicleAsset).driver_id) : null;
+  const driver = asset.type === 'vehiculo' ? drivers.find(d => d.id === (asset as VehicleAsset).driver_id) : null;
 
   const getAssetIcon = () => {
     switch (asset.type) {
-      case 'vehicle': return Truck;
+      case 'vehiculo': return Truck;
       case 'cargo': return Package;
       case 'container': return Container;
       case 'person': return User;
@@ -81,7 +81,7 @@ export function AssetDetailModal({ asset, isOpen, onClose, onSave }: AssetDetail
 
   const getAssetTypeLabel = () => {
     switch (asset.type) {
-      case 'vehicle': return 'Vehículo';
+      case 'vehiculo': return 'Vehículo';
       case 'cargo': return 'Carga';
       case 'container': return 'Contenedor';
       case 'person': return 'Persona';
@@ -225,7 +225,7 @@ export function AssetDetailModal({ asset, isOpen, onClose, onSave }: AssetDetail
         </div>
 
         {/* Información específica por tipo */}
-        {asset.type === 'vehicle' && (
+        {asset.type === 'vehiculo' && (
           <VehicleDetails
             asset={asset as VehicleAsset}
             editedAsset={editedAsset as VehicleAsset}

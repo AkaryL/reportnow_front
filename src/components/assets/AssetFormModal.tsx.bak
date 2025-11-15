@@ -16,7 +16,7 @@ interface AssetFormModalProps {
 
 export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isLoading }: AssetFormModalProps) {
   const [formData, setFormData] = useState({
-    type: 'vehicle' as AssetType,
+    type: 'vehiculo' as AssetType,
     name: '',
     photo_url: '',
     icon: '',
@@ -51,7 +51,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
     if (!isOpen) {
       // Reset form when modal closes
       setFormData({
-        type: 'vehicle',
+        type: 'vehiculo',
         name: '',
         photo_url: '',
         icon: '',
@@ -105,7 +105,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         asset_type: '',
       };
 
-      if (asset.type === 'vehicle') {
+      if (asset.type === 'vehiculo') {
         baseData.brand = (asset as any).brand || '';
         baseData.model = (asset as any).model || '';
         baseData.year = (asset as any).year?.toString() || '';
@@ -194,7 +194,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             >
-              <option value="vehicle">Vehículo</option>
+              <option value="vehiculo">Vehículo</option>
               <option value="cargo">Mercancía</option>
               <option value="container">Contenedor</option>
               <option value="person">Persona</option>

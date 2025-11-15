@@ -18,7 +18,7 @@ interface AssetFormModalProps {
 
 export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isLoading, user, clients = [] }: AssetFormModalProps) {
   const [formData, setFormData] = useState({
-    type: 'vehicle' as AssetType,
+    type: 'vehiculo' as AssetType,
     name: '',
     photo_url: '',
     icon: '',
@@ -54,7 +54,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
     if (!isOpen) {
       // Reset form when modal closes
       setFormData({
-        type: 'vehicle',
+        type: 'vehiculo',
         name: '',
         photo_url: '',
         icon: '',
@@ -110,7 +110,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         asset_type: '',
       };
 
-      if (asset.type === 'vehicle') {
+      if (asset.type === 'vehiculo') {
         baseData.brand = asset.brand || '';
         baseData.model = asset.model || '';
         baseData.year = asset.year ? String(asset.year) : '';
@@ -153,67 +153,121 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
     let payload: any;
 
     switch (formData.type) {
-      case 'vehicle':
+      case 'vehiculo':
         payload = {
-          type: 'vehicle',
-          data: {
-            ...basePayload,
-            name: formData.name,
-            brand: formData.brand || undefined,
-            model: formData.model || undefined,
-            year: formData.year ? parseInt(formData.year) : undefined,
-            plate: formData.plate || undefined,
-            economic_id: formData.economic_id || undefined,
-            vin: formData.vin || undefined,
-            color: formData.color || undefined,
-          },
+          // type: 'vehiculo',
+          // data: {
+          //   ...basePayload,
+          //   name: formData.name,
+          //   brand: formData.brand || undefined,
+          //   model: formData.model || undefined,
+          //   year: formData.year ? parseInt(formData.year) : undefined,
+          //   plate: formData.plate || undefined,
+          //   economic_id: formData.economic_id || undefined,
+          //   vin: formData.vin || undefined,
+          //   color: formData.color || undefined,
+          //   asset_type: 'vehiculo'
+          // },
+          ...basePayload,
+          type: 'vehiculo',
+          name: formData.name,
+          brand: formData.brand || undefined,
+          model: formData.model || undefined,
+          year: formData.year ? parseInt(formData.year) : undefined,
+          plate: formData.plate || undefined,
+          economic_id: formData.economic_id || undefined,
+          vin: formData.vin || undefined,
+          color: formData.color || undefined,
+          asset_type: 'vehiculo'
         };
         break;
       case 'cargo':
         payload = {
+          // type: 'cargo',
+          // data: {
+          //   name: formData.name,
+          //   cargo_type: formData.cargo_type || undefined,
+          //   box_id: formData.box_id || undefined,
+          //   asset_type: 'cargo'
+          // },
+          ...basePayload,
           type: 'cargo',
-          data: {
-            ...basePayload,
-            name: formData.name,
-            cargo_type: formData.cargo_type || undefined,
-            box_id: formData.box_id || undefined,
-          },
+          client_id: formData.client_id || undefined,
+          cargo_type: formData.cargo_type || undefined,
+          box_id: formData.box_id || undefined,
+          tracking_number: formData.tracking_number || undefined,
+          weight_kg: formData.weight_kg || undefined,
+          dimensions: formData.dimensions || undefined,
+          value: formData.value || undefined,
+          status: 'active',
+          asset_type: 'cargo'
         };
         break;
       case 'container':
         payload = {
+          // type: 'container',
+          // data: {
+          //   ...basePayload,
+          //   name: formData.name,
+          //   container_type: formData.container_type || undefined,
+          //   box_plate: formData.box_plate || undefined,
+          //   economic_id: formData.container_economic_id || undefined,
+          //   color: formData.container_color || undefined,
+          //   asset_type: 'container'
+          // },
+          ...basePayload,
           type: 'container',
-          data: {
-            ...basePayload,
-            name: formData.name,
-            container_type: formData.container_type || undefined,
-            box_plate: formData.box_plate || undefined,
-            economic_id: formData.container_economic_id || undefined,
-            color: formData.container_color || undefined,
-          },
+          name: formData.name,
+          client_id: formData.client_id || undefined,
+          container_type: formData.container_type || undefined,
+          container_number: formData.container_number || undefined,
+          box_plate: formData.box_plate || undefined,
+          economic_id: formData.economic_id || undefined,
+          color: formData.color || undefined,
+          size_ft: formData.size_ft || undefined,
+          status: formData.status || undefined
         };
         break;
       case 'person':
         payload = {
-          type: 'person',
-          data: {
-            ...basePayload,
-            person_name: formData.person_name,
-            phone: formData.phone || undefined,
-            address: formData.address || undefined,
-            emergency_phone: formData.emergency_phone || undefined,
-            position: formData.position || undefined,
-          },
+          // type: 'person',
+          // data: {
+          //   ...basePayload,
+          //   person_name: formData.person_name,
+          //   phone: formData.phone || undefined,
+          //   address: formData.address || undefined,
+          //   emergency_phone: formData.emergency_phone || undefined,
+          //   position: formData.position || undefined,
+          //   asset_type: 'person'
+          // },
+          ...basePayload,
+          type: 'person', 
+          client_id: formData.client_id || undefined,
+          person_name: formData.person_name || undefined,
+          role: formData.role || undefined,
+          phone: formData.phone || undefined,
+          email: formData.email || undefined,
+          position: formData.position || undefined,
+          emergency_phone: formData.emergency_phone || undefined
         };
         break;
       case 'other':
         payload = {
+          // type: 'other',
+          // data: {
+          //   ...basePayload,
+          //   name: formData.name,
+          //   asset_type: formData.asset_type || undefined,
+          // },
+          
+          ...basePayload,
           type: 'other',
-          data: {
-            ...basePayload,
-            name: formData.name,
-            asset_type: formData.asset_type || undefined,
-          },
+          name: formData.name,
+          client_id: formData.client_id || undefined,
+          equipment_id: formData.equipment_id || undefined,
+          asset_type: 'other',
+          category: formData.category || undefined, 
+          notes: formData.notes || undefined
         };
         break;
     }
@@ -230,12 +284,12 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
           <select
             id="type"
             value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as AssetType })}
+            onChange={(e) => {setFormData({ ...formData, type: e.target.value as AssetType });console.log(e.target.value)} }
             disabled={!!asset}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           >
-            <option value="vehicle">Vehículo</option>
+            <option value="vehiculo">Vehículo</option>
             <option value="cargo">Mercancía</option>
             <option value="container">Contenedor</option>
             <option value="person">Persona</option>
@@ -265,7 +319,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         )}
 
         {/* Vehicle Fields */}
-        {formData.type === 'vehicle' && (
+        {formData.type === 'vehiculo' && (
           <>
             <div>
               <Label htmlFor="name">Nombre del activo *</Label>
