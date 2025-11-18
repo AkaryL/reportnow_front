@@ -171,8 +171,58 @@ export function LeafletMap({
     geofences.forEach((geofence: any) => {
       const color = geofence.color || '#3BA2E8';
 
-      // Handle Circle geofences
-      if (geofence.geom_type === 'Circle') {
+      // Handle Circle geofences (creation_mode: 'address' with center_lat/center_lng/radius)
+      if (geofence.center_lat && geofence.center_lng && geofence.radius) {
+        const circle = L.circle([geofence.center_lat, geofence.center_lng], {
+          radius: geofence.radius,
+          color: color,
+          fillColor: hexToRgba(color),
+          fillOpacity: 1,
+          weight: 2,
+        }).addTo(geofencesLayerRef.current!);
+
+        const eventTypeLabels = {
+          entry: 'Entrada',
+          exit: 'Salida',
+          both: 'Entrada y Salida'
+        };
+
+        circle.bindPopup(`<div class="p-3">
+          <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
+          <p class="text-xs text-gray-600 mt-1">Radio: ${geofence.radius}m</p>
+          <p class="text-xs text-gray-600">Alertas: ${eventTypeLabels[geofence.event_type] || 'N/A'}</p>
+          ${geofence.notes ? `<p class="text-xs text-gray-500 mt-1">${geofence.notes}</p>` : ''}
+        </div>`);
+      }
+      // Handle Polygon geofences (creation_mode: 'coordinates' with polygon_coordinates)
+      else if (geofence.polygon_coordinates && geofence.polygon_coordinates.length >= 3) {
+        // polygon_coordinates está en formato [lng, lat], convertir a Leaflet [lat, lng]
+        const leafletCoords = geofence.polygon_coordinates.map((coord: number[]) =>
+          [coord[1], coord[0]] as [number, number]
+        );
+
+        const polygon = L.polygon(leafletCoords, {
+          color: color,
+          fillColor: hexToRgba(color),
+          fillOpacity: 1,
+          weight: 2,
+        }).addTo(geofencesLayerRef.current!);
+
+        const eventTypeLabels = {
+          entry: 'Entrada',
+          exit: 'Salida',
+          both: 'Entrada y Salida'
+        };
+
+        polygon.bindPopup(`<div class="p-3">
+          <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
+          <p class="text-xs text-gray-600 mt-1">Polígono (${geofence.polygon_coordinates.length} puntos)</p>
+          <p class="text-xs text-gray-600">Alertas: ${eventTypeLabels[geofence.event_type] || 'N/A'}</p>
+          ${geofence.notes ? `<p class="text-xs text-gray-500 mt-1">${geofence.notes}</p>` : ''}
+        </div>`);
+      }
+      // Legacy support: Handle old Circle format
+      else if (geofence.geom_type === 'Circle') {
         try {
           const data = typeof geofence.coordinates === 'string'
             ? JSON.parse(geofence.coordinates)
@@ -190,15 +240,14 @@ export function LeafletMap({
 
             circle.bindPopup(`<div class="p-3">
               <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
-              <p class="text-xs text-gray-600 mt-1">Tipo: ${geofence.type}</p>
-              <p class="text-xs text-gray-600">Radio: ${data.radius}m</p>
+              <p class="text-xs text-gray-600 mt-1">Radio: ${data.radius}m</p>
             </div>`);
           }
         } catch (error) {
           console.error('Error parsing circle geofence:', error);
         }
       }
-      // Handle Polygon geofences (legacy support)
+      // Legacy support: Handle old Polygon format
       else if (geofence.geom?.type === 'Polygon' && geofence.geom.coordinates) {
         const coordinates = geofence.geom.coordinates[0];
 
@@ -220,7 +269,6 @@ export function LeafletMap({
 
           polygon.bindPopup(`<div class="p-3">
             <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
-            <p class="text-xs text-gray-600 mt-1">Tipo: ${geofence.type}</p>
           </div>`);
         }
       }
@@ -251,7 +299,49 @@ export function LeafletMap({
     console.log('🎯 Enfocando geocerca:', geofence.name);
     console.log('📊 Datos de la geocerca:', geofence);
 
-    // Handle Circle geofences
+    // Handle Circle geofences (new format)
+    if (geofence.center_lat && geofence.center_lng && geofence.radius) {
+      const lat = geofence.center_lat;
+      const lng = geofence.center_lng;
+      const radiusInDegrees = geofence.radius / 111000; // Approximate conversion
+
+      // Create bounds around the circle
+      const bounds = L.latLngBounds(
+        [lat - radiusInDegrees, lng - radiusInDegrees],
+        [lat + radiusInDegrees, lng + radiusInDegrees]
+      );
+
+      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      console.log('✅ Mapa centrado en geocerca circular');
+      return;
+    }
+
+    // Handle Polygon geofences (new format)
+    if (geofence.polygon_coordinates && geofence.polygon_coordinates.length >= 3) {
+      // polygon_coordinates está en formato [lng, lat], convertir a Leaflet [lat, lng]
+      const leafletCoords = geofence.polygon_coordinates.map((coord: number[]) =>
+        [coord[1], coord[0]] as [number, number]
+      );
+
+      console.log('📍 Coordenadas del polígono (primeras 3):', leafletCoords.slice(0, 3));
+
+      // Calculate bounds of the geofence
+      const bounds = L.latLngBounds(leafletCoords);
+
+      console.log('📏 Bounds calculados:', {
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest(),
+      });
+
+      // Fit map to geofence bounds with padding
+      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      console.log('✅ Mapa centrado en geocerca poligonal');
+      return;
+    }
+
+    // Legacy: Handle old Circle format
     if (geofence.geom_type === 'Circle') {
       try {
         const data = typeof geofence.coordinates === 'string'
@@ -269,7 +359,7 @@ export function LeafletMap({
           );
 
           mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-          console.log('✅ Mapa centrado en geocerca circular');
+          console.log('✅ Mapa centrado en geocerca circular (legacy)');
         }
       } catch (error) {
         console.error('Error focusing circle geofence:', error);
@@ -277,49 +367,27 @@ export function LeafletMap({
       return;
     }
 
-    // Handle Polygon geofences (legacy support)
-    if (!geofence.geom?.coordinates) {
-      console.log('❌ Geocerca sin coordenadas:', focusGeofenceId);
-      return;
+    // Legacy: Handle old Polygon format
+    if (geofence.geom?.coordinates) {
+      const coordinates = geofence.geom.coordinates[0];
+      if (coordinates && coordinates.length > 0) {
+        // Check if coordinates are in [lat, lng] or [lng, lat] format
+        const firstCoord = coordinates[0];
+        const isLatLngFormat = Math.abs(firstCoord[0]) <= 90 && Math.abs(firstCoord[1]) <= 180;
+
+        // Convert to Leaflet format [lat, lng]
+        const leafletCoords = isLatLngFormat
+          ? coordinates.map((coord: number[]) => [coord[0], coord[1]] as [number, number])
+          : coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number]);
+
+        // Calculate bounds of the geofence
+        const bounds = L.latLngBounds(leafletCoords);
+
+        // Fit map to geofence bounds with padding
+        mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+        console.log('✅ Mapa centrado en geocerca (legacy)');
+      }
     }
-
-    const coordinates = geofence.geom.coordinates[0];
-    if (!coordinates || coordinates.length === 0) {
-      console.log('❌ Sin coordenadas válidas');
-      return;
-    }
-
-    console.log('📍 Coordenadas originales (primeras 3):', coordinates.slice(0, 3));
-    console.log('📍 Primera coordenada completa:', coordinates[0]);
-
-    // Check if coordinates are in [lat, lng] or [lng, lat] format
-    // Latitude is always between -90 and 90, longitude between -180 and 180
-    const firstCoord = coordinates[0];
-    const isLatLngFormat = Math.abs(firstCoord[0]) <= 90 && Math.abs(firstCoord[1]) <= 180;
-
-    console.log('🔍 Detectando formato:', isLatLngFormat ? '[lat, lng]' : '[lng, lat]');
-
-    // Convert to Leaflet format [lat, lng]
-    const leafletCoords = isLatLngFormat
-      ? coordinates.map((coord: number[]) => [coord[0], coord[1]] as [number, number]) // Already [lat, lng]
-      : coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number]); // Convert from [lng, lat]
-
-    console.log('🗺️  Primera coordenada para Leaflet [lat, lng]:', leafletCoords[0]);
-    console.log('🗺️  Coordenadas convertidas (primeras 3):', leafletCoords.slice(0, 3));
-
-    // Calculate bounds of the geofence
-    const bounds = L.latLngBounds(leafletCoords);
-
-    console.log('📏 Bounds calculados:', {
-      north: bounds.getNorth(),
-      south: bounds.getSouth(),
-      east: bounds.getEast(),
-      west: bounds.getWest(),
-    });
-
-    // Fit map to geofence bounds with padding
-    mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-    console.log('✅ Mapa centrado en geocerca');
   }, [focusGeofenceId, geofences]);
 
   // Draw route history polyline

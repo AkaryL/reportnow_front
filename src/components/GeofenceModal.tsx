@@ -5,6 +5,7 @@ import { useAuth } from '../features/auth/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { clientsApi } from '../features/clients/api';
 import L from 'leaflet';
+import { PolygonDrawMap } from './map/PolygonDrawMap';
 
 interface GeofenceModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
   const [assignmentType, setAssignmentType] = useState<'global' | 'client'>('global');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [mapSelectedLocation, setMapSelectedLocation] = useState<[number, number] | null>(null);
+  const [polygonCoordinates, setPolygonCoordinates] = useState<[number, number][]>([]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Circle | null>(null);
@@ -106,6 +108,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       setAlertType('both');
       setSelectedTab('address');
       setMapSelectedLocation(null);
+      setPolygonCoordinates([]);
 
       // Si hay defaultClientId, forzar asignación a cliente
       if (defaultClientId) {
@@ -245,39 +248,57 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-    const rad = parseFloat(radius);
-
-    // Validar que los valores sean números válidos
-    if (isNaN(lat) || isNaN(lng) || isNaN(rad)) {
-      alert('Por favor ingresa valores numéricos válidos');
-      return;
-    }
-
-    // Validar rangos razonables
-    if (lat < -90 || lat > 90) {
-      alert('La latitud debe estar entre -90 y 90');
-      return;
-    }
-
-    if (lng < -180 || lng > 180) {
-      alert('La longitud debe estar entre -180 y 180');
-      return;
-    }
-
-    if (rad <= 0) {
-      alert('El radio debe ser mayor a 0');
-      return;
-    }
-
     const geofenceData: any = {
       name,
       color,
-      center: [lat, lng] as [number, number],
-      radius: rad,
       alert_type: alertType,
     };
+
+    // Manejo diferenciado según el tab seleccionado
+    if (selectedTab === 'coordinates') {
+      // Geocerca de tipo polígono
+      if (polygonCoordinates.length < 3) {
+        alert('Debes crear un polígono con al menos 3 puntos');
+        return;
+      }
+
+      // Convertir coordenadas de [lat, lng] a [lng, lat] para GeoJSON
+      const geoJsonCoordinates = polygonCoordinates.map(coord => [coord[1], coord[0]]);
+
+      geofenceData.creation_mode = 'coordinates';
+      geofenceData.polygon_coordinates = geoJsonCoordinates;
+    } else {
+      // Geocerca de tipo círculo (tabs: address o map)
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      const rad = parseFloat(radius);
+
+      // Validar que los valores sean números válidos
+      if (isNaN(lat) || isNaN(lng) || isNaN(rad)) {
+        alert('Por favor ingresa valores numéricos válidos');
+        return;
+      }
+
+      // Validar rangos razonables
+      if (lat < -90 || lat > 90) {
+        alert('La latitud debe estar entre -90 y 90');
+        return;
+      }
+
+      if (lng < -180 || lng > 180) {
+        alert('La longitud debe estar entre -180 y 180');
+        return;
+      }
+
+      if (rad <= 0) {
+        alert('El radio debe ser mayor a 0');
+        return;
+      }
+
+      geofenceData.creation_mode = 'address';
+      geofenceData.center = [lat, lng] as [number, number];
+      geofenceData.radius = rad;
+    }
 
     // Asignación según rol
     if (isSuperuser) {
@@ -309,6 +330,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     setSelectedClientId('');
     setSelectedTab('address');
     setMapSelectedLocation(null);
+    setPolygonCoordinates([]);
 
     // Clean up map
     if (mapInstanceRef.current) {
@@ -333,6 +355,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     setSelectedClientId('');
     setSelectedTab('address');
     setMapSelectedLocation(null);
+    setPolygonCoordinates([]);
 
     // Clean up map
     if (mapInstanceRef.current) {
@@ -468,38 +491,16 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                 )}
               </div>
             ) : selectedTab === 'coordinates' ? (
-              // Entrada manual de coordenadas
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">
-                    Latitud
-                  </label>
-                  <input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    placeholder="Ej: 20.7215"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">
-                    Longitud
-                  </label>
-                  <input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    placeholder="Ej: -103.3915"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-                  />
-                </div>
+              // Dibujo de polígono por coordenadas
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Dibuja la geocerca en el mapa
+                </label>
+                <PolygonDrawMap
+                  onPolygonComplete={(coords) => setPolygonCoordinates(coords)}
+                  color={color}
+                  initialCoordinates={polygonCoordinates}
+                />
               </div>
             ) : (
               // Selección en mapa
@@ -519,21 +520,24 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
               </div>
             )}
 
-            <div>
-              <label htmlFor="radius" className="block text-sm font-medium text-gray-700 mb-1">
-                Radio (metros)
-              </label>
-              <input
-                id="radius"
-                type="number"
-                value={radius}
-                onChange={(e) => setRadius(e.target.value)}
-                placeholder="Ej: 500"
-                required
-                min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-              />
-            </div>
+            {/* Radio solo para círculos (tabs: address y map) */}
+            {selectedTab !== 'coordinates' && (
+              <div>
+                <label htmlFor="radius" className="block text-sm font-medium text-gray-700 mb-1">
+                  Radio (metros)
+                </label>
+                <input
+                  id="radius"
+                  type="number"
+                  value={radius}
+                  onChange={(e) => setRadius(e.target.value)}
+                  placeholder="Ej: 500"
+                  required
+                  min="1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                />
+              </div>
+            )}
 
             <div>
               <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-1">
