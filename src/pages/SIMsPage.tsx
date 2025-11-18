@@ -145,10 +145,10 @@ export function SIMsPage() {
   });
 
   // Calcular el estado dinámico de una SIM basado en su equipo
-  const getSIMStatus = (sim: SIM): 'available' | 'active' | 'inactive' => {
+  const getSIMStatus = (sim: SIM): 'Active' | 'Inactive' => {
     // Si no tiene equipo asignado, está disponible
     if (!sim.equipment_id && !sim.assigned_to_equipment_id) {
-      return 'available';
+      return 'Active';
     }
 
     // Tiene equipo asignado, buscar el estado del equipo
@@ -158,11 +158,11 @@ export function SIMsPage() {
     // El equipo siempre debe existir, pero por seguridad
     if (!equipment) {
       console.warn(`Equipo ${equipmentId} no encontrado para SIM ${sim.iccid}`);
-      return 'available';
+      return 'Active';
     }
 
     // El estado de la SIM refleja el estado del equipo
-    return equipment.status === 'inactive' ? 'inactive' : 'active';
+    return equipment.status === 'Inactive' ? 'Inactive' : 'Active';
   };
 
   // Helper para obtener el nombre del cliente
@@ -341,18 +341,13 @@ export function SIMsPage() {
       color: 'bg-blue-50 text-blue-700',
     },
     {
-      label: 'Disponibles',
-      value: sims.filter((s) => getSIMStatus(s) === 'available').length,
-      color: 'bg-ok-50 text-ok-700',
-    },
-    {
       label: 'Activas',
-      value: sims.filter((s) => getSIMStatus(s) === 'active').length,
+      value: sims.filter((s) => getSIMStatus(s) === 'Active').length,
       color: 'bg-info-50 text-info-700',
     },
     {
       label: 'Inactivas',
-      value: sims.filter((s) => getSIMStatus(s) === 'inactive').length,
+      value: sims.filter((s) => getSIMStatus(s) === 'Inactive').length,
       color: 'bg-gray-100 text-gray-700',
     },
   ];
@@ -419,7 +414,6 @@ export function SIMsPage() {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los estados</option>
-            <option value="available">Disponibles</option>
             <option value="active">Activas</option>
             <option value="inactive">Inactivas</option>
           </select>

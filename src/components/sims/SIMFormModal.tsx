@@ -21,9 +21,9 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
     phone_number: '',
     carrier: '',
     apn: '',
-    status: 'available' as SIM['status'],
+    status: 'Active' as SIM['status'],
     data_limit_mb: '',
-    activation_date: '',
+    // activation_date: '',
     equipment_id: '',
   });
 
@@ -56,7 +56,7 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
         apn: sim.apn || '',
         status: sim.status,
         data_limit_mb: sim.data_limit_mb?.toString() || '',
-        activation_date: sim.activation_date || '',
+        // activation_date: sim.activation_date || '',
         equipment_id: sim.equipment_id || '',
       });
       if (!isCommonCarrier) {
@@ -72,9 +72,9 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
         phone_number: '',
         carrier: '',
         apn: '',
-        status: 'available',
+        status: 'Active',
         data_limit_mb: '',
-        activation_date: '',
+        // activation_date: '',
         equipment_id: '',
       });
       setIsCustomCarrier(false);
