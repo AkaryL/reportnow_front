@@ -13,7 +13,7 @@ import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { LeafletMap } from '../components/map/LeafletMap';
-import { GeofenceModal } from '../components/GeofenceModal';
+import { GeofenceModal } from '../components/Geofence/GeofenceModal';
 import { OperatorFormModal } from '../components/operators/OperatorFormModal';
 import { ClientFormModal } from '../components/clients/ClientFormModal';
 import { AssetFormModal } from '../components/assets/AssetFormModal';

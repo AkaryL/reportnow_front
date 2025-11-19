@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Search, Map } from 'lucide-react';
-import { Button } from './ui/Button';
-import { useAuth } from '../features/auth/hooks';
+import { Button } from '../ui/Button';
+import { useAuth } from '../../features/auth/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { clientsApi } from '../features/clients/api';
+import { clientsApi } from '../../features/clients/api';
 import L from 'leaflet';
-import { PolygonDrawMap } from './map/PolygonDrawMap';
+import { PolygonDrawMap } from '../map/PolygonDrawMap';
+import { longFormatters } from 'date-fns';
 
 interface GeofenceModalProps {
   isOpen: boolean;
@@ -267,6 +268,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
 
       geofenceData.creation_mode = 'coordinates';
       geofenceData.polygon_coordinates = geoJsonCoordinates;
+      geofenceData.center = [20.651033, -103.325489];
+      geofenceData.radius = 100;
     } else {
       // Geocerca de tipo círculo (tabs: address o map)
       const lat = parseFloat(latitude);
@@ -295,7 +298,6 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         return;
       }
 
-      geofenceData.creation_mode = 'address';
       geofenceData.center = [lat, lng] as [number, number];
       geofenceData.radius = rad;
     }
@@ -315,6 +317,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       geofenceData.is_global = false;
     }
 
+    console.log("Si llegaaa", geofenceData);
     onSave(geofenceData);
 
     // Limpiar formulario

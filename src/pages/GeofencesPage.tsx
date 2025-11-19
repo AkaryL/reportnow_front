@@ -8,7 +8,7 @@ import { ClientCard } from '../components/ui/ClientCard';
 import { Button } from '../components/ui/Button';
 import { ClientButton } from '../components/ui/ClientButton';
 import { Topbar } from '../components/Topbar';
-import { GeofenceModal } from '../components/GeofenceModal';
+import { GeofenceModal } from '../components/Geofence/GeofenceModal';
 import { LeafletMap } from '../components/map/LeafletMap';
 import { MapPin, Trash2, Edit, Plus, Navigation, Filter } from 'lucide-react';
 import { useAuth } from '../features/auth/hooks';

@@ -1,49 +1,54 @@
 import type { Geofence } from '../../lib/types';
-import { mockGeofences } from '../../data/mockData';
+import  apiClient  from "../../lib/apiClient";
 
-// Función auxiliar para simular delay de red
+// Funcion auxiliar para simular delay de red (opcional)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Copia mutable de geocercas
-let geofences = [...mockGeofences];
 
 export const geofencesApi = {
   getAll: async (): Promise<Geofence[]> => {
     await delay(150);
-    return [...geofences];
+    const response = await apiClient.get<Geofence[]>('/geofences');
+    return response.data;
   },
 
   create: async (data: Omit<Geofence, 'id'>): Promise<Geofence> => {
-    await delay(250);
+    await delay(150);
+    let newData = data;
+    if(data.client_id === ''){
+      console.log("No hay cliente xd");
+      newData = {
+        ...data,
+        client_id: null
+      }
+    }
+    console.log(" Enviando geocerca al backend:", newData);
 
-    const newGeofence: Geofence = {
-      id: `g${Date.now()}`,
-      ...data,
-    };
+    const response = await apiClient.post<Geofence>('/geofences', newData);
 
-    geofences.push(newGeofence);
-    return { ...newGeofence };
+    console.log(" Respuesta del backend:", response.data);
+
+    return response.data;
   },
 
   update: async (id: string, data: Partial<Omit<Geofence, 'id'>>): Promise<Geofence> => {
-    await delay(250);
+    await delay(150);
 
-    const index = geofences.findIndex(g => g.id === id);
-    if (index === -1) {
-      throw new Error('Geocerca no encontrada');
-    }
+    console.log(` Actualizando geocerca ${id} con:`, data);
 
-    geofences[index] = {
-      ...geofences[index],
-      ...data,
-      updated_at: new Date().toISOString(),
-    };
+    const response = await apiClient.put<Geofence>(`/geofences/${id}`, data);
 
-    return { ...geofences[index] };
+    console.log(" Respuesta del backend:", response.data);
+
+    return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
     await delay(150);
-    geofences = geofences.filter(g => g.id !== id);
-  },
+
+    console.log(` Eliminando geocerca ${id}`);
+
+    await apiClient.delete(`/geofences/${id}`);
+
+    console.log(" Eliminado del backend");
+  }
 };

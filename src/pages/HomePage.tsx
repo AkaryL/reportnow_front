@@ -18,7 +18,7 @@ import { MapView } from '../components/map/MapView';
 import { LeafletMap } from '../components/map/LeafletMap';
 import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
 import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
-import { GeofenceModal } from '../components/GeofenceModal';
+import { GeofenceModal } from '../components/Geofence/GeofenceModal';
 import { Modal } from '../components/ui/Modal';
 import { Topbar } from '../components/Topbar';
 import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock, Radio, MessageSquare, Package, ShieldAlert } from 'lucide-react';

@@ -13,9 +13,9 @@ export const equipmentsApi = {
   },
 
   create: async (data: any) => {
-    console.log("📤 Enviando al backend:", data);
+    console.log(" Enviando al backend:", data);
     const res = await apiClient.post("/equipments", data);
-    console.log("📥 Respuesta backend:", res.data);
+    console.log(" Respuesta backend:", res.data);
     return res.data;
   },
 
