@@ -3,18 +3,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { clientsApi } from '../features/clients/api';
 import { equipmentsApi } from '../features/equipments/api';
+import { authApi } from '../features/auth/api';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2, Radio, Users, Info, Search, Filter } from 'lucide-react';
+import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2, Radio, Users, Info, Search, Filter, LogIn } from 'lucide-react';
 import { formatDate } from '../lib/utils';
 import { ClientFormModal } from '../components/clients/ClientFormModal';
 import type { Client } from '../lib/types';
 import { useConfirm } from '../hooks/useConfirm';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
+import { useAuth } from '../features/auth/hooks';
 
 export function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +27,7 @@ export function ClientsPage() {
   const navigate = useNavigate();
   const confirmDialog = useConfirm();
   const toast = useToast();
+  const { user } = useAuth();
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.CLIENTS,
@@ -120,6 +123,33 @@ export function ClientsPage() {
 
   const handleViewClient = (id: string) => {
     navigate(`/clientes/${id}`);
+  };
+
+  const handleLoginAsClient = async (client: Client) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Iniciar sesión como cliente',
+      message: `¿Deseas iniciar sesión como "${client.company_name}"? Tu sesión actual se cerrará.`,
+      confirmText: 'Iniciar sesión',
+      cancelText: 'Cancelar',
+      variant: 'primary',
+    });
+
+    if (confirmed) {
+      try {
+        // Llamar al endpoint de login-as-client
+        await authApi.loginAsClient(client.id);
+
+        toast.success(`Sesión iniciada como ${client.company_name}`);
+
+        // Redirigir al home
+        navigate('/');
+
+        // Recargar la página para actualizar el contexto de autenticación
+        window.location.reload();
+      } catch (error: any) {
+        toast.error(error.message || 'Error al iniciar sesión como cliente');
+      }
+    }
   };
 
   // Helper para contar equipos del cliente
@@ -356,6 +386,17 @@ export function ClientsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {user?.role === 'superuser' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLoginAsClient(client)}
+                            className="text-primary-600 hover:text-primary-700"
+                            title="Iniciar sesión como este cliente"
+                          >
+                            <LogIn className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
