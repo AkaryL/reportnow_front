@@ -55,7 +55,7 @@ export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoa
         brand: '',
         model: '',
         sim_id: '',
-        status: 'available',
+        status: 'active',
         firmware_version: '',
         purchase_date: '',
         warranty_expiry: '',
