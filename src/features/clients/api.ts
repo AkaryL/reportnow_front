@@ -40,7 +40,7 @@ export const clientsApi = {
       authorized_phones: data.authorized_phones || [data.contact_phone || data.phone],
       authorized_emails: data.authorized_emails || [data.email],
       equipment_quota: data.equipment_quota || 5,
-      status: data.status || 'active',
+      status: data.status || 'activo',
     };
     const response = await apiClient.post<any>('/clients', backendData);
     return normalizeClient(response.data);

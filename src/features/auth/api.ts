@@ -50,4 +50,29 @@ export const authApi = {
       localStorage.removeItem(LS_USER_KEY);
     }
   },
+
+  loginAsClient: async (clientId: string): Promise<AuthResponse> => {
+    console.log('🔄 authApi.loginAsClient called with clientId:', clientId);
+
+    try {
+      const response = await apiClient.post<AuthResponse>('/auth/login-as-client', {
+        client_id: clientId
+      });
+
+      console.log('✅ Login as client exitoso:', response.data);
+
+      // Guardar token y usuario en localStorage
+      if (response.data.token) {
+        localStorage.setItem(LS_TOKEN_KEY, response.data.token);
+        localStorage.setItem(LS_USER_KEY, JSON.stringify(response.data.user));
+      }
+
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Login as client error:', error);
+      // Mejorar el mensaje de error para mostrar el detalle del backend
+      const errorMessage = error.response?.data?.detail || error.response?.data || error.message || 'Error al iniciar sesión como cliente';
+      throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
+    }
+  },
 };

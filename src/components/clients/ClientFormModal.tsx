@@ -75,7 +75,7 @@ export function ClientFormModal({ isOpen, onClose, onSubmit, client, isLoading }
       });
       setSelectedEquipments([]);
     }
-  }, [client, equipments]);
+  }, [client]);
 
   // Filtrar equipos disponibles (sin cliente asignado) o los ya asignados a este cliente
   const availableEquipments = equipments.filter(
