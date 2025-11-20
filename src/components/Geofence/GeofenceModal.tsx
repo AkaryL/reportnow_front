@@ -34,7 +34,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
   const [address, setAddress] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const [selectedTab, setSelectedTab] = useState<'address' | 'coordinates' | 'map'>('address');
+  const [selectedTab, setSelectedTab] = useState<'address' | 'coordinates' | 'pin'>('address');
   const [alertType, setAlertType] = useState<'entry' | 'exit' | 'both'>('both');
   const [assignmentType, setAssignmentType] = useState<'global' | 'client'>('global');
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -124,7 +124,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
 
   // Initialize map when tab changes to map
   useEffect(() => {
-    if (selectedTab === 'map' && mapContainerRef.current && !mapInstanceRef.current && isOpen) {
+    if (selectedTab === 'pin' && mapContainerRef.current && !mapInstanceRef.current && isOpen) {
       // Small timeout to ensure container is rendered
       setTimeout(() => {
         if (!mapContainerRef.current) return;
@@ -176,7 +176,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
 
     // Cleanup when modal closes or tab changes
     return () => {
-      if (selectedTab !== 'map' && mapInstanceRef.current) {
+      if (selectedTab !== 'pin' && mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         markerRef.current = null;
@@ -253,7 +253,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       name,
       color,
       alert_type: alertType,
-      creation_mode: selectedTab, // 'address', 'coordinates' o 'map'
+      creation_mode: selectedTab, // 'address', 'coordinates' o 'pin'
     };
 
     // Manejo diferenciado según el tab seleccionado
@@ -274,7 +274,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       geofenceData.center = [centerLat, centerLng] as [number, number];
       geofenceData.radius = null;
     } else {
-      // Geocerca de tipo círculo (tabs: address o map)
+      // Geocerca de tipo círculo (tabs: address o pin)
       const lat = parseFloat(latitude);
       const lng = parseFloat(longitude);
       const rad = parseFloat(radius);
@@ -426,9 +426,9 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
             </button>
             <button
               type="button"
-              onClick={() => setSelectedTab('map')}
+              onClick={() => setSelectedTab('pin')}
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-                selectedTab === 'map'
+                selectedTab === 'pin'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
