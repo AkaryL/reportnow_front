@@ -37,6 +37,7 @@ export const clientsApi = {
       contact_phone: data.contact_phone || data.phone,
       contact_position: data.contact_position || 'Gerente',
       email: data.email,
+      password: data.password, // Password for the admin user
       authorized_phones: data.authorized_phones || [data.contact_phone || data.phone],
       authorized_emails: data.authorized_emails || [data.email],
       equipment_quota: data.equipment_quota || 5,
