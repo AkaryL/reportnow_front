@@ -31,20 +31,38 @@ export const clientsApi = {
 
   create: async (data: any): Promise<Client> => {
     // Transformar datos del frontend al formato del backend
-    const backendData = {
+    const backendData: any = {
       contact_name: data.contact_name || data.name,
       company_name: data.company_name || data.name,
       contact_phone: data.contact_phone || data.phone,
       contact_position: data.contact_position || 'Gerente',
       email: data.email,
-      password: data.password, // Password for the admin user
+      password: data.password,
       authorized_phones: data.authorized_phones || [data.contact_phone || data.phone],
       authorized_emails: data.authorized_emails || [data.email],
-      equipment_quota: data.equipment_quota || 5,
+      equipment_quota: data.equipment_quota ?? 0,
       status: data.status || 'activo',
+      assigned_equipments: data.assigned_equipments || data.equipment_ids || [],
     };
-    const response = await apiClient.post<any>('/clients', backendData);
-    return normalizeClient(response.data);
+
+    // Solo agregar campos opcionales si tienen valor
+    if (data.whatsapp) backendData.whatsapp = data.whatsapp;
+    if (data.rfc) backendData.rfc = data.rfc;
+    if (data.address) backendData.address = data.address;
+    if (data.city) backendData.city = data.city;
+    if (data.state) backendData.state = data.state;
+    if (data.postal_code || data.zip_code) backendData.postal_code = data.postal_code || data.zip_code;
+
+    console.log('Datos enviados al backend:', backendData);
+    try {
+      const response = await apiClient.post<any>('/clients', backendData);
+      console.log('Respuesta del backend:', response.data);
+      return normalizeClient(response.data);
+    } catch (error: any) {
+      console.error('Error al crear cliente:', error);
+      console.error('Detalles del error:', error.response?.data);
+      throw error;
+    }
   },
 
   update: async (id: string, data: any): Promise<Client> => {
@@ -62,8 +80,18 @@ export const clientsApi = {
     if (data.contact_position) backendData.contact_position = data.contact_position;
     if (data.authorized_phones) backendData.authorized_phones = data.authorized_phones;
     if (data.authorized_emails) backendData.authorized_emails = data.authorized_emails;
-    if (data.equipment_quota) backendData.equipment_quota = data.equipment_quota;
+    if (data.equipment_quota !== undefined) backendData.equipment_quota = data.equipment_quota;
     if (data.status) backendData.status = data.status;
+    if (data.whatsapp) backendData.whatsapp = data.whatsapp;
+    if (data.rfc) backendData.rfc = data.rfc;
+    if (data.address) backendData.address = data.address;
+    if (data.city) backendData.city = data.city;
+    if (data.state) backendData.state = data.state;
+    if (data.postal_code || data.zip_code) backendData.postal_code = data.postal_code || data.zip_code;
+    if (data.password) backendData.password = data.password;
+    if (data.assigned_equipments || data.equipment_ids) {
+      backendData.assigned_equipments = data.assigned_equipments || data.equipment_ids;
+    }
 
     const response = await apiClient.put<any>(`/clients/${id}`, backendData);
     return normalizeClient(response.data);

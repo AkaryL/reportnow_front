@@ -56,7 +56,16 @@ export function ClientsPage() {
       toast.success('Cliente creado exitosamente');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Error al crear el cliente');
+      // WORKAROUND: El backend devuelve 500 pero el cliente sí se crea
+      // Refrescamos la lista después de 2 segundos para mostrar el cliente
+      toast.error('Hubo un error del servidor, pero el cliente podría haberse creado. Actualizando lista...');
+
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+        setIsModalOpen(false);
+        setSelectedClient(null);
+        toast.success('Lista de clientes actualizada. Verifica si el cliente se creó.');
+      }, 2000);
     },
   });
 
@@ -69,7 +78,15 @@ export function ClientsPage() {
       toast.success('Cliente actualizado exitosamente');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Error al actualizar el cliente');
+      // WORKAROUND: Por si el backend devuelve 500 pero el cliente sí se actualiza
+      toast.error('Hubo un error del servidor, pero el cliente podría haberse actualizado. Actualizando lista...');
+
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+        setIsModalOpen(false);
+        setSelectedClient(null);
+        toast.success('Lista de clientes actualizada. Verifica los cambios.');
+      }, 2000);
     },
   });
 
