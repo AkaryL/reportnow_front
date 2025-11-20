@@ -61,6 +61,7 @@ export function GeofencesPage() {
     queryFn: async () => {
       // For mock API, we just get all geofences and filter client-side
       const allGeofences = await geofencesApi.getAll();
+      console.log('🗺️ Geocercas del backend:', allGeofences);
 
       // Filter based on user role and selections
       if (selectedClientId) {
@@ -103,20 +104,23 @@ export function GeofencesPage() {
     name: string;
     color: string;
     center: [number, number];
-    radius: number;
+    radius: number | null;
     alert_type: 'entry' | 'exit' | 'both';
+    creation_mode: 'address' | 'coordinates' | 'map';
+    polygon_coordinates?: [number, number][] | null;
     is_global?: boolean;
     client_id?: string;
   }) => {
     try {
       const [lat, lng] = geofenceData.center;
 
-      const geofence = {
+      const geofence: any = {
         name: geofenceData.name,
-        creation_mode: 'address' as const,
+        creation_mode: geofenceData.creation_mode,
         center_lat: lat,
         center_lng: lng,
         radius: geofenceData.radius,
+        polygon_coordinates: geofenceData.polygon_coordinates || null,
         color: geofenceData.color,
         event_type: geofenceData.alert_type,
         created_at: new Date().toISOString(),
