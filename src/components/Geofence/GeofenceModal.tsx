@@ -253,6 +253,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       name,
       color,
       alert_type: alertType,
+      creation_mode: selectedTab, // 'address', 'coordinates' o 'map'
     };
 
     // Manejo diferenciado según el tab seleccionado
@@ -263,13 +264,15 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         return;
       }
 
-      // Convertir coordenadas de [lat, lng] a [lng, lat] para GeoJSON
-      const geoJsonCoordinates = polygonCoordinates.map(coord => [coord[1], coord[0]]);
+      // Enviar coordenadas en formato array directo [lat, lng]
+      geofenceData.polygon_coordinates = polygonCoordinates;
 
-      geofenceData.creation_mode = 'coordinates';
-      geofenceData.polygon_coordinates = geoJsonCoordinates;
-      geofenceData.center = [20.651033, -103.325489];
-      geofenceData.radius = 100;
+      // Calcular centro del polígono (promedio de todas las coordenadas)
+      const centerLat = polygonCoordinates.reduce((sum, coord) => sum + coord[0], 0) / polygonCoordinates.length;
+      const centerLng = polygonCoordinates.reduce((sum, coord) => sum + coord[1], 0) / polygonCoordinates.length;
+
+      geofenceData.center = [centerLat, centerLng] as [number, number];
+      geofenceData.radius = null;
     } else {
       // Geocerca de tipo círculo (tabs: address o map)
       const lat = parseFloat(latitude);
@@ -300,6 +303,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
 
       geofenceData.center = [lat, lng] as [number, number];
       geofenceData.radius = rad;
+      geofenceData.polygon_coordinates = null;
     }
 
     // Asignación según rol
