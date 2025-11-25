@@ -12,11 +12,14 @@ interface GeofenceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (geofence: {
+    id?: string; // ID para edición
     name: string;
     color: string;
     center: [number, number];
-    radius: number;
+    radius: number | null;
     alert_type: 'entry' | 'exit' | 'both';
+    creation_mode: 'address' | 'coordinates' | 'pin';
+    polygon_coordinates?: { type: string; coordinates: number[][] } | null;
     is_global?: boolean;
     client_id?: string;
   }) => void;
@@ -65,38 +68,80 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
   // Cargar datos de geocerca cuando se está editando
   useEffect(() => {
     if (isOpen && editingGeofence) {
+      console.log('Cargando geocerca para editar:', editingGeofence);
+
       setName(editingGeofence.name || '');
       setColor(editingGeofence.color || '#3BA2E8');
 
-      // Extraer coordenadas del geom
-      if (editingGeofence.geom && editingGeofence.geom.coordinates) {
-        const coords = editingGeofence.geom.coordinates[0][0];
-        if (coords && coords.length >= 2) {
-          setLongitude(String(coords[0]));
-          setLatitude(String(coords[1]));
-        }
-      }
-
-      // El radio no está almacenado en el mock actual, usar default
-      setRadius('500');
-
-      // Cargar tipo de alerta si existe
-      if (editingGeofence.alert_type) {
+      // Cargar tipo de alerta
+      if (editingGeofence.event_type) {
+        setAlertType(editingGeofence.event_type);
+      } else if (editingGeofence.alert_type) {
         setAlertType(editingGeofence.alert_type);
       }
 
-      // Si hay defaultClientId, forzar asignación a cliente
+      // Determinar el modo de creación y cargar datos según el tipo
+      const creationMode = editingGeofence.creation_mode || 'address';
+      setSelectedTab(creationMode);
+
+      if (creationMode === 'coordinates' && editingGeofence.polygon_coordinates) {
+        // Geocerca tipo polígono
+        let coords: number[][] = [];
+
+        // Soportar formato GeoJSON y array directo
+        if (editingGeofence.polygon_coordinates.type === 'Polygon' && editingGeofence.polygon_coordinates.coordinates) {
+          coords = editingGeofence.polygon_coordinates.coordinates;
+        } else if (Array.isArray(editingGeofence.polygon_coordinates)) {
+          coords = editingGeofence.polygon_coordinates;
+        }
+
+        // Convertir de [lng, lat] a [lat, lng] para el componente
+        const leafletCoords = coords.map((coord: number[]) => [coord[1], coord[0]] as [number, number]);
+        setPolygonCoordinates(leafletCoords);
+
+        // Limpiar datos de círculo
+        setLatitude('');
+        setLongitude('');
+        setRadius('500');
+        setMapSelectedLocation(null);
+      } else {
+        // Geocerca tipo círculo (address o pin)
+        if (editingGeofence.center_lat && editingGeofence.center_lng) {
+          setLatitude(String(editingGeofence.center_lat));
+          setLongitude(String(editingGeofence.center_lng));
+          setMapSelectedLocation([
+            parseFloat(editingGeofence.center_lat),
+            parseFloat(editingGeofence.center_lng)
+          ]);
+        }
+
+        if (editingGeofence.radius) {
+          setRadius(String(editingGeofence.radius));
+        } else {
+          setRadius('500');
+        }
+
+        if (editingGeofence.address) {
+          setAddress(editingGeofence.address);
+        }
+
+        // Limpiar datos de polígono
+        setPolygonCoordinates([]);
+      }
+
+      // Cargar asignación
       if (defaultClientId) {
         setAssignmentType('client');
         setSelectedClientId(defaultClientId);
+      } else if (editingGeofence.is_global) {
+        setAssignmentType('global');
+        setSelectedClientId('');
+      } else if (editingGeofence.client_id) {
+        setAssignmentType('client');
+        setSelectedClientId(editingGeofence.client_id);
       } else {
-        // Cargar tipo de asignación normal
-        if (editingGeofence.is_global) {
-          setAssignmentType('global');
-        } else if (editingGeofence.client_id) {
-          setAssignmentType('client');
-          setSelectedClientId(editingGeofence.client_id);
-        }
+        setAssignmentType('global');
+        setSelectedClientId('');
       }
     } else if (isOpen && !editingGeofence) {
       // Limpiar formulario al abrir para crear nueva geocerca
@@ -256,6 +301,11 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       creation_mode: selectedTab, // 'address', 'coordinates' o 'pin'
     };
 
+    // Si es edición, incluir el ID
+    if (editingGeofence?.id) {
+      geofenceData.id = editingGeofence.id;
+    }
+
     // Manejo diferenciado según el tab seleccionado
     if (selectedTab === 'coordinates') {
       // Geocerca de tipo polígono
@@ -264,8 +314,14 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         return;
       }
 
-      // Enviar coordenadas en formato array directo [lat, lng]
-      geofenceData.polygon_coordinates = polygonCoordinates;
+      // Convertir coordenadas de [lat, lng] a [lng, lat] para formato GeoJSON
+      const geoJsonCoordinates = polygonCoordinates.map(coord => [coord[1], coord[0]]);
+
+      // Enviar coordenadas en formato GeoJSON Polygon
+      geofenceData.polygon_coordinates = {
+        type: "Polygon",
+        coordinates: geoJsonCoordinates
+      };
 
       // Calcular centro del polígono (promedio de todas las coordenadas)
       const centerLat = polygonCoordinates.reduce((sum, coord) => sum + coord[0], 0) / polygonCoordinates.length;

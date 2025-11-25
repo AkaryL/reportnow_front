@@ -101,13 +101,14 @@ export function GeofencesPage() {
   });
 
   const handleSaveGeofence = async (geofenceData: {
+    id?: string;
     name: string;
     color: string;
     center: [number, number];
     radius: number | null;
     alert_type: 'entry' | 'exit' | 'both';
-    creation_mode: 'address' | 'coordinates' | 'map';
-    polygon_coordinates?: [number, number][] | null;
+    creation_mode: 'address' | 'coordinates' | 'pin';
+    polygon_coordinates?: { type: string; coordinates: number[][] } | null;
     is_global?: boolean;
     client_id?: string;
   }) => {
@@ -123,18 +124,26 @@ export function GeofencesPage() {
         polygon_coordinates: geofenceData.polygon_coordinates || null,
         color: geofenceData.color,
         event_type: geofenceData.alert_type,
-        created_at: new Date().toISOString(),
         is_global: geofenceData.is_global || false,
-        client_id: geofenceData.client_id || '',
+        client_id: geofenceData.client_id && geofenceData.client_id !== '' ? geofenceData.client_id : null,
       };
 
-      await geofencesApi.create(geofence);
+      // Si tiene ID es actualización, si no es creación
+      if (geofenceData.id) {
+        await geofencesApi.update(geofenceData.id, geofence);
+        toast.success('Geocerca actualizada exitosamente');
+      } else {
+        geofence.created_at = new Date().toISOString();
+        await geofencesApi.create(geofence);
+        toast.success('Geocerca creada exitosamente');
+      }
+
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
-      toast.success('Geocerca creada exitosamente');
       setIsModalOpen(false);
+      setEditingGeofence(null);
     } catch (error: any) {
-      console.error('Error al crear geocerca:', error);
-      const errorMessage = error.message || 'Error al crear la geocerca';
+      console.error('Error al guardar geocerca:', error);
+      const errorMessage = error.message || 'Error al guardar la geocerca';
       toast.error(errorMessage);
     }
   };
@@ -453,6 +462,7 @@ export function GeofencesPage() {
           setEditingGeofence(null);
         }}
         onSave={handleSaveGeofence}
+        editingGeofence={editingGeofence}
       />
 
       <ConfirmDialog

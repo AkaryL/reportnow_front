@@ -195,31 +195,44 @@ export function LeafletMap({
         </div>`);
       }
       // Handle Polygon geofences (creation_mode: 'coordinates' with polygon_coordinates)
-      else if (geofence.polygon_coordinates && geofence.polygon_coordinates.length >= 3) {
-        // polygon_coordinates está en formato [lng, lat], convertir a Leaflet [lat, lng]
-        const leafletCoords = geofence.polygon_coordinates.map((coord: number[]) =>
-          [coord[1], coord[0]] as [number, number]
-        );
+      else if (geofence.polygon_coordinates) {
+        // Soportar tanto formato GeoJSON { type: "Polygon", coordinates: [...] } como array directo [[lng, lat], ...]
+        let coords: number[][] = [];
 
-        const polygon = L.polygon(leafletCoords, {
-          color: color,
-          fillColor: hexToRgba(color),
-          fillOpacity: 1,
-          weight: 2,
-        }).addTo(geofencesLayerRef.current!);
+        if (geofence.polygon_coordinates.type === 'Polygon' && geofence.polygon_coordinates.coordinates) {
+          // Formato GeoJSON
+          coords = geofence.polygon_coordinates.coordinates;
+        } else if (Array.isArray(geofence.polygon_coordinates) && geofence.polygon_coordinates.length >= 3) {
+          // Formato array directo (legacy)
+          coords = geofence.polygon_coordinates;
+        }
 
-        const eventTypeLabels = {
-          entry: 'Entrada',
-          exit: 'Salida',
-          both: 'Entrada y Salida'
-        };
+        if (coords.length >= 3) {
+          // polygon_coordinates está en formato [lng, lat], convertir a Leaflet [lat, lng]
+          const leafletCoords = coords.map((coord: number[]) =>
+            [coord[1], coord[0]] as [number, number]
+          );
 
-        polygon.bindPopup(`<div class="p-3">
-          <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
-          <p class="text-xs text-gray-600 mt-1">Polígono (${geofence.polygon_coordinates.length} puntos)</p>
-          <p class="text-xs text-gray-600">Alertas: ${eventTypeLabels[geofence.event_type] || 'N/A'}</p>
-          ${geofence.notes ? `<p class="text-xs text-gray-500 mt-1">${geofence.notes}</p>` : ''}
-        </div>`);
+          const polygon = L.polygon(leafletCoords, {
+            color: color,
+            fillColor: hexToRgba(color),
+            fillOpacity: 1,
+            weight: 2,
+          }).addTo(geofencesLayerRef.current!);
+
+          const eventTypeLabels = {
+            entry: 'Entrada',
+            exit: 'Salida',
+            both: 'Entrada y Salida'
+          };
+
+          polygon.bindPopup(`<div class="p-3">
+            <h3 class="font-semibold text-sm text-gray-900">${geofence.name}</h3>
+            <p class="text-xs text-gray-600 mt-1">Polígono (${coords.length} puntos)</p>
+            <p class="text-xs text-gray-600">Alertas: ${eventTypeLabels[geofence.event_type] || 'N/A'}</p>
+            ${geofence.notes ? `<p class="text-xs text-gray-500 mt-1">${geofence.notes}</p>` : ''}
+          </div>`);
+        }
       }
       // Legacy support: Handle old Circle format
       else if (geofence.geom_type === 'Circle') {
@@ -317,28 +330,41 @@ export function LeafletMap({
     }
 
     // Handle Polygon geofences (new format)
-    if (geofence.polygon_coordinates && geofence.polygon_coordinates.length >= 3) {
-      // polygon_coordinates está en formato [lng, lat], convertir a Leaflet [lat, lng]
-      const leafletCoords = geofence.polygon_coordinates.map((coord: number[]) =>
-        [coord[1], coord[0]] as [number, number]
-      );
+    if (geofence.polygon_coordinates) {
+      // Soportar tanto formato GeoJSON { type: "Polygon", coordinates: [...] } como array directo [[lng, lat], ...]
+      let coords: number[][] = [];
 
-      console.log('📍 Coordenadas del polígono (primeras 3):', leafletCoords.slice(0, 3));
+      if (geofence.polygon_coordinates.type === 'Polygon' && geofence.polygon_coordinates.coordinates) {
+        // Formato GeoJSON
+        coords = geofence.polygon_coordinates.coordinates;
+      } else if (Array.isArray(geofence.polygon_coordinates) && geofence.polygon_coordinates.length >= 3) {
+        // Formato array directo (legacy)
+        coords = geofence.polygon_coordinates;
+      }
 
-      // Calculate bounds of the geofence
-      const bounds = L.latLngBounds(leafletCoords);
+      if (coords.length >= 3) {
+        // polygon_coordinates está en formato [lng, lat], convertir a Leaflet [lat, lng]
+        const leafletCoords = coords.map((coord: number[]) =>
+          [coord[1], coord[0]] as [number, number]
+        );
 
-      console.log('📏 Bounds calculados:', {
-        north: bounds.getNorth(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        west: bounds.getWest(),
-      });
+        console.log('📍 Coordenadas del polígono (primeras 3):', leafletCoords.slice(0, 3));
 
-      // Fit map to geofence bounds with padding
-      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      console.log('✅ Mapa centrado en geocerca poligonal');
-      return;
+        // Calculate bounds of the geofence
+        const bounds = L.latLngBounds(leafletCoords);
+
+        console.log('📏 Bounds calculados:', {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest(),
+        });
+
+        // Fit map to geofence bounds with padding
+        mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+        console.log('✅ Mapa centrado en geocerca poligonal');
+        return;
+      }
     }
 
     // Legacy: Handle old Circle format
