@@ -23,6 +23,7 @@ const DriversPage = lazy(() => import('../pages/DriversPage').then(m => ({ defau
 const PlacesPage = lazy(() => import('../pages/PlacesPage').then(m => ({ default: m.PlacesPage })));
 const SIMsPage = lazy(() => import('../pages/SIMsPage').then(m => ({ default: m.SIMsPage })));
 const VehicleHistoryPage = lazy(() => import('../pages/VehicleHistoryPage'));
+const RouteSimulationPage = lazy(() => import('../pages/RouteSimulationPage').then(m => ({ default: m.RouteSimulationPage })));
 
 // Loading spinner component
 function PageLoader() {
@@ -162,6 +163,16 @@ export function AppRoutes() {
 
           {/* Historial de Vehículos - Temporal (acceso para todos) */}
           <Route path="/historial-rastreo" element={<VehicleHistoryPage />} />
+
+          {/* Simulación de Ruta - Solo para superuser */}
+          <Route
+            path={ROUTES.ROUTE_SIMULATION}
+            element={
+              <RequireRole allowedRoles={['superuser']}>
+                <RouteSimulationPage />
+              </RequireRole>
+            }
+          />
         </Route>
 
         <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />

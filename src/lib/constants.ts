@@ -276,6 +276,7 @@ export const ROUTES = {
   ROLES: '/roles',
   USERS: '/usuarios',
   ACCOUNT: '/mi-cuenta',
+  ROUTE_SIMULATION: '/simulacion-ruta',
 } as const;
 
 // Query Keys
