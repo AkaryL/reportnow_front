@@ -30,11 +30,14 @@ export function RouteSimulationPage() {
   const polylineRef = useRef<L.Polyline | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch equipments
-  const { data: equipments = [], isLoading: loadingEquipments } = useQuery({
+  // Fetch equipments - only those with a client assigned
+  const { data: allEquipments = [], isLoading: loadingEquipments } = useQuery({
     queryKey: ['equipments'],
     queryFn: equipmentsApi.getAll,
   });
+
+  // Filter to only show equipments with a client_id assigned (needed for geofence alerts)
+  const equipments = allEquipments.filter((eq: Equipment) => eq.client_id);
 
   // Mutation for creating simulation
   const createSimulationMutation = useMutation({
@@ -226,7 +229,7 @@ export function RouteSimulationPage() {
           {/* Equipment Selection */}
           <div className="p-4 border-b">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Equipo GPS
+              Equipo GPS (con cliente asignado)
             </label>
             <select
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -247,6 +250,11 @@ export function RouteSimulationPage() {
             {selectedEquipment && (
               <div className="mt-2 text-xs text-gray-500">
                 IMEI: <span className="font-mono">{selectedEquipment.imei}</span>
+              </div>
+            )}
+            {!loadingEquipments && equipments.length === 0 && (
+              <div className="mt-2 text-xs text-amber-600">
+                No hay equipos con cliente asignado. Asigna un cliente a un equipo primero.
               </div>
             )}
           </div>

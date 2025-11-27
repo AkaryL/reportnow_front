@@ -26,5 +26,15 @@ export const equipmentsApi = {
 
   delete: async (id: string) => {
     await apiClient.delete(`/equipment/${id}`);
+  },
+
+  assignToClient: async (equipmentId: string, clientId: string) => {
+    const res = await apiClient.post(`/equipment/${equipmentId}/assign-client/${clientId}`);
+    return res.data;
+  },
+
+  unassignFromClient: async (equipmentId: string) => {
+    const res = await apiClient.post(`/equipment/${equipmentId}/unassign-client`);
+    return res.data;
   }
 };
