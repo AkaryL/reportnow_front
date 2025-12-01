@@ -52,6 +52,13 @@ export function EquipmentsPage() {
     },
   });
 
+  const formatCoord = (value) => {
+    if (value == null) return "N/A";         // null o undefined
+    const num = Number(value);               // convierte string o número
+    if (isNaN(num)) return "N/A";            // string inválido
+    return num.toFixed(4);
+  };
+
   const createMutation = useMutation({
     mutationFn: equipmentsApi.create,
     onSuccess: () => {
@@ -416,7 +423,7 @@ export function EquipmentsPage() {
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <MapPin className="w-3 h-3" />
                             <span>
-                              {equipment.lat.toFixed(4)}, {equipment.lng.toFixed(4)}
+                              {formatCoord(equipment.lat)}, {formatCoord(equipment.lng)}
                             </span>
                           </div>
                         ) : (
