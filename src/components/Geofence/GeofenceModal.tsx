@@ -17,7 +17,8 @@ interface GeofenceModalProps {
     color: string;
     center: [number, number];
     radius: number | null;
-    alert_type: 'entry' | 'exit' | 'both';
+    alert_type: 'entry' | 'exit' | 'both' | 'speed_limit';
+    speed_limit?: number;
     creation_mode: 'address' | 'coordinates' | 'pin';
     polygon_coordinates?: { type: string; coordinates: number[][] } | null;
     is_global?: boolean;
@@ -38,7 +39,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [selectedTab, setSelectedTab] = useState<'address' | 'coordinates' | 'pin'>('address');
-  const [alertType, setAlertType] = useState<'entry' | 'exit' | 'both'>('both');
+  const [alertType, setAlertType] = useState<'entry' | 'exit' | 'both' | 'speed_limit'>('both');
+  const [speedLimit, setSpeedLimit] = useState<string>('');
   const [assignmentType, setAssignmentType] = useState<'global' | 'client'>('global');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [mapSelectedLocation, setMapSelectedLocation] = useState<[number, number] | null>(null);
@@ -78,6 +80,13 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         setAlertType(editingGeofence.event_type);
       } else if (editingGeofence.alert_type) {
         setAlertType(editingGeofence.alert_type);
+      }
+
+      // Cargar límite de velocidad si existe
+      if (editingGeofence.speed_limit !== undefined && editingGeofence.speed_limit !== null) {
+        setSpeedLimit(String(editingGeofence.speed_limit));
+      } else {
+        setSpeedLimit('');
       }
 
       // Determinar el modo de creación y cargar datos según el tipo
@@ -152,6 +161,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       setRadius('500');
       setAddress('');
       setAlertType('both');
+      setSpeedLimit('');
       setSelectedTab('address');
       setMapSelectedLocation(null);
       setPolygonCoordinates([]);
@@ -301,6 +311,16 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       creation_mode: selectedTab, // 'address', 'coordinates' o 'pin'
     };
 
+    // Incluir límite de velocidad si es el tipo seleccionado
+    if (alertType === 'speed_limit') {
+      const speedLimitValue = parseInt(speedLimit, 10);
+      if (isNaN(speedLimitValue) || speedLimitValue < 0 || speedLimitValue > 300) {
+        alert('El límite de velocidad debe ser un número entre 0 y 300 km/h');
+        return;
+      }
+      geofenceData.speed_limit = speedLimitValue;
+    }
+
     // Si es edición, incluir el ID
     if (editingGeofence?.id) {
       geofenceData.id = editingGeofence.id;
@@ -389,6 +409,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     setAddress('');
     setSearchError('');
     setAlertType('both');
+    setSpeedLimit('');
     setAssignmentType('global');
     setSelectedClientId('');
     setSelectedTab('address');
@@ -414,6 +435,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     setAddress('');
     setSearchError('');
     setAlertType('both');
+    setSpeedLimit('');
     setAssignmentType('global');
     setSelectedClientId('');
     setSelectedTab('address');
@@ -623,7 +645,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Tipo de alerta
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setAlertType('entry')}
@@ -657,7 +679,41 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                 >
                   Ambas
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertType('speed_limit')}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
+                    alertType === 'speed_limit'
+                      ? 'border-primary-600 bg-primary-600 text-white'
+                      : 'border-gray-300 bg-white text-gray-900 hover:border-gray-400 hover:bg-gray-50'
+                  }`}
+                >
+                  Límite de velocidad
+                </button>
               </div>
+
+              {/* Campo de límite de velocidad */}
+              {alertType === 'speed_limit' && (
+                <div className="mt-3">
+                  <label htmlFor="speedLimit" className="block text-sm font-medium text-gray-700 mb-1">
+                    Límite de velocidad (km/h)
+                  </label>
+                  <input
+                    id="speedLimit"
+                    type="number"
+                    value={speedLimit}
+                    onChange={(e) => setSpeedLimit(e.target.value)}
+                    placeholder="Ej: 80"
+                    required
+                    min="0"
+                    max="300"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Se generará una alerta cuando un vehículo supere este límite dentro de la geocerca.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Asignación (solo para superuser y cuando no hay defaultClientId) */}
@@ -716,6 +772,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                 <strong>Nota:</strong> La geocerca generará alertas cuando un vehículo {
                   alertType === 'entry' ? 'entre en' :
                   alertType === 'exit' ? 'salga de' :
+                  alertType === 'speed_limit' ? `supere ${speedLimit || '?'} km/h dentro de` :
                   'entre o salga de'
                 } esta zona.
               </p>
