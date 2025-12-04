@@ -35,11 +35,9 @@ export function useAuth() {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      console.log('✅ Login successful:', data);
       localStorage.setItem(LS_TOKEN_KEY, data.token);
       localStorage.setItem(LS_USER_KEY, JSON.stringify(data.user));
       queryClient.setQueryData(QUERY_KEYS.AUTH_USER, data.user);
-      console.log('➡️ Navigating to HOME...');
       navigate(ROUTES.HOME, { replace: true });
     },
   });
