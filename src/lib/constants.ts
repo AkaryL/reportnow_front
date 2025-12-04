@@ -1,4 +1,4 @@
-import type { VehicleStatus, NotificationType, UserRole, EquipmentStatus, AssetType } from './types';
+import type { VehicleStatus, NotificationType, UserRole, EquipmentStatus, AssetType, VehicleLastStatus } from './types';
 
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'ReportNow';
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -127,6 +127,49 @@ export const EQUIPMENT_STATUS_CONFIG: Record<EquipmentStatus, {
     color: '#8b5cf6',
     bgColor: 'bg-purple-50',
     textColor: 'text-purple-700',
+  },
+};
+
+// Vehicle Last Status Configuration (estado operativo en tiempo real)
+export const VEHICLE_LAST_STATUS_CONFIG: Record<VehicleLastStatus, {
+  label: string;
+  color: string;
+  markerColor: string;
+  bgColor: string;
+  textColor: string;
+  icon: string;
+}> = {
+  engine_on: {
+    label: 'Arranque',
+    color: '#10b981',
+    markerColor: '#10b981',
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-700',
+    icon: 'Power',
+  },
+  moving: {
+    label: 'En movimiento',
+    color: '#3b82f6',
+    markerColor: '#3b82f6',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    icon: 'Car',
+  },
+  stopped: {
+    label: 'Detenido',
+    color: '#f59e0b',
+    markerColor: '#f59e0b',
+    bgColor: 'bg-amber-50',
+    textColor: 'text-amber-700',
+    icon: 'CircleStop',
+  },
+  engine_off: {
+    label: 'Motor apagado',
+    color: '#6b7280',
+    markerColor: '#6b7280',
+    bgColor: 'bg-gray-100',
+    textColor: 'text-gray-700',
+    icon: 'PowerOff',
   },
 };
 

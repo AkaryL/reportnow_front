@@ -1,35 +1,49 @@
-import type { Vehicle, VehicleEvent, VehicleHistoryPoint } from '../../lib/types';
+import type { Vehicle, VehicleEvent, VehicleHistoryPoint, Equipment, VehicleLastStatus } from '../../lib/types';
 import apiClient from '../../lib/apiClient';
-import { assetsApi } from '../assets/api';
-import type { Asset } from '../../lib/types';
+import { equipmentsApi } from '../equipments/api';
 
-// Función para convertir un Asset del backend a Vehicle del frontend
-const assetToVehicle = (asset: any): Vehicle => {
-  const equipment = asset.equipment;
-
+// Función para convertir un Equipment del backend a Vehicle del frontend
+const equipmentToVehicle = (equipment: Equipment): Vehicle => {
   return {
-    id: asset.id,
-    plate: asset.plate || asset.name || 'SIN-PLACA',
-    driver: asset.person_name || 'Sin conductor',
-    status: determineVehicleStatus(asset, equipment),
-    lastSeenMin: equipment?.last_seen
+    id: equipment.id,
+    plate: equipment.serial || equipment.imei || 'SIN-ID',
+    driver: `${equipment.brand || ''} ${equipment.model || ''}`.trim() || 'Sin modelo',
+    status: determineVehicleStatusFromEquipment(equipment),
+    lastSeenMin: equipment.last_seen
       ? Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000)
       : 999,
-    lat: equipment?.lat || 0,
-    lng: equipment?.lng || 0,
-    speed: equipment?.speed || 0,
-    deviceId: equipment?.imei || asset.equipment_id,
-    clientId: asset.client_id,
-    created_at: asset.created_at,
-    updated_at: asset.updated_at,
+    lat: equipment.lat || 0,
+    lng: equipment.lng || 0,
+    speed: equipment.speed || 0,
+    deviceId: equipment.id,
+    clientId: equipment.client_id,
+    created_at: equipment.created_at,
+    updated_at: equipment.updated_at,
   };
 };
 
-// Determinar el estado del vehículo basado en los datos del asset
-const determineVehicleStatus = (asset: any, equipment: any): Vehicle['status'] => {
-  if (asset.status === 'inactive') return 'offline';
+// Determinar el estado del vehículo basado en last_status del equipo
+const determineVehicleStatusFromEquipment = (equipment: Equipment): Vehicle['status'] => {
+  // Si el equipo está inactivo, siempre offline
+  if (equipment.status === 'inactive') return 'offline';
 
-  if (equipment?.last_seen) {
+  // Usar last_status si está disponible
+  if (equipment.last_status) {
+    switch (equipment.last_status) {
+      case 'moving':
+        return 'moving';
+      case 'stopped':
+      case 'engine_on':
+        return 'stopped';
+      case 'engine_off':
+        return 'offline';
+      default:
+        break;
+    }
+  }
+
+  // Fallback: calcular basándose en last_seen y speed
+  if (equipment.last_seen) {
     const minutesAgo = Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000);
     if (minutesAgo > 30) return 'offline';
     if (equipment.speed && equipment.speed > 5) return 'moving';
@@ -42,51 +56,51 @@ const determineVehicleStatus = (asset: any, equipment: any): Vehicle['status'] =
 export const vehiclesApi = {
   getAll: async (): Promise<Vehicle[]> => {
     try {
-      // Obtener assets de tipo vehículo del backend
-      const assets = await assetsApi.getAll({ asset_type: 'vehicle' });
-      // Convertir assets a vehicles
-      return assets.map(assetToVehicle);
+      // Obtener equipos GPS directamente del backend
+      const equipments = await equipmentsApi.getAll();
+      // Convertir equipos a vehicles para mantener compatibilidad con UI
+      return equipments.map(equipmentToVehicle);
     } catch (error) {
-      console.error('Error fetching vehicles from backend:', error);
+      console.error('Error fetching equipments from backend:', error);
       return [];
     }
   },
 
   getById: async (id: string): Promise<Vehicle | null> => {
     try {
-      const asset = await assetsApi.getById(id);
-      if (!asset) return null;
-      return assetToVehicle(asset);
+      const equipment = await equipmentsApi.getById(id);
+      if (!equipment) return null;
+      return equipmentToVehicle(equipment);
     } catch (error) {
-      console.error('Error fetching vehicle:', error);
+      console.error('Error fetching equipment:', error);
       return null;
     }
   },
 
   create: async (data: Partial<Vehicle>): Promise<Vehicle> => {
-    // Crear como asset de tipo vehículo
-    const assetData = {
-      type: 'vehicle' as const,
-      name: data.plate || 'Nuevo vehículo',
-      client_id: data.clientId || '',
-      plate: data.plate,
+    // Crear equipo GPS
+    const equipmentData = {
+      imei: data.plate || `IMEI-${Date.now()}`,
+      serial: data.plate,
+      brand: 'Generic',
+      model: 'GPS',
       status: 'active' as const,
     };
-    const asset = await assetsApi.create(assetData);
-    return assetToVehicle(asset);
+    const equipment = await equipmentsApi.create(equipmentData);
+    return equipmentToVehicle(equipment);
   },
 
   update: async (id: string, data: Partial<Vehicle>): Promise<Vehicle> => {
-    const assetData: any = {};
-    if (data.plate) assetData.plate = data.plate;
-    if (data.status) assetData.status = data.status === 'offline' ? 'inactive' : 'active';
+    const equipmentData: any = {};
+    if (data.plate) equipmentData.serial = data.plate;
+    if (data.status) equipmentData.status = data.status === 'offline' ? 'inactive' : 'active';
 
-    const asset = await assetsApi.update(id, assetData);
-    return assetToVehicle(asset);
+    const equipment = await equipmentsApi.update(id, equipmentData);
+    return equipmentToVehicle(equipment);
   },
 
   delete: async (id: string): Promise<void> => {
-    await assetsApi.delete(id);
+    await equipmentsApi.delete(id);
   },
 
   // History endpoints (TODO: Implement with backend vehicle-history endpoints)

@@ -2,12 +2,12 @@ import apiClient from "../../lib/apiClient";
 import type { Equipment } from "../../lib/types";
 
 export const equipmentsApi = {
-  getAll: async () => {
+  getAll: async (): Promise<Equipment[]> => {
     const res = await apiClient.get("/equipment");
     return res.data;
   },
 
-  getById: async (id: string) => {
+  getById: async (id: string): Promise<Equipment> => {
     const res = await apiClient.get(`/equipment/${id}`);
     return res.data;
   },
@@ -53,6 +53,24 @@ export const equipmentsApi = {
   // Obtener equipo por activo
   getByAsset: async (assetId: string) => {
     const res = await apiClient.get(`/equipment/asset/${assetId}`);
+    return res.data;
+  },
+
+  // Asignar conductor a un equipo
+  assignDriver: async (equipmentId: string, driverId: string) => {
+    const res = await apiClient.post(`/equipment/${equipmentId}/assign-driver/${driverId}`);
+    return res.data;
+  },
+
+  // Desasignar conductor de un equipo
+  unassignDriver: async (equipmentId: string) => {
+    const res = await apiClient.post(`/equipment/${equipmentId}/unassign-driver`);
+    return res.data;
+  },
+
+  // Obtener equipos por conductor
+  getByDriver: async (driverId: string) => {
+    const res = await apiClient.get(`/equipment/driver/${driverId}`);
     return res.data;
   }
 };
