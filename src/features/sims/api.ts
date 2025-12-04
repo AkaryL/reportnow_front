@@ -16,7 +16,7 @@ export const simsApi = {
   },
 
   // Crear nueva SIM
-  create: async (data: {  
+  create: async (data: {
     iccid: string;
     phone_number: string;
     carrier: string;
@@ -24,24 +24,14 @@ export const simsApi = {
     data_limit_mb?: number;
     activation_date?: string;
   }): Promise<SIM> => {
-    console.log(data);
-    console.log(" Enviando al backend (SIM):", data);
-
     const response = await apiClient.post("/sims", data);
-
-    // console.log("Respuesta del backend (SIM):", response.data);
-    // return response.data;
-     return;
+    return response.data;
   },
 
   // Actualizar SIM
   update: async (id: string, data: Partial<SIM>): Promise<SIM> => {
-    console.log(data);
-
-    // const response = await apiClient.put(`/sims/${id}`, data);
-    // return response.data;
-
-     return;
+    const response = await apiClient.put(`/sims/${id}`, data);
+    return response.data;
   },
 
   // Eliminar SIM
@@ -51,15 +41,13 @@ export const simsApi = {
 
   // Asignar SIM a un equipo
   assignToEquipment: async (simId: string, equipmentId: string) => {
-    const response = await apiClient.post(`/sims/${simId}/assign`, {
-      equipment_id: equipmentId,
-    });
+    const response = await apiClient.post(`/sims/${simId}/assign-equipment/${equipmentId}`);
     return response.data;
   },
 
   // Desasignar SIM de un equipo
   unassignFromEquipment: async (simId: string) => {
-    const response = await apiClient.post(`/sims/${simId}/unassign`);
+    const response = await apiClient.post(`/sims/${simId}/unassign-equipment`);
     return response.data;
   },
 };

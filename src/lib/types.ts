@@ -332,6 +332,21 @@ export interface EquipmentEvent {
   metadata?: Record<string, any>;
 }
 
+// ==================== Alertas (Geocercas) ====================
+export type AlertType = 'geofence_enter' | 'geofence_exit';
+
+export interface Alert {
+  id: string;
+  equipment_id: string;
+  geofence_id?: string;
+  type: AlertType;
+  message: string;
+  lat?: number;
+  lng?: number;
+  speed?: number;
+  created_at: string;
+}
+
 // ==================== Notificaciones ====================
 export type NotificationType = 'info' | 'warn' | 'crit';
 export type NotificationChannel = 'in-app' | 'email' | 'webhook';

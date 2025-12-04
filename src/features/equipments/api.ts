@@ -36,5 +36,23 @@ export const equipmentsApi = {
   unassignFromClient: async (equipmentId: string) => {
     const res = await apiClient.post(`/equipment/${equipmentId}/unassign-client`);
     return res.data;
+  },
+
+  // Asignar equipo a un activo
+  assignToAsset: async (equipmentId: string, assetId: string) => {
+    const res = await apiClient.post(`/equipment/${equipmentId}/assign-asset/${assetId}`);
+    return res.data;
+  },
+
+  // Desasignar equipo de un activo
+  unassignFromAsset: async (equipmentId: string) => {
+    const res = await apiClient.post(`/equipment/${equipmentId}/unassign-asset`);
+    return res.data;
+  },
+
+  // Obtener equipo por activo
+  getByAsset: async (assetId: string) => {
+    const res = await apiClient.get(`/equipment/asset/${assetId}`);
+    return res.data;
   }
 };

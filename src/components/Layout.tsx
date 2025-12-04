@@ -8,6 +8,7 @@ import {
   Users,
   FileText,
   Bell,
+  AlertTriangle,
   Shield,
   LogOut,
   Menu,
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Clientes', href: ROUTES.CLIENTS, icon: Users, roles: ['superuser'] },
   { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser'] },
   { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'operator-admin'] },
+  { name: 'Alertas', href: ROUTES.ALERTS, icon: AlertTriangle, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'operator-admin', 'operator-monitor'] },
   { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['admin', 'operator-admin', 'operator-monitor'] },
 ];

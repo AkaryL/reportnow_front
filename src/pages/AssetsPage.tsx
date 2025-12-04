@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { AssetFormModal } from '../components/assets/AssetFormModal';
 import { AssetDetailModal } from '../components/assets/AssetDetailModal';
+import { AssignEquipmentToAssetModal } from '../components/assets/AssignEquipmentToAssetModal';
 import {
   Truck,
   Package,
@@ -24,7 +25,9 @@ import {
   Search,
   Radio,
   User,
-  Container
+  Container,
+  Link,
+  Unlink
 } from 'lucide-react';
 import type { Asset, VehicleAsset, CargoAsset, ContainerAsset, PersonAsset, OtherAsset } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
@@ -44,6 +47,8 @@ export function AssetsPage() {
   const [activeTab, setActiveTab] = useState<AssetTab>('all');
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
+  const [isAssignEquipmentModalOpen, setIsAssignEquipmentModalOpen] = useState(false);
+  const [assetToAssignEquipment, setAssetToAssignEquipment] = useState<Asset | null>(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const toast = useToast();
@@ -105,6 +110,35 @@ export function AssetsPage() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Error al eliminar el activo');
+    },
+  });
+
+  const assignEquipmentMutation = useMutation({
+    mutationFn: ({ equipmentId, assetId }: { equipmentId: string; assetId: string }) =>
+      equipmentsApi.assignToAsset(equipmentId, assetId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ASSETS });
+      setIsAssignEquipmentModalOpen(false);
+      setAssetToAssignEquipment(null);
+      toast.success('Equipo GPS asignado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al asignar el equipo');
+    },
+  });
+
+  const unassignEquipmentMutation = useMutation({
+    mutationFn: (equipmentId: string) => equipmentsApi.unassignFromAsset(equipmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EQUIPMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ASSETS });
+      setIsAssignEquipmentModalOpen(false);
+      setAssetToAssignEquipment(null);
+      toast.success('Equipo GPS desasignado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al desasignar el equipo');
     },
   });
 
@@ -195,6 +229,29 @@ export function AssetsPage() {
   const getEquipmentSerial = (assetId: string) => {
     const equipment = equipments.find((e) => e.asset_id === assetId);
     return equipment?.serial || '-';
+  };
+
+  const getEquipmentForAsset = (assetId: string) => {
+    return equipments.find((e) => e.asset_id === assetId) || null;
+  };
+
+  const getAvailableEquipments = () => {
+    return equipments.filter((e) => !e.asset_id);
+  };
+
+  const handleOpenAssignEquipmentModal = (asset: Asset) => {
+    setAssetToAssignEquipment(asset);
+    setIsAssignEquipmentModalOpen(true);
+  };
+
+  const handleAssignEquipment = (equipmentId: string) => {
+    if (assetToAssignEquipment) {
+      assignEquipmentMutation.mutate({ equipmentId, assetId: assetToAssignEquipment.id });
+    }
+  };
+
+  const handleUnassignEquipment = (equipmentId: string) => {
+    unassignEquipmentMutation.mutate(equipmentId);
   };
 
   const tabs = [
@@ -321,12 +378,12 @@ export function AssetsPage() {
               </div>
             ) : (
               <>
-                {activeTab === 'all' && <AllAssetsTable assets={filteredAssets} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} isSuperuser={user?.role === 'superuser'} getEquipmentSerial={getEquipmentSerial} />}
-                {activeTab === 'vehiculo' && <VehicleTable assets={filteredAssets as VehicleAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getDriverName={getDriverName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
-                {activeTab === 'cargo' && <CargoTable assets={filteredAssets as CargoAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
-                {activeTab === 'container' && <ContainerTable assets={filteredAssets as ContainerAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
-                {activeTab === 'person' && <PersonTable assets={filteredAssets as PersonAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
-                {activeTab === 'other' && <OtherTable assets={filteredAssets as OtherAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} isSuperuser={user?.role === 'superuser'} />}
+                {activeTab === 'all' && <AllAssetsTable assets={filteredAssets} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} onAssignEquipment={handleOpenAssignEquipmentModal} getClientName={getClientName} isSuperuser={user?.role === 'superuser'} getEquipmentSerial={getEquipmentSerial} getEquipmentForAsset={getEquipmentForAsset} />}
+                {activeTab === 'vehiculo' && <VehicleTable assets={filteredAssets as VehicleAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} onAssignEquipment={handleOpenAssignEquipmentModal} getClientName={getClientName} getDriverName={getDriverName} getEquipmentSerial={getEquipmentSerial} getEquipmentForAsset={getEquipmentForAsset} isSuperuser={user?.role === 'superuser'} />}
+                {activeTab === 'cargo' && <CargoTable assets={filteredAssets as CargoAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} onAssignEquipment={handleOpenAssignEquipmentModal} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} getEquipmentForAsset={getEquipmentForAsset} isSuperuser={user?.role === 'superuser'} />}
+                {activeTab === 'container' && <ContainerTable assets={filteredAssets as ContainerAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} onAssignEquipment={handleOpenAssignEquipmentModal} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} getEquipmentForAsset={getEquipmentForAsset} isSuperuser={user?.role === 'superuser'} />}
+                {activeTab === 'person' && <PersonTable assets={filteredAssets as PersonAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} onAssignEquipment={handleOpenAssignEquipmentModal} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} getEquipmentForAsset={getEquipmentForAsset} isSuperuser={user?.role === 'superuser'} />}
+                {activeTab === 'other' && <OtherTable assets={filteredAssets as OtherAsset[]} onView={handleViewDetails} onEdit={handleEdit} onDelete={handleDelete} onAssignEquipment={handleOpenAssignEquipmentModal} getClientName={getClientName} getEquipmentSerial={getEquipmentSerial} getEquipmentForAsset={getEquipmentForAsset} isSuperuser={user?.role === 'superuser'} />}
               </>
             )}
           </div>
@@ -364,12 +421,26 @@ export function AssetsPage() {
         cancelText={confirmDialog.options.cancelText}
         variant={confirmDialog.options.variant}
       />
+
+      <AssignEquipmentToAssetModal
+        isOpen={isAssignEquipmentModalOpen}
+        onClose={() => {
+          setIsAssignEquipmentModalOpen(false);
+          setAssetToAssignEquipment(null);
+        }}
+        onAssign={handleAssignEquipment}
+        onUnassign={handleUnassignEquipment}
+        asset={assetToAssignEquipment}
+        availableEquipments={getAvailableEquipments()}
+        currentEquipment={assetToAssignEquipment ? getEquipmentForAsset(assetToAssignEquipment.id) : null}
+        isLoading={assignEquipmentMutation.isPending || unassignEquipmentMutation.isPending}
+      />
     </div>
   );
 }
 
 // Tabla para "Todas"
-function AllAssetsTable({ assets, onView, onEdit, onDelete, getClientName, isSuperuser, getEquipmentSerial }: any) {
+function AllAssetsTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getClientName, isSuperuser, getEquipmentSerial, getEquipmentForAsset }: any) {
   return (
     <Table>
       <TableHeader>
@@ -382,37 +453,49 @@ function AllAssetsTable({ assets, onView, onEdit, onDelete, getClientName, isSup
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset: Asset) => (
-          <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
-            <TableCell className="font-medium">{asset.name}</TableCell>
-            <TableCell>
-              {asset.type === 'vehiculo' && <Badge variant="default" className="bg-blue-50 text-blue-700">Vehículo</Badge>}
-              {asset.type === 'cargo' && <Badge variant="default" className="bg-orange-50 text-orange-700">Mercancía</Badge>}
-              {asset.type === 'container' && <Badge variant="default" className="bg-purple-50 text-purple-700">Contenedor</Badge>}
-              {asset.type === 'person' && <Badge variant="default" className="bg-green-50 text-green-700">Persona</Badge>}
-              {asset.type === 'other' && <Badge variant="default" className="bg-gray-50 text-gray-700">Otro</Badge>}
-            </TableCell>
-            {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
-            <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {assets.map((asset: Asset) => {
+          const hasEquipment = !!getEquipmentForAsset(asset.id);
+          return (
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+              <TableCell className="font-medium">{asset.name}</TableCell>
+              <TableCell>
+                {asset.type === 'vehiculo' && <Badge variant="default" className="bg-blue-50 text-blue-700">Vehículo</Badge>}
+                {asset.type === 'cargo' && <Badge variant="default" className="bg-orange-50 text-orange-700">Mercancía</Badge>}
+                {asset.type === 'container' && <Badge variant="default" className="bg-purple-50 text-purple-700">Contenedor</Badge>}
+                {asset.type === 'person' && <Badge variant="default" className="bg-green-50 text-green-700">Persona</Badge>}
+                {asset.type === 'other' && <Badge variant="default" className="bg-gray-50 text-gray-700">Otro</Badge>}
+              </TableCell>
+              {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
+              <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAssignEquipment(asset)}
+                    title={hasEquipment ? 'Gestionar equipo GPS' : 'Asignar equipo GPS'}
+                    className={hasEquipment ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-700'}
+                  >
+                    {hasEquipment ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
 }
 
 // Tabla para Vehículos
-function VehicleTable({ assets, onView, onEdit, onDelete, getClientName, getDriverName, getEquipmentSerial, isSuperuser }: any) {
+function VehicleTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getClientName, getDriverName, getEquipmentSerial, getEquipmentForAsset, isSuperuser }: any) {
   return (
     <Table>
       <TableHeader>
@@ -430,36 +513,48 @@ function VehicleTable({ assets, onView, onEdit, onDelete, getClientName, getDriv
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset: VehicleAsset) => (
-          <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
-            <TableCell className="font-medium">{asset.name}</TableCell>
-            <TableCell>{asset.brand}</TableCell>
-            <TableCell>{asset.model}</TableCell>
-            <TableCell>{asset.year}</TableCell>
-            <TableCell className="font-mono">{asset.plate || '-'}</TableCell>
-            <TableCell>{asset.economic_id || '-'}</TableCell>
-            <TableCell>{getDriverName(asset.driver_id)}</TableCell>
-            {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
-            <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {assets.map((asset: VehicleAsset) => {
+          const hasEquipment = !!getEquipmentForAsset(asset.id);
+          return (
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+              <TableCell className="font-medium">{asset.name}</TableCell>
+              <TableCell>{asset.brand}</TableCell>
+              <TableCell>{asset.model}</TableCell>
+              <TableCell>{asset.year}</TableCell>
+              <TableCell className="font-mono">{asset.plate || '-'}</TableCell>
+              <TableCell>{asset.economic_id || '-'}</TableCell>
+              <TableCell>{getDriverName(asset.driver_id)}</TableCell>
+              {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
+              <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAssignEquipment(asset)}
+                    title={hasEquipment ? 'Gestionar equipo GPS' : 'Asignar equipo GPS'}
+                    className={hasEquipment ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-700'}
+                  >
+                    {hasEquipment ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
 }
 
 // Tabla para Mercancía
-function CargoTable({ assets, onView, onEdit, onDelete, getClientName, getEquipmentSerial, isSuperuser }: any) {
+function CargoTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getClientName, getEquipmentSerial, getEquipmentForAsset, isSuperuser }: any) {
   return (
     <Table>
       <TableHeader>
@@ -473,32 +568,44 @@ function CargoTable({ assets, onView, onEdit, onDelete, getClientName, getEquipm
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset: CargoAsset) => (
-          <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
-            <TableCell className="font-medium">{asset.name}</TableCell>
-            <TableCell>{asset.cargo_type || '-'}</TableCell>
-            <TableCell className="font-mono">{asset.box_id || '-'}</TableCell>
-            {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
-            <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {assets.map((asset: CargoAsset) => {
+          const hasEquipment = !!getEquipmentForAsset(asset.id);
+          return (
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+              <TableCell className="font-medium">{asset.name}</TableCell>
+              <TableCell>{asset.cargo_type || '-'}</TableCell>
+              <TableCell className="font-mono">{asset.box_id || '-'}</TableCell>
+              {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
+              <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAssignEquipment(asset)}
+                    title={hasEquipment ? 'Gestionar equipo GPS' : 'Asignar equipo GPS'}
+                    className={hasEquipment ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-700'}
+                  >
+                    {hasEquipment ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
 }
 
 // Tabla para Contenedores
-function ContainerTable({ assets, onView, onEdit, onDelete, getClientName, getEquipmentSerial, isSuperuser }: any) {
+function ContainerTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getClientName, getEquipmentSerial, getEquipmentForAsset, isSuperuser }: any) {
   return (
     <Table>
       <TableHeader>
@@ -514,34 +621,46 @@ function ContainerTable({ assets, onView, onEdit, onDelete, getClientName, getEq
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset: ContainerAsset) => (
-          <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
-            <TableCell className="font-medium">{asset.name}</TableCell>
-            <TableCell>{asset.container_type || '-'}</TableCell>
-            <TableCell className="font-mono">{asset.box_plate || '-'}</TableCell>
-            <TableCell>{asset.economic_id || '-'}</TableCell>
-            <TableCell>{asset.color || '-'}</TableCell>
-            {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
-            <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {assets.map((asset: ContainerAsset) => {
+          const hasEquipment = !!getEquipmentForAsset(asset.id);
+          return (
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+              <TableCell className="font-medium">{asset.name}</TableCell>
+              <TableCell>{asset.container_type || '-'}</TableCell>
+              <TableCell className="font-mono">{asset.box_plate || '-'}</TableCell>
+              <TableCell>{asset.economic_id || '-'}</TableCell>
+              <TableCell>{asset.color || '-'}</TableCell>
+              {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
+              <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAssignEquipment(asset)}
+                    title={hasEquipment ? 'Gestionar equipo GPS' : 'Asignar equipo GPS'}
+                    className={hasEquipment ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-700'}
+                  >
+                    {hasEquipment ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
 }
 
 // Tabla para Personas
-function PersonTable({ assets, onView, onEdit, onDelete, getClientName, getEquipmentSerial, isSuperuser }: any) {
+function PersonTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getClientName, getEquipmentSerial, getEquipmentForAsset, isSuperuser }: any) {
   return (
     <Table>
       <TableHeader>
@@ -556,33 +675,45 @@ function PersonTable({ assets, onView, onEdit, onDelete, getClientName, getEquip
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset: PersonAsset) => (
-          <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
-            <TableCell className="font-medium">{asset.person_name}</TableCell>
-            <TableCell>{asset.phone}</TableCell>
-            <TableCell>{asset.emergency_phone || '-'}</TableCell>
-            <TableCell>{asset.role || '-'}</TableCell>
-            {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
-            <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {assets.map((asset: PersonAsset) => {
+          const hasEquipment = !!getEquipmentForAsset(asset.id);
+          return (
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+              <TableCell className="font-medium">{asset.person_name}</TableCell>
+              <TableCell>{asset.phone}</TableCell>
+              <TableCell>{asset.emergency_phone || '-'}</TableCell>
+              <TableCell>{asset.role || '-'}</TableCell>
+              {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
+              <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAssignEquipment(asset)}
+                    title={hasEquipment ? 'Gestionar equipo GPS' : 'Asignar equipo GPS'}
+                    className={hasEquipment ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-700'}
+                  >
+                    {hasEquipment ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
 }
 
 // Tabla para Otros
-function OtherTable({ assets, onView, onEdit, onDelete, getClientName, getEquipmentSerial, isSuperuser }: any) {
+function OtherTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getClientName, getEquipmentSerial, getEquipmentForAsset, isSuperuser }: any) {
   return (
     <Table>
       <TableHeader>
@@ -596,25 +727,37 @@ function OtherTable({ assets, onView, onEdit, onDelete, getClientName, getEquipm
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset: OtherAsset) => (
-          <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
-            <TableCell className="font-medium">{asset.name}</TableCell>
-            <TableCell>{asset.asset_type || '-'}</TableCell>
-            <TableCell>{asset.category || '-'}</TableCell>
-            {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
-            <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {assets.map((asset: OtherAsset) => {
+          const hasEquipment = !!getEquipmentForAsset(asset.id);
+          return (
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+              <TableCell className="font-medium">{asset.name}</TableCell>
+              <TableCell>{asset.asset_type || '-'}</TableCell>
+              <TableCell>{asset.category || '-'}</TableCell>
+              {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
+              <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAssignEquipment(asset)}
+                    title={hasEquipment ? 'Gestionar equipo GPS' : 'Asignar equipo GPS'}
+                    className={hasEquipment ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-700'}
+                  >
+                    {hasEquipment ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(asset)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(asset.id, asset.name)} className="text-red-600 hover:text-red-700" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
