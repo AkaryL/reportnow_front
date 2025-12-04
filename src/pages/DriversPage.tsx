@@ -113,7 +113,16 @@ export function DriversPage() {
     if (selectedDriver) {
       updateMutation.mutate({ id: selectedDriver.id, data });
     } else {
-      createMutation.mutate(data);
+      // Verificar que el usuario tenga un client_id para crear conductores
+      if (!user?.client_id && user?.role !== 'superuser') {
+        toast.error('No está conectado a un cliente. Por favor, vuelva a iniciar sesión.');
+        return;
+      }
+      // Agregar client_id del usuario autenticado al crear un conductor
+      createMutation.mutate({
+        ...data,
+        client_id: user?.client_id,
+      });
     }
   };
 

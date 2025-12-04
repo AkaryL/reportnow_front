@@ -14,7 +14,6 @@ export function LoginPage() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('🔐 Login form submitted:', { email, password });
     login({ email, password });
   };
 

@@ -4,13 +4,9 @@ import apiClient from '../../lib/apiClient';
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    console.log('🔄 authApi.login called with:', credentials);
-
     try {
       // Llamar al backend real
       const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-
-      console.log('✅ Login exitoso:', response.data);
 
       // Guardar token y usuario en localStorage
       if (response.data.token) {
@@ -20,7 +16,6 @@ export const authApi = {
 
       return response.data;
     } catch (error: any) {
-      console.error('❌ Login error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Credenciales inválidas');
     }
   },
@@ -52,14 +47,10 @@ export const authApi = {
   },
 
   loginAsClient: async (clientId: string): Promise<AuthResponse> => {
-    console.log('🔄 authApi.loginAsClient called with clientId:', clientId);
-
     try {
       const response = await apiClient.post<AuthResponse>('/auth/login-as-client', {
         client_id: clientId
       });
-
-      console.log('✅ Login as client exitoso:', response.data);
 
       // Guardar token y usuario en localStorage
       if (response.data.token) {
@@ -69,8 +60,6 @@ export const authApi = {
 
       return response.data;
     } catch (error: any) {
-      console.error('❌ Login as client error:', error);
-      // Mejorar el mensaje de error para mostrar el detalle del backend
       const errorMessage = error.response?.data?.detail || error.response?.data || error.message || 'Error al iniciar sesión como cliente';
       throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     }

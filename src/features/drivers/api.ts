@@ -1,72 +1,45 @@
 import type { Driver } from '../../lib/types';
-import { mockDrivers } from '../../data/mockData';
+import apiClient from '../../lib/apiClient';
 import { LS_USER_KEY } from '../../lib/constants';
 
-// Función auxiliar para simular delay de red
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper para obtener el usuario actual
+// Helper para obtener el usuario actual del localStorage
 const getCurrentUser = () => {
   const userStr = localStorage.getItem(LS_USER_KEY);
   return userStr ? JSON.parse(userStr) : null;
 };
 
-// Copia mutable
-let drivers = [...mockDrivers];
-
 export const driversApi = {
-  // Obtener todos los conductores (con filtro por cliente si aplica)
+  // Obtener todos los conductores
   getAll: async (): Promise<Driver[]> => {
-    await delay(200);
-
-    const user = getCurrentUser();
-
-    // Si es admin, operator-admin o operator-monitor, filtrar por su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
-      return drivers.filter(d => d.client_id === user.client_id);
+    try {
+      const response = await apiClient.get<Driver[]>('/drivers');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al obtener conductores');
     }
-
-    // Superuser ve todos los conductores
-    return [...drivers];
   },
 
   // Obtener conductor por ID
   getById: async (id: string): Promise<Driver | null> => {
-    await delay(150);
-
-    const driver = drivers.find(d => d.id === id);
-    if (!driver) return null;
-
-    const user = getCurrentUser();
-
-    // Verificar permisos
-    if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
-      if (driver.client_id !== user.client_id) {
+    try {
+      const response = await apiClient.get<Driver>(`/drivers/${id}`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
         return null;
       }
+      throw new Error(error.response?.data?.detail || error.message || 'Error al obtener conductor');
     }
-
-    return driver;
   },
 
-  // Obtener conductores por cliente (solo superuser)
-  getByClientId: async (clientId: string): Promise<Driver[]> => {
-    await delay(150);
-
-    const user = getCurrentUser();
-    if (user?.role !== 'superuser') {
-      throw new Error('Solo superuser puede obtener conductores por cliente');
-    }
-
-    return drivers.filter(d => d.client_id === clientId);
-  },
-
-  // Obtener conductores disponibles (no asignados a vehículo)
+  // Obtener conductores disponibles
   getAvailable: async (): Promise<Driver[]> => {
-    await delay(150);
-
-    const allDrivers = await driversApi.getAll();
-    return allDrivers.filter(d => d.status === 'available');
+    try {
+      const allDrivers = await driversApi.getAll();
+      return allDrivers.filter(d => d.status === 'available');
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al obtener conductores disponibles');
+    }
   },
 
   // Crear nuevo conductor
@@ -78,179 +51,109 @@ export const driversApi = {
     email?: string;
     emergency_phone?: string;
     address?: string;
-    client_id: string;
+    client_id?: string;
     photo_url?: string;
     status?: Driver['status'];
   }): Promise<Driver> => {
-    await delay(300);
+    try {
+      const user = getCurrentUser();
 
-    const user = getCurrentUser();
+      // Determinar el client_id a usar
+      let clientId = data.client_id;
 
-    // Operador monitor no puede crear
-    if (user?.role === 'operator-monitor') {
-      throw new Error('Operador monitor no tiene permisos de escritura');
-    }
-
-    // Admin/operadores solo pueden crear en su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
-      if (data.client_id !== user.client_id) {
-        throw new Error('No puede crear conductores para otro cliente');
+      // Admin/operadores usan su propio client_id
+      if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+        clientId = user.client_id;
       }
+
+      // Validar que tengamos un client_id
+      if (!clientId) {
+        throw new Error('No está conectado a un cliente. Por favor, vuelva a iniciar sesión.');
+      }
+
+      const payload = {
+        name: data.name,
+        phone: data.phone,
+        email: data.email || null,
+        license_number: data.license_number,
+        license_expiry: data.license_expiry,
+        status: data.status || 'available',
+        emergency_phone: data.emergency_phone || null,
+        address: data.address || null,
+        client_id: clientId,
+      };
+
+      const response = await apiClient.post<Driver>('/drivers', payload);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al crear conductor');
     }
-
-    // Verificar que la licencia no exista
-    if (drivers.some(d => d.license_number === data.license_number)) {
-      throw new Error('Ya existe un conductor con ese número de licencia');
-    }
-
-    const newDriver: Driver = {
-      id: `drv${Date.now()}`,
-      name: data.name,
-      license_number: data.license_number,
-      license_expiry: data.license_expiry,
-      phone: data.phone,
-      email: data.email,
-      emergency_phone: data.emergency_phone || '',
-      address: data.address || '',
-      client_id: data.client_id,
-      photo_url: data.photo_url,
-      status: data.status || 'available',
-      created_at: new Date().toISOString(),
-    };
-
-    drivers.push(newDriver);
-    return newDriver;
   },
 
   // Actualizar conductor
   update: async (id: string, data: Partial<Driver>): Promise<Driver> => {
-    await delay(250);
+    try {
+      const user = getCurrentUser();
 
-    const index = drivers.findIndex(d => d.id === id);
-    if (index === -1) {
-      throw new Error('Conductor no encontrado');
-    }
+      // Determinar el client_id a usar
+      let clientId = data.client_id;
 
-    const user = getCurrentUser();
-    const driver = drivers[index];
-
-    // Operador monitor no puede actualizar
-    if (user?.role === 'operator-monitor') {
-      throw new Error('Operador monitor no tiene permisos de escritura');
-    }
-
-    // Admin/operadores solo pueden actualizar conductores de su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
-      if (driver.client_id !== user.client_id) {
-        throw new Error('No tiene permiso para actualizar este conductor');
+      // Admin/operadores usan su propio client_id
+      if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+        clientId = user.client_id;
       }
+
+      const payload = {
+        name: data.name,
+        phone: data.phone,
+        email: data.email || null,
+        license_number: data.license_number,
+        license_expiry: data.license_expiry,
+        status: data.status,
+        emergency_phone: data.emergency_phone || null,
+        address: data.address || null,
+        client_id: clientId,
+      };
+
+      const response = await apiClient.put<Driver>(`/drivers/${id}`, payload);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al actualizar conductor');
     }
-
-    // Si se cambia la licencia, verificar que no exista
-    if (data.license_number && data.license_number !== driver.license_number) {
-      if (drivers.some(d => d.license_number === data.license_number)) {
-        throw new Error('Ya existe un conductor con ese número de licencia');
-      }
-    }
-
-    drivers[index] = {
-      ...drivers[index],
-      ...data,
-      id, // Asegurar que el ID no cambie
-      updated_at: new Date().toISOString(),
-    };
-
-    return drivers[index];
   },
 
   // Eliminar conductor
   delete: async (id: string): Promise<void> => {
-    await delay(200);
-
-    const user = getCurrentUser();
-
-    // Operador monitor no puede eliminar
-    if (user?.role === 'operator-monitor') {
-      throw new Error('Operador monitor no tiene permisos de escritura');
+    try {
+      await apiClient.delete(`/drivers/${id}`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al eliminar conductor');
     }
-
-    const driver = drivers.find(d => d.id === id);
-    if (!driver) {
-      throw new Error('Conductor no encontrado');
-    }
-
-    // Admin/operadores solo pueden eliminar conductores de su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
-      if (driver.client_id !== user.client_id) {
-        throw new Error('No tiene permiso para eliminar este conductor');
-      }
-    }
-
-    // No se puede eliminar si está asignado (on_trip)
-    if (driver.status === 'on_trip') {
-      throw new Error('No se puede eliminar un conductor que está en viaje. Primero finalice el viaje.');
-    }
-
-    drivers = drivers.filter(d => d.id !== id);
   },
 
-  // Asignar conductor a vehículo (cambiar estado)
+  // Asignar conductor a vehículo (cambiar estado a on_trip)
   assignToVehicle: async (driverId: string): Promise<Driver> => {
-    await delay(150);
-
-    const index = drivers.findIndex(d => d.id === driverId);
-    if (index === -1) {
-      throw new Error('Conductor no encontrado');
-    }
-
-    const user = getCurrentUser();
-    const driver = drivers[index];
-
-    // Verificar permisos
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
-      if (driver.client_id !== user.client_id) {
-        throw new Error('No tiene permiso para asignar este conductor');
+    try {
+      const driver = await driversApi.getById(driverId);
+      if (!driver) {
+        throw new Error('Conductor no encontrado');
       }
+      return await driversApi.update(driverId, { ...driver, status: 'on_trip' });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al asignar conductor');
     }
-
-    if (driver.status === 'inactive') {
-      throw new Error('No se puede asignar un conductor inactivo');
-    }
-
-    drivers[index] = {
-      ...drivers[index],
-      status: 'on_trip',
-      updated_at: new Date().toISOString(),
-    };
-
-    return drivers[index];
   },
 
-  // Liberar conductor (cambiar estado a disponible)
+  // Liberar conductor (cambiar estado a available)
   releaseFromVehicle: async (driverId: string): Promise<Driver> => {
-    await delay(150);
-
-    const index = drivers.findIndex(d => d.id === driverId);
-    if (index === -1) {
-      throw new Error('Conductor no encontrado');
-    }
-
-    const user = getCurrentUser();
-    const driver = drivers[index];
-
-    // Verificar permisos
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
-      if (driver.client_id !== user.client_id) {
-        throw new Error('No tiene permiso para liberar este conductor');
+    try {
+      const driver = await driversApi.getById(driverId);
+      if (!driver) {
+        throw new Error('Conductor no encontrado');
       }
+      return await driversApi.update(driverId, { ...driver, status: 'available' });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Error al liberar conductor');
     }
-
-    drivers[index] = {
-      ...drivers[index],
-      status: 'available',
-      updated_at: new Date().toISOString(),
-    };
-
-    return drivers[index];
   },
 };

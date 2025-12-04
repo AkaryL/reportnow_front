@@ -12,11 +12,14 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { Download, FileText, Radio, Package, MapPin, Users, Shield, Bell, Calendar, Clock, X } from 'lucide-react';
-import { exportToCSV, exportToExcel, formatDate } from '../lib/utils';
+import { exportToCSV, exportToExcel, exportToPDF, exportProPDF, formatDate } from '../lib/utils';
+import type { EquipmentReportData } from '../lib/utils';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../features/auth/hooks';
 
 type ReportType = 'equipments' | 'assets' | 'geofences' | 'clients' | 'users' | 'notifications';
+type ExportFormat = 'csv' | 'pdf';
+type ExportMode = 'lite' | 'pro';
 
 export function ReportsPage() {
   const toast = useToast();
@@ -28,6 +31,10 @@ export function ReportsPage() {
   const [endTime, setEndTime] = useState('');
   // Si el usuario no es superuser, usar su client_id automáticamente
   const [selectedClientId, setSelectedClientId] = useState(user?.role !== 'superuser' && user?.client_id ? user.client_id : '');
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
+  const [exportMode, setExportMode] = useState<ExportMode>('lite');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ current: 0, total: 0 });
 
   // Fetch all data
   const { data: equipments = [] } = useQuery({
@@ -178,9 +185,85 @@ export function ReportsPage() {
     }
   };
 
-  const handleExport = () => {
-    // Si hay un cliente seleccionado, generar reporte completo de ese cliente
+  const handleExport = async () => {
+    // Si hay un cliente seleccionado
     if (selectedClientId) {
+      const isLite = exportMode === 'lite';
+
+      // Pro PDF con cliente - genera PDF detallado de los equipos del cliente
+      if (!isLite && exportFormat === 'pdf') {
+        const clientEquipments = equipments.filter(eq => eq.client_id === selectedClientId);
+
+        if (clientEquipments.length === 0) {
+          toast.error('Este cliente no tiene equipos registrados');
+          return;
+        }
+
+        setIsExporting(true);
+        setExportProgress({ current: 0, total: clientEquipments.length });
+
+        try {
+          const client = clients.find(c => c.id === selectedClientId);
+          const equipmentReportData: EquipmentReportData[] = clientEquipments.map((eq: any) => {
+            const asset = assets.find(a => a.id === eq.asset_id);
+            const eqNotifications = notifications.filter(n => n.equipment_id === eq.id);
+
+            return {
+              id: eq.id,
+              imei: eq.imei,
+              serial: eq.serial,
+              brand: eq.brand,
+              model: eq.model,
+              status: eq.status,
+              lat: eq.lat,
+              lng: eq.lng,
+              speed: eq.speed,
+              last_seen: eq.last_seen,
+              created_at: eq.created_at,
+              client: client ? {
+                company_name: client.company_name,
+                contact_name: client.contact_name,
+                email: client.email,
+                contact_phone: client.contact_phone,
+              } : undefined,
+              asset: asset ? {
+                name: asset.name,
+                type: asset.type,
+                plate: asset.plate,
+                brand: asset.brand,
+                model: asset.model,
+                year: asset.year,
+                color: asset.color,
+              } : undefined,
+              notifications: eqNotifications.map(n => ({
+                title: n.title,
+                description: n.description || '',
+                priority: n.priority,
+                ts: n.ts,
+              })),
+            };
+          });
+
+          const dateRange = startDate && endDate ? `${startDate}_${endDate}` : 'todos';
+          await exportProPDF(
+            equipmentReportData,
+            `Reporte Pro - ${client?.company_name || 'Cliente'}`,
+            `Reporte_Pro_${client?.company_name?.replace(/\s+/g, '_') || 'Cliente'}_${dateRange}`,
+            (current, total) => setExportProgress({ current, total })
+          );
+
+          toast.success(`Reporte Pro generado: ${clientEquipments.length} equipos con mapas`);
+        } catch (error) {
+          toast.error('Error al generar el reporte Pro');
+          console.error(error);
+        } finally {
+          setIsExporting(false);
+          setExportProgress({ current: 0, total: 0 });
+        }
+        return;
+      }
+
+      // Para otros casos (Lite o CSV/Excel), usar el reporte completo
       handleComprehensiveClientReport();
       return;
     }
@@ -193,90 +276,290 @@ export function ReportsPage() {
       return;
     }
 
+    const isLite = exportMode === 'lite';
+
+    // Pro PDF para equipos - genera reporte detallado con mapas
+    if (!isLite && exportFormat === 'pdf' && selectedReport === 'equipments') {
+      setIsExporting(true);
+      setExportProgress({ current: 0, total: filteredData.length });
+
+      try {
+        const equipmentReportData: EquipmentReportData[] = filteredData.map((eq: any) => {
+          const client = clients.find(c => c.id === eq.client_id);
+          const asset = assets.find(a => a.id === eq.asset_id);
+          const eqNotifications = notifications.filter(n => n.equipment_id === eq.id);
+
+          return {
+            id: eq.id,
+            imei: eq.imei,
+            serial: eq.serial,
+            brand: eq.brand,
+            model: eq.model,
+            status: eq.status,
+            lat: eq.lat,
+            lng: eq.lng,
+            speed: eq.speed,
+            last_seen: eq.last_seen,
+            created_at: eq.created_at,
+            client: client ? {
+              company_name: client.company_name,
+              contact_name: client.contact_name,
+              email: client.email,
+              contact_phone: client.contact_phone,
+            } : undefined,
+            asset: asset ? {
+              name: asset.name,
+              type: asset.type,
+              plate: asset.plate,
+              brand: asset.brand,
+              model: asset.model,
+              year: asset.year,
+              color: asset.color,
+            } : undefined,
+            notifications: eqNotifications.map(n => ({
+              title: n.title,
+              description: n.description || '',
+              priority: n.priority,
+              ts: n.ts,
+            })),
+          };
+        });
+
+        const dateRange = startDate && endDate ? `${startDate}_${endDate}` : 'todos';
+        await exportProPDF(
+          equipmentReportData,
+          'Reporte Pro de Equipos GPS',
+          `Reporte_Equipos_Pro_${dateRange}`,
+          (current, total) => setExportProgress({ current, total })
+        );
+
+        toast.success(`Reporte Pro generado: ${filteredData.length} equipos con mapas y detalles`);
+      } catch (error) {
+        toast.error('Error al generar el reporte Pro');
+        console.error(error);
+      } finally {
+        setIsExporting(false);
+        setExportProgress({ current: 0, total: 0 });
+      }
+      return;
+    }
     let csvData: any[] = [];
     let filename = '';
 
     switch (selectedReport) {
       case 'equipments':
-        csvData = filteredData.map((eq: any) => ({
-          IMEI: eq.imei,
-          Serial: eq.serial,
-          Marca: eq.brand,
-          Modelo: eq.model,
-          Estado: eq.status === 'active' ? 'Activo' : 'Inactivo',
-          Cliente: clients.find(c => c.id === eq.client_id)?.company_name || 'Sin asignar',
-          Activo: assets.find(a => a.id === eq.asset_id)?.name || 'Sin asignar',
-          'Última Señal': eq.last_seen ? formatDate(eq.last_seen) : 'N/A',
-          Latitud: eq.lat || 'N/A',
-          Longitud: eq.lng || 'N/A',
-          'Fecha Creación': formatDate(eq.created_at),
-        }));
-        filename = 'Reporte_Equipos';
+        csvData = filteredData.map((eq: any) => {
+          const asset = assets.find(a => a.id === eq.asset_id);
+          const client = clients.find(c => c.id === eq.client_id);
+
+          if (isLite) {
+            return {
+              IMEI: eq.imei,
+              Estado: eq.status === 'active' ? 'Activo' : 'Inactivo',
+              Cliente: client?.company_name || 'Sin asignar',
+              Activo: asset?.name || 'Sin asignar',
+            };
+          }
+          return {
+            IMEI: eq.imei,
+            Serial: eq.serial,
+            Marca: eq.brand,
+            Modelo: eq.model,
+            Estado: eq.status === 'active' ? 'Activo' : 'Inactivo',
+            Cliente: client?.company_name || 'Sin asignar',
+            'Email Cliente': client?.email || 'N/A',
+            'Tel. Cliente': client?.contact_phone || 'N/A',
+            Activo: asset?.name || 'Sin asignar',
+            'Tipo Activo': asset?.type || 'N/A',
+            'Placa Activo': asset?.plate || 'N/A',
+            'Última Señal': eq.last_seen ? formatDate(eq.last_seen) : 'N/A',
+            Latitud: eq.lat || 'N/A',
+            Longitud: eq.lng || 'N/A',
+            'Velocidad (km/h)': eq.speed || 0,
+            'Fecha Creación': formatDate(eq.created_at),
+          };
+        });
+        filename = `Reporte_Equipos_${isLite ? 'Lite' : 'Pro'}`;
         break;
 
       case 'assets':
-        csvData = filteredData.map((asset: any) => ({
-          Nombre: asset.name,
-          Tipo: asset.type,
-          Cliente: clients.find(c => c.id === asset.client_id)?.company_name || 'Sin asignar',
-          'Placa/ID': asset.plate || asset.economic_id || 'N/A',
-          Estado: asset.status || 'N/A',
-          'Fecha Creación': formatDate(asset.created_at),
-        }));
-        filename = 'Reporte_Activos';
+        csvData = filteredData.map((asset: any) => {
+          const client = clients.find(c => c.id === asset.client_id);
+          const equipment = equipments.find(eq => eq.asset_id === asset.id);
+
+          if (isLite) {
+            return {
+              Nombre: asset.name,
+              Tipo: asset.type,
+              Cliente: client?.company_name || 'Sin asignar',
+            };
+          }
+          return {
+            Nombre: asset.name,
+            Tipo: asset.type,
+            Cliente: client?.company_name || 'Sin asignar',
+            'Placa': asset.plate || 'N/A',
+            'Número Económico': asset.economic_id || 'N/A',
+            Estado: asset.status || 'Activo',
+            Marca: asset.brand || 'N/A',
+            Modelo: asset.model || 'N/A',
+            Año: asset.year || 'N/A',
+            Color: asset.color || 'N/A',
+            VIN: asset.vin || 'N/A',
+            'Equipo GPS': equipment?.imei || 'Sin equipo',
+            'Última Ubicación': equipment?.last_seen ? formatDate(equipment.last_seen) : 'N/A',
+            Latitud: equipment?.lat || 'N/A',
+            Longitud: equipment?.lng || 'N/A',
+            'Fecha Creación': formatDate(asset.created_at),
+          };
+        });
+        filename = `Reporte_Activos_${isLite ? 'Lite' : 'Pro'}`;
         break;
 
       case 'geofences':
-        csvData = filteredData.map((geo: any) => ({
-          Nombre: geo.name,
-          Descripción: geo.description || 'Sin descripción',
-          Tipo: geo.geom_type || 'N/A',
-          Cliente: clients.find(c => c.id === geo.client_id)?.company_name || 'Sin asignar',
-          'Fecha Creación': formatDate(geo.created_at),
-        }));
-        filename = 'Reporte_Geocercas';
+        csvData = filteredData.map((geo: any) => {
+          const client = clients.find(c => c.id === geo.client_id);
+
+          if (isLite) {
+            return {
+              Nombre: geo.name,
+              Tipo: geo.geom_type || 'N/A',
+              Cliente: client?.company_name || 'Global',
+            };
+          }
+          return {
+            Nombre: geo.name,
+            Descripción: geo.description || 'Sin descripción',
+            Tipo: geo.geom_type || 'N/A',
+            'Es Global': geo.is_global ? 'Sí' : 'No',
+            Cliente: client?.company_name || 'Global',
+            'Límite Velocidad': geo.speed_limit ? `${geo.speed_limit} km/h` : 'Sin límite',
+            'Fecha Creación': formatDate(geo.created_at),
+          };
+        });
+        filename = `Reporte_Geocercas_${isLite ? 'Lite' : 'Pro'}`;
         break;
 
       case 'clients':
-        csvData = filteredData.map((client: any) => ({
-          'Nombre Empresa': client.company_name,
-          'Contacto': client.contact_name,
-          'Email': client.email,
-          'Teléfono': client.contact_phone,
-          'Estado': client.status === 'active' ? 'Activo' : 'Suspendido',
-          'Fecha Alta': formatDate(client.created_at),
-        }));
-        filename = 'Reporte_Clientes';
+        csvData = filteredData.map((client: any) => {
+          const clientEquipments = equipments.filter(eq => eq.client_id === client.id);
+          const clientAssets = assets.filter(a => a.client_id === client.id);
+          const clientUsers = users.filter(u => u.client_id === client.id);
+
+          if (isLite) {
+            return {
+              'Empresa': client.company_name,
+              'Contacto': client.contact_name,
+              'Estado': client.status === 'active' ? 'Activo' : 'Suspendido',
+            };
+          }
+          return {
+            'Empresa': client.company_name,
+            'Contacto': client.contact_name,
+            'Email': client.email,
+            'Teléfono': client.contact_phone,
+            'Dirección': client.address || 'N/A',
+            'Estado': client.status === 'active' ? 'Activo' : 'Suspendido',
+            'Total Equipos': clientEquipments.length,
+            'Equipos Activos': clientEquipments.filter(eq => eq.status === 'active').length,
+            'Total Activos': clientAssets.length,
+            'Total Usuarios': clientUsers.length,
+            'Fecha Alta': formatDate(client.created_at),
+          };
+        });
+        filename = `Reporte_Clientes_${isLite ? 'Lite' : 'Pro'}`;
         break;
 
       case 'users':
-        csvData = filteredData.map((user: any) => ({
-          Nombre: user.name,
-          Usuario: user.username,
-          Email: user.email || 'N/A',
-          Rol: user.role,
-          Cliente: clients.find(c => c.id === user.client_id)?.company_name || 'Sin cliente',
-          'Fecha Creación': formatDate(user.created_at),
-        }));
-        filename = 'Reporte_Usuarios';
+        csvData = filteredData.map((u: any) => {
+          const client = clients.find(c => c.id === u.client_id);
+
+          if (isLite) {
+            return {
+              Nombre: u.name,
+              Rol: u.role,
+              Cliente: client?.company_name || 'Sin cliente',
+            };
+          }
+          return {
+            Nombre: u.name,
+            Usuario: u.username,
+            Email: u.email || 'N/A',
+            Rol: u.role,
+            Cliente: client?.company_name || 'Sin cliente',
+            'Empresa Cliente': client?.company_name || 'N/A',
+            'Último Acceso': u.last_login ? formatDate(u.last_login) : 'Nunca',
+            'Fecha Creación': formatDate(u.created_at),
+          };
+        });
+        filename = `Reporte_Usuarios_${isLite ? 'Lite' : 'Pro'}`;
         break;
 
       case 'notifications':
-        csvData = filteredData.map((notif: any) => ({
-          Título: notif.title,
-          Descripción: notif.description,
-          Prioridad: notif.priority,
-          Equipo: notif.equipment_id || 'N/A',
-          'Recurso': notif.resource_name || 'N/A',
-          'Fecha': formatDate(notif.ts),
-        }));
-        filename = 'Reporte_Notificaciones';
+        csvData = filteredData.map((notif: any) => {
+          const equipment = equipments.find(eq => eq.id === notif.equipment_id);
+          const asset = equipment ? assets.find(a => a.id === equipment.asset_id) : null;
+
+          if (isLite) {
+            return {
+              Título: notif.title,
+              Prioridad: notif.priority,
+              Fecha: formatDate(notif.ts),
+            };
+          }
+          return {
+            Título: notif.title,
+            Descripción: notif.description,
+            Prioridad: notif.priority,
+            'Equipo IMEI': equipment?.imei || 'N/A',
+            'Activo': asset?.name || 'N/A',
+            'Recurso': notif.resource_name || 'N/A',
+            'Tipo': notif.type || 'N/A',
+            'Latitud': notif.lat || 'N/A',
+            'Longitud': notif.lng || 'N/A',
+            'Fecha': formatDate(notif.ts),
+          };
+        });
+        filename = `Reporte_Notificaciones_${isLite ? 'Lite' : 'Pro'}`;
         break;
     }
 
     const dateRange = startDate && endDate ? `${startDate}_${endDate}` : 'todos';
-    exportToCSV(csvData, `${filename}_${dateRange}`);
-    toast.success(`Reporte exportado exitosamente: ${csvData.length} registros`);
+    const fullFilename = `${filename}_${dateRange}`;
+    const reportTitle = `${reportTypes.find(r => r.id === selectedReport)?.title || 'Reporte'} (${isLite ? 'Resumen' : 'Completo'})`;
+
+    // Para modo Pro con CSV, usar Excel con múltiples hojas
+    if (!isLite && exportFormat === 'csv') {
+      // En modo Pro exportamos Excel con la hoja principal y hojas relacionadas
+      const sheets = [{ sheetName: 'Reporte Principal', data: csvData }];
+
+      // Agregar hojas adicionales según el tipo de reporte
+      if (selectedReport === 'equipments') {
+        const relatedNotifs = notifications.filter(n =>
+          filteredData.some((eq: any) => eq.id === n.equipment_id)
+        ).map(n => ({
+          Fecha: formatDate(n.ts),
+          Título: n.title,
+          Descripción: n.description,
+          Prioridad: n.priority,
+          'Equipo': equipments.find(eq => eq.id === n.equipment_id)?.imei || 'N/A',
+        }));
+        if (relatedNotifs.length > 0) {
+          sheets.push({ sheetName: 'Notificaciones', data: relatedNotifs });
+        }
+      }
+
+      exportToExcel(sheets, fullFilename);
+      toast.success(`Reporte Pro exportado: ${csvData.length} registros en Excel`);
+      return;
+    }
+
+    if (exportFormat === 'csv') {
+      exportToCSV(csvData, fullFilename);
+    } else {
+      exportToPDF(csvData, fullFilename, reportTitle);
+    }
+    toast.success(`Reporte ${isLite ? 'Lite' : 'Pro'} exportado: ${csvData.length} registros`);
   };
 
   const handleComprehensiveClientReport = () => {
@@ -606,8 +889,40 @@ export function ReportsPage() {
             </div>
           )}
 
+          {/* Export Mode */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Shield className="w-4 h-4 inline mr-1" />
+              Modo
+            </label>
+            <select
+              value={exportMode}
+              onChange={(e) => setExportMode(e.target.value as ExportMode)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="lite">Lite (Resumen)</option>
+              <option value="pro">Pro (Completo)</option>
+            </select>
+          </div>
+
+          {/* Export Format */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FileText className="w-4 h-4 inline mr-1" />
+              Formato
+            </label>
+            <select
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="csv">{exportMode === 'pro' ? 'Excel (múltiples hojas)' : 'CSV'}</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+
           {/* Action Buttons */}
-          <div className="md:col-span-2 flex items-end gap-3">
+          <div className={`${selectedClientId ? 'md:col-span-2' : ''} flex items-end gap-3`}>
             <Button
               variant="outline"
               onClick={handleClearFilters}
@@ -622,9 +937,19 @@ export function ReportsPage() {
               variant="primary"
               onClick={handleExport}
               className="flex-1"
+              disabled={isExporting}
             >
-              <Download className="w-4 h-4" />
-              {selectedClientId ? 'Descargar Reporte Completo (Excel)' : 'Descargar Reporte CSV'}
+              {isExporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generando... {exportProgress.current}/{exportProgress.total}
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Descargar {exportMode === 'pro' ? 'Pro' : 'Lite'} ({exportMode === 'pro' && exportFormat === 'csv' ? 'Excel' : exportFormat.toUpperCase()})
+                </>
+              )}
             </Button>
           </div>
         </div>

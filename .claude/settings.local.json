@@ -15,7 +15,10 @@
       "Bash(npx eslint:*)",
       "Bash(node -c:*)",
       "Bash(git push)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
