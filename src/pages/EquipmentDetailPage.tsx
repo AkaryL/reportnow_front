@@ -26,6 +26,8 @@ import {
   Zap,
   Hexagon,
   Smartphone,
+  BarChart3,
+  Route,
   Power,
   Car,
   CircleStop,
@@ -35,6 +37,23 @@ import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import type { Equipment } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
 import { geofencesApi } from '../features/geofences/api';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+} from 'recharts';
 import 'leaflet/dist/leaflet.css';
 
 export function EquipmentDetailPage() {
@@ -45,11 +64,22 @@ export function EquipmentDetailPage() {
   // Estados para filtros de fecha/hora
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-  const [startDate, setStartDate] = useState(todayStr);
-  const [endDate, setEndDate] = useState(todayStr);
+
+  // Calcular ayer y antier
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  const dayBeforeYesterday = new Date(today);
+  dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+  const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0];
+
+  const [startDate, setStartDate] = useState(dayBeforeYesterdayStr);
+  const [endDate, setEndDate] = useState(yesterdayStr);
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const [showGeofences, setShowGeofences] = useState(false);
+  const [activeTab, setActiveTab] = useState<'historial' | 'estadisticas'>('historial');
 
   // Obtener el equipo específico
   const { data: equipment, isLoading: isLoadingEquipment } = useQuery({
@@ -397,7 +427,34 @@ export function EquipmentDetailPage() {
         </Card>
       </div>
 
-      {/* Mapa y Filtros */}
+      {/* Tabs de navegación */}
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('historial')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'historial'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+        >
+          <Route className="w-4 h-4" />
+          Historial de Recorrido
+        </button>
+        <button
+          onClick={() => setActiveTab('estadisticas')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'estadisticas'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Estadísticas
+        </button>
+      </div>
+
+      {/* Tab: Historial de Recorrido */}
+      {activeTab === 'historial' && (
       <Card>
         <CardHeader className="p-6 border-b">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -817,8 +874,337 @@ export function EquipmentDetailPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Información detallada del equipo */}
+      {/* Tab: Estadísticas */}
+      {activeTab === 'estadisticas' && (
+      <Card>
+        <CardHeader className="p-6 border-b">
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            Estadísticas del Equipo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          {/* Filtros de Fecha para estadísticas */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Período de análisis</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Inicio</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  max={todayStr}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Hora Inicio</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Fin</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  max={todayStr}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Hora Fin</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+          </div>
+
+          {isLoadingRoutes ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Estadísticas principales */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-blue-600">{routes.length > 0 ? routeStats.totalPoints : 245}</p>
+                  <p className="text-sm text-blue-700 mt-1">Puntos registrados</p>
+                </div>
+                <div className="bg-red-50 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-red-600">{routes.length > 0 ? routeStats.maxSpeed.toFixed(0) : 78}</p>
+                  <p className="text-sm text-red-700 mt-1">Vel. máxima (km/h)</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-green-600">{routes.length > 0 ? routeStats.avgSpeed.toFixed(0) : 42}</p>
+                  <p className="text-sm text-green-700 mt-1">Vel. promedio (km/h)</p>
+                </div>
+                <div className="bg-gray-100 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-gray-600">{routes.length > 0 ? routeStats.stoppedPoints : 38}</p>
+                  <p className="text-sm text-gray-700 mt-1">Puntos detenido</p>
+                </div>
+              </div>
+
+              {/* Gráfico de Velocidad en el Tiempo */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-gray-600" />
+                  Velocidad en el Tiempo
+                </h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={routes.length > 0
+                        ? routes.filter((_, i) => i % Math.max(1, Math.floor(routes.length / 100)) === 0).map((point) => ({
+                            time: format(new Date(point.recv_time), 'HH:mm', { locale: es }),
+                            velocidad: point.speed_kph || 0,
+                          }))
+                        : [
+                            { time: '08:00', velocidad: 0 },
+                            { time: '08:30', velocidad: 25 },
+                            { time: '09:00', velocidad: 45 },
+                            { time: '09:30', velocidad: 62 },
+                            { time: '10:00', velocidad: 55 },
+                            { time: '10:30', velocidad: 38 },
+                            { time: '11:00', velocidad: 0 },
+                            { time: '11:30', velocidad: 0 },
+                            { time: '12:00', velocidad: 42 },
+                            { time: '12:30', velocidad: 58 },
+                            { time: '13:00', velocidad: 72 },
+                            { time: '13:30', velocidad: 65 },
+                            { time: '14:00', velocidad: 48 },
+                            { time: '14:30', velocidad: 35 },
+                            { time: '15:00', velocidad: 0 },
+                            { time: '15:30', velocidad: 28 },
+                            { time: '16:00', velocidad: 52 },
+                            { time: '16:30', velocidad: 78 },
+                            { time: '17:00', velocidad: 45 },
+                            { time: '17:30', velocidad: 0 },
+                          ]
+                      }
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorSpeed" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="time" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" unit=" km/h" />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                        formatter={(value: number) => [`${value.toFixed(0)} km/h`, 'Velocidad']}
+                      />
+                      <Area type="monotone" dataKey="velocidad" stroke="#3b82f6" fillOpacity={1} fill="url(#colorSpeed)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Gráficos de Distribución */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gráfico de Barras - Distribución de Velocidad */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución de Velocidad</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={routes.length > 0
+                          ? [
+                              { name: 'Detenido', value: routes.filter(p => !p.speed_kph || p.speed_kph === 0).length, fill: '#6b7280' },
+                              { name: '1-30', value: routes.filter(p => p.speed_kph && p.speed_kph > 0 && p.speed_kph <= 30).length, fill: '#0ea5e9' },
+                              { name: '31-60', value: routes.filter(p => p.speed_kph && p.speed_kph > 30 && p.speed_kph <= 60).length, fill: '#10b981' },
+                              { name: '61-80', value: routes.filter(p => p.speed_kph && p.speed_kph > 60 && p.speed_kph <= 80).length, fill: '#f59e0b' },
+                              { name: '>80', value: routes.filter(p => p.speed_kph && p.speed_kph > 80).length, fill: '#ef4444' },
+                            ]
+                          : [
+                              { name: 'Detenido', value: 38, fill: '#6b7280' },
+                              { name: '1-30', value: 52, fill: '#0ea5e9' },
+                              { name: '31-60', value: 89, fill: '#10b981' },
+                              { name: '61-80', value: 48, fill: '#f59e0b' },
+                              { name: '>80', value: 18, fill: '#ef4444' },
+                            ]
+                        }
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                        <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          formatter={(value: number) => [`${value} puntos`, 'Cantidad']}
+                        />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {[
+                            { name: 'Detenido', fill: '#6b7280' },
+                            { name: '1-30', fill: '#0ea5e9' },
+                            { name: '31-60', fill: '#10b981' },
+                            { name: '61-80', fill: '#f59e0b' },
+                            { name: '>80', fill: '#ef4444' },
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-2">Velocidad en km/h</p>
+                </div>
+
+                {/* Gráfico de Pie - Estado de Movimiento */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado de Movimiento</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={routes.length > 0
+                            ? [
+                                { name: 'En movimiento', value: routes.filter(p => p.speed_kph && p.speed_kph > 0).length, fill: '#10b981' },
+                                { name: 'Detenido', value: routes.filter(p => !p.speed_kph || p.speed_kph === 0).length, fill: '#6b7280' },
+                              ]
+                            : [
+                                { name: 'En movimiento', value: 207, fill: '#10b981' },
+                                { name: 'Detenido', value: 38, fill: '#6b7280' },
+                              ]
+                          }
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          <Cell fill="#10b981" />
+                          <Cell fill="#6b7280" />
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          formatter={(value: number) => [`${value} puntos`, 'Cantidad']}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Análisis de velocidad detallado */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Gauge className="w-5 h-5 text-gray-600" />
+                  Análisis Detallado
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Puntos en movimiento</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 0).length : 207}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {routes.length > 0
+                        ? ((routes.filter(p => p.speed_kph && p.speed_kph > 0).length / routes.length) * 100).toFixed(1)
+                        : '84.5'}%
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Exceso de velocidad</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 60).length : 66}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {routes.length > 0
+                        ? ((routes.filter(p => p.speed_kph && p.speed_kph > 60).length / routes.length) * 100).toFixed(1)
+                        : '26.9'}%
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Alta velocidad (&gt;80)</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 80).length : 18}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {routes.length > 0
+                        ? ((routes.filter(p => p.speed_kph && p.speed_kph > 80).length / routes.length) * 100).toFixed(1)
+                        : '7.3'}%
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Tiempo detenido</p>
+                    <p className="text-2xl font-bold text-gray-600">
+                      {routes.length > 0 ? routeStats.stoppedPoints : 38}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {routes.length > 0
+                        ? ((routeStats.stoppedPoints / routes.length) * 100).toFixed(1)
+                        : '15.5'}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información del período */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-gray-600" />
+                  Información del Período
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-500">Primer registro</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {routes.length > 0
+                        ? format(new Date(routes[0].recv_time), "dd/MM/yyyy HH:mm:ss", { locale: es })
+                        : format(new Date(dayBeforeYesterdayStr + 'T08:00:00'), "dd/MM/yyyy HH:mm:ss", { locale: es })}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-500">Último registro</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {routes.length > 0
+                        ? format(new Date(routes[routes.length - 1].recv_time), "dd/MM/yyyy HH:mm:ss", { locale: es })
+                        : format(new Date(yesterdayStr + 'T17:30:00'), "dd/MM/yyyy HH:mm:ss", { locale: es })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {routes.length === 0 && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 text-center">
+                    Mostrando datos de ejemplo. Selecciona un período con datos reales del equipo para ver estadísticas actuales.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      )}
+
+      {/* Sección: Información detallada del equipo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Información del equipo */}
         <Card>
