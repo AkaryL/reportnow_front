@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { vehiclesApi } from '../features/vehicles/api';
 import { geofencesApi } from '../features/geofences/api';
 import { clientsApi } from '../features/clients/api';
 import { notificationsApi } from '../features/notifications/api';
-import { QUERY_KEYS } from '../lib/constants';
+import { QUERY_KEYS, VEHICLE_LAST_STATUS_CONFIG } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
 import { Input } from '../components/ui/Input';
@@ -21,12 +21,13 @@ import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../componen
 import { GeofenceModal } from '../components/Geofence/GeofenceModal';
 import { Modal } from '../components/ui/Modal';
 import { Topbar } from '../components/Topbar';
-import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock, Radio, MessageSquare, Package, ShieldAlert } from 'lucide-react';
-import type { Vehicle, VehicleStatus } from '../lib/types';
+import { Activity, Truck, AlertTriangle, Gauge, Search, X, MapPin, Navigation, Bell, Clock, Radio, MessageSquare, Package, ShieldAlert, Power, Car, CircleStop, PowerOff } from 'lucide-react';
+import type { Vehicle, VehicleStatus, VehicleLastStatus } from '../lib/types';
 import { formatSpeed, formatRelativeTime } from '../lib/utils';
 import { VEHICLE_STATUS_CONFIG } from '../lib/constants';
 import { useAuth } from '../features/auth/hooks';
 import { useToast } from '../hooks/useToast';
+import { wsClient, type WSVehicleUpdate } from '../lib/websocketClient';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -91,32 +92,52 @@ export function HomePage() {
     ? vehicles.filter(v => String(v.clientId) === String(user.client_id))
     : vehicles;
 
-  // WebSocket connection for real-time updates - DISABLED to prevent auto-reload
-  // useEffect(() => {
-  //   if (!user) return;
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    if (!user) return;
 
-  //   wsClient.connect();
+    wsClient.connect();
 
-  //   const queryKey = user.role === 'client' ? ['user-vehicles', user.id] : QUERY_KEYS.VEHICLES;
+    // Handler para actualizaciones de vehículos - actualiza solo el vehículo que cambió
+    const handleVehicleUpdate = (data: WSVehicleUpdate) => {
+      console.log('[WS] Vehicle updated:', data);
 
-  //   wsClient.on('vehicle:updated', () => {
-  //     queryClient.invalidateQueries({ queryKey });
-  //   });
+      // Actualizar el cache de React Query sin invalidar toda la lista
+      queryClient.setQueryData<Vehicle[]>(QUERY_KEYS.VEHICLES, (oldVehicles) => {
+        if (!oldVehicles) return oldVehicles;
 
-  //   wsClient.on('vehicle:created', () => {
-  //     queryClient.invalidateQueries({ queryKey });
-  //   });
+        return oldVehicles.map((vehicle) => {
+          // Buscar por deviceId (que es el equipment.id)
+          if (vehicle.deviceId === data.id || vehicle.id === data.id) {
+            // Calcular nuevo status basado en last_status
+            let newStatus: VehicleStatus = vehicle.status;
+            if (data.last_status) {
+              if (data.last_status === 'moving') newStatus = 'moving';
+              else if (data.last_status === 'stopped' || data.last_status === 'engine_on') newStatus = 'stopped';
+              else if (data.last_status === 'engine_off') newStatus = 'offline';
+            }
 
-  //   wsClient.on('vehicle:deleted', () => {
-  //     queryClient.invalidateQueries({ queryKey });
-  //   });
+            return {
+              ...vehicle,
+              lat: data.lat ?? vehicle.lat,
+              lng: data.lng ?? vehicle.lng,
+              speed: data.speed ?? vehicle.speed,
+              status: newStatus,
+              lastSeenMin: 0, // Acaba de actualizar
+            };
+          }
+          return vehicle;
+        });
+      });
+    };
 
-  //   return () => {
-  //     wsClient.off('vehicle:updated');
-  //     wsClient.off('vehicle:created');
-  //     wsClient.off('vehicle:deleted');
-  //   };
-  // }, [queryClient, user]);
+    wsClient.on('vehicle:updated', handleVehicleUpdate);
+
+    return () => {
+      wsClient.off('vehicle:updated', handleVehicleUpdate);
+      wsClient.disconnect();
+    };
+  }, [queryClient, user]);
 
   // Calculate KPIs
   const kpis = [

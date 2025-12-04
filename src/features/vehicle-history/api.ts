@@ -16,6 +16,7 @@ export interface RoutePoint {
   ignition: boolean | null;
   satellites: number | null;
   course_deg: number | null;
+  status: 'engine_on' | 'moving' | 'stopped' | 'engine_off' | null;
   // Referencias al estado del equipo en el momento del registro
   equipment_id: string | null;
   client_id: string | null;

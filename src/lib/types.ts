@@ -77,6 +77,7 @@ export interface SIM {
 
 // ==================== Equipo (GPS Device) ====================
 export type EquipmentStatus = 'active' | 'inactive' | 'available';
+export type VehicleLastStatus = 'engine_on' | 'moving' | 'stopped' | 'engine_off';
 
 export interface Equipment {
   id: string;
@@ -91,6 +92,7 @@ export interface Equipment {
   sim_id: string; // SIM asignada (obligatorio)
   client_id?: string; // Cliente al que está asignado
   asset_id?: string; // Activo al que está asignado actualmente (null si no está asignado)
+  driver_id?: string; // Conductor asignado (solo para vehículos, mercancía o contenedores)
 
   // Estado
   status: EquipmentStatus; // Activo (asignable) o Inactivo (no asignable/oculto para cliente)
@@ -101,6 +103,7 @@ export interface Equipment {
   speed?: number; // km/h
   bearing?: number; // Dirección en grados (0-360)
   last_seen?: string; // ISO timestamp de última comunicación
+  last_status?: VehicleLastStatus; // Estado operativo del vehículo (engine_on, moving, stopped, engine_off)
 
   // Metadatos
   purchase_date?: string;
