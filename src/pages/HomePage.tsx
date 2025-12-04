@@ -1036,11 +1036,11 @@ export function HomePage() {
             <div className="space-y-3">
               <DrawerItemComponent
                 label="Latitud"
-                value={selectedVehicle.lat.toFixed(6)}
+                value={selectedVehicle.lat != null ? Number(selectedVehicle.lat).toFixed(6) : 'N/A'}
               />
               <DrawerItemComponent
                 label="Longitud"
-                value={selectedVehicle.lng.toFixed(6)}
+                value={selectedVehicle.lng != null ? Number(selectedVehicle.lng).toFixed(6) : 'N/A'}
               />
             </div>
           </DrawerSectionComponent>

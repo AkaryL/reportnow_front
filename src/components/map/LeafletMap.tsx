@@ -32,6 +32,7 @@ export function LeafletMap({
   const routeMarkersRef = useRef<L.Marker[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const initialFitDoneRef = useRef(false);
 
   // Initialize map once
   useEffect(() => {
@@ -59,6 +60,7 @@ export function LeafletMap({
       map.remove();
       mapRef.current = null;
       initializedRef.current = false;
+      initialFitDoneRef.current = false;
       markersRef.current.clear();
     };
   }, []);
@@ -145,10 +147,14 @@ export function LeafletMap({
       }
     });
 
-    // Fit bounds only on first load or when vehicle count changes significantly
-    if (vehicles.length > 0 && currentMarkers.size === vehicles.length) {
-      const bounds = L.latLngBounds(vehicles.map((v) => [v.lat, v.lng]));
-      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    // Fit bounds only on first load (not on updates to preserve user's zoom/position)
+    if (!initialFitDoneRef.current && vehicles.length > 0 && currentMarkers.size === vehicles.length) {
+      const validVehicles = vehicles.filter(v => v.lat && v.lng);
+      if (validVehicles.length > 0) {
+        const bounds = L.latLngBounds(validVehicles.map((v) => [v.lat, v.lng]));
+        mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        initialFitDoneRef.current = true;
+      }
     }
   }, [vehicles, onVehicleClick]);
 
