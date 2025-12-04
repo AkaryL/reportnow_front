@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, Circle, Polygon } from 'react-leaflet';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { equipmentsApi } from '../features/equipments/api';
@@ -22,7 +22,9 @@ import {
   Satellite,
   Calendar,
   Activity,
-  Zap
+  Zap,
+  Hexagon,
+  Smartphone
 } from 'lucide-react';
 import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import type { Equipment } from '../lib/types';
@@ -76,6 +78,15 @@ export function EquipmentDetailPage() {
     queryFn: geofencesApi.getAll,
   });
 
+  // Obtener SIMs
+  const { data: sims = [] } = useQuery({
+    queryKey: QUERY_KEYS.SIMS,
+    queryFn: async () => {
+      const { simsApi } = await import('../features/sims/api');
+      return simsApi.getAll();
+    },
+  });
+
   // Obtener historial de rutas del equipo
   const { data: routes = [], isLoading: isLoadingRoutes } = useQuery({
     queryKey: ['vehicle-history', 'routes', equipment?.imei, startDate, startTime, endDate, endTime],
@@ -107,6 +118,19 @@ export function EquipmentDetailPage() {
       other: 'Otro',
     };
     return labels[type] || type;
+  };
+
+  const getSimInfo = (simId?: string) => {
+    if (!simId) return null;
+    return sims.find((s) => s.id === simId);
+  };
+
+  const getGeofenceNames = (geofenceIds: string[] | null) => {
+    if (!geofenceIds || geofenceIds.length === 0) return [];
+    return geofenceIds
+      .map(id => geofences.find(gf => gf.id === id))
+      .filter(Boolean)
+      .map(gf => gf!.name);
   };
 
   // Calcular el centro del mapa
@@ -160,6 +184,7 @@ export function EquipmentDetailPage() {
   }
 
   const asset = getAssetInfo(equipment.asset_id);
+  const sim = getSimInfo(equipment.sim_id);
 
   return (
     <div className="space-y-6 pb-8">
@@ -191,7 +216,7 @@ export function EquipmentDetailPage() {
       </Card>
 
       {/* Info Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Cliente */}
         <Card className="p-4">
           <div className="flex items-start gap-3">
@@ -222,6 +247,26 @@ export function EquipmentDetailPage() {
                 </div>
               ) : (
                 <p className="text-lg font-semibold text-gray-400 mt-1">Sin activo</p>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* SIM */}
+        <Card className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Smartphone className="w-5 h-5 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium text-gray-500 uppercase">SIM Asignada</p>
+              {sim ? (
+                <div className="mt-1">
+                  <p className="text-lg font-semibold text-gray-900">{sim.phone_number}</p>
+                  <p className="text-sm text-gray-500">{sim.carrier}</p>
+                </div>
+              ) : (
+                <p className="text-lg font-semibold text-gray-400 mt-1">Sin SIM</p>
               )}
             </div>
           </div>
@@ -390,7 +435,7 @@ export function EquipmentDetailPage() {
                       fillOpacity={0.9}
                     >
                       <Popup>
-                        <div className="min-w-[220px] p-2">
+                        <div className="min-w-[260px] p-2">
                           <div className="mb-3 pb-2 border-b border-gray-200">
                             <div className="font-bold text-gray-900">
                               {isFirst ? '🟢 Inicio del recorrido' : isLast ? '🔴 Fin del recorrido' : '📍 Punto de ruta'}
@@ -419,6 +464,11 @@ export function EquipmentDetailPage() {
                                   ? `${Math.round(point.speed_kph)} km/h`
                                   : 'Sin datos'}
                               </span>
+                              {point.course_deg !== null && (
+                                <span className="text-xs text-gray-500">
+                                  ({Math.round(point.course_deg)}°)
+                                </span>
+                              )}
                             </div>
 
                             {point.satellites !== null && (
@@ -436,11 +486,45 @@ export function EquipmentDetailPage() {
                             </div>
 
                             {point.ignition !== null && (
-                              <div className="mt-2 flex items-center gap-2 p-2 rounded bg-gray-50">
+                              <div className="flex items-center gap-2 p-2 rounded bg-gray-50">
                                 <Zap className={`h-4 w-4 ${point.ignition ? 'text-green-500' : 'text-gray-400'}`} />
                                 <span className="text-sm">
                                   Motor: {point.ignition ? '✓ Encendido' : '✗ Apagado'}
                                 </span>
+                              </div>
+                            )}
+
+                            {/* Geocercas donde estaba el punto */}
+                            {point.geofences_in && point.geofences_in.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <div className="flex items-start gap-2">
+                                  <Hexagon className="h-4 w-4 text-purple-500 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs font-medium text-purple-700">Dentro de geocerca(s):</div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {getGeofenceNames(point.geofences_in).map((name, i) => (
+                                        <span key={i} className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                                          {name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Info del activo en ese momento */}
+                            {point.asset_id && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <div className="flex items-center gap-2">
+                                  <Box className="h-4 w-4 text-blue-500" />
+                                  <div>
+                                    <div className="text-xs text-gray-500">Activo asignado:</div>
+                                    <div className="text-sm font-medium text-gray-800">
+                                      {getAssetInfo(point.asset_id)?.name || 'Desconocido'}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -452,26 +536,57 @@ export function EquipmentDetailPage() {
 
                 {/* Geocercas */}
                 {showGeofences && geofences.map((geofence) => {
+                  // Geocerca circular (por dirección/pin)
                   if (geofence.center_lat && geofence.center_lng && geofence.radius) {
-                    // Geocerca circular
                     return (
-                      <CircleMarker
+                      <Circle
                         key={geofence.id}
-                        center={[geofence.center_lat, geofence.center_lng]}
-                        radius={20}
-                        fillColor={geofence.color || '#3b82f6'}
-                        color={geofence.color || '#3b82f6'}
-                        weight={2}
-                        opacity={0.6}
-                        fillOpacity={0.2}
+                        center={[Number(geofence.center_lat), Number(geofence.center_lng)]}
+                        radius={Number(geofence.radius)}
+                        pathOptions={{
+                          fillColor: geofence.color || '#3b82f6',
+                          color: geofence.color || '#3b82f6',
+                          weight: 2,
+                          opacity: 0.8,
+                          fillOpacity: 0.2
+                        }}
                       >
                         <Popup>
                           <div className="font-medium">{geofence.name}</div>
                           <div className="text-sm text-gray-500">Radio: {geofence.radius}m</div>
                         </Popup>
-                      </CircleMarker>
+                      </Circle>
                     );
                   }
+
+                  // Geocerca poligonal (por coordenadas)
+                  if (geofence.polygon_coordinates && Array.isArray(geofence.polygon_coordinates) && geofence.polygon_coordinates.length >= 3) {
+                    // polygon_coordinates viene como [[lng, lat], [lng, lat], ...]
+                    // Leaflet necesita [[lat, lng], [lat, lng], ...]
+                    const positions: [number, number][] = geofence.polygon_coordinates.map(
+                      (coord: number[]) => [coord[1], coord[0]] as [number, number]
+                    );
+
+                    return (
+                      <Polygon
+                        key={geofence.id}
+                        positions={positions}
+                        pathOptions={{
+                          fillColor: geofence.color || '#3b82f6',
+                          color: geofence.color || '#3b82f6',
+                          weight: 2,
+                          opacity: 0.8,
+                          fillOpacity: 0.2
+                        }}
+                      >
+                        <Popup>
+                          <div className="font-medium">{geofence.name}</div>
+                          <div className="text-sm text-gray-500">Polígono ({geofence.polygon_coordinates.length} puntos)</div>
+                        </Popup>
+                      </Polygon>
+                    );
+                  }
+
                   return null;
                 })}
               </MapContainer>
@@ -574,28 +689,28 @@ export function EquipmentDetailPage() {
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-500">Latitud</span>
                 <span className="font-mono font-semibold text-gray-900">
-                  {equipment.lat?.toFixed(6) || 'N/A'}
+                  {equipment.lat != null ? Number(equipment.lat).toFixed(6) : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-500">Longitud</span>
                 <span className="font-mono font-semibold text-gray-900">
-                  {equipment.lng?.toFixed(6) || 'N/A'}
+                  {equipment.lng != null ? Number(equipment.lng).toFixed(6) : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-500">Velocidad</span>
                 <span className="font-semibold text-gray-900">
-                  {equipment.speed !== undefined && equipment.speed !== null
-                    ? formatSpeed(equipment.speed)
+                  {equipment.speed != null
+                    ? formatSpeed(Number(equipment.speed))
                     : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-500">Dirección</span>
                 <span className="font-semibold text-gray-900">
-                  {equipment.bearing !== undefined && equipment.bearing !== null
-                    ? `${equipment.bearing}°`
+                  {equipment.bearing != null
+                    ? `${Number(equipment.bearing).toFixed(0)}°`
                     : 'N/A'}
                 </span>
               </div>

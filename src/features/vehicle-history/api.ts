@@ -15,6 +15,14 @@ export interface RoutePoint {
   fix_time: string;
   ignition: boolean | null;
   satellites: number | null;
+  course_deg: number | null;
+  // Referencias al estado del equipo en el momento del registro
+  equipment_id: string | null;
+  client_id: string | null;
+  asset_id: string | null;
+  sim_id: string | null;
+  // Geocercas en las que estaba el punto
+  geofences_in: string[] | null;
 }
 
 export interface VehicleHistoryPoint {
@@ -37,6 +45,13 @@ export interface VehicleHistoryPoint {
   status: string | null;
   raw_hex: string | null;
   extras: Record<string, any> | null;
+  // Referencias al estado del equipo en el momento del registro
+  equipment_id: string | null;
+  client_id: string | null;
+  asset_id: string | null;
+  sim_id: string | null;
+  // Geocercas en las que estaba el punto
+  geofences_in: string[] | null;
 }
 
 export const vehicleHistoryApi = {
