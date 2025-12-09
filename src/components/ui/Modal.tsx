@@ -71,20 +71,20 @@ export function Modal({
       {/* Modal Content */}
       <div
         className={cn(
-          'relative bg-white rounded-xl shadow-medium max-h-[90vh] w-full overflow-hidden flex flex-col z-[9999]',
+          'relative bg-white dark:bg-gray-800 rounded-xl shadow-medium max-h-[90vh] w-full overflow-hidden flex flex-col z-[9999]',
           sizeStyles[size],
           className
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-app-border">
-            <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
+          <div className="flex items-center justify-between p-6 border-b border-app-border dark:border-gray-700">
+            <h2 id="modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               aria-label="Cerrar modal"
             >
               <X className="w-5 h-5" />
@@ -108,7 +108,7 @@ export function ModalFooter({ children, className }: ModalFooterProps) {
   return (
     <div
       className={cn(
-        'flex items-center justify-end gap-3 p-6 border-t border-app-border',
+        'flex items-center justify-end gap-3 p-6 border-t border-app-border dark:border-gray-700',
         className
       )}
     >

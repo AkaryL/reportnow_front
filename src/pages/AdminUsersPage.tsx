@@ -17,15 +17,15 @@ import type { User as UserType } from '../lib/types';
 const ROLE_LABELS: Record<string, string> = {
   superuser: 'Superusuario',
   admin: 'Administrador Cliente',
-  'operator-admin': 'Operador Admin',
-  'operator-monitor': 'Operador Monitor',
+  'operator_admin': 'Operador Admin',
+  'operator_monitor': 'Operador Monitor',
 };
 
 const ROLE_COLORS: Record<string, string> = {
   superuser: 'bg-purple-100 text-purple-700',
   admin: 'bg-blue-100 text-blue-700',
-  'operator-admin': 'bg-green-100 text-green-700',
-  'operator-monitor': 'bg-yellow-100 text-yellow-700',
+  'operator_admin': 'bg-green-100 text-green-700',
+  'operator_monitor': 'bg-yellow-100 text-yellow-700',
 };
 
 export function AdminUsersPage() {
@@ -105,7 +105,7 @@ export function AdminUsersPage() {
     total: usersForStats.length,
     superusers: usersForStats.filter(u => u.role === 'superuser').length,
     admins: usersForStats.filter(u => u.role === 'admin').length,
-    operators: usersForStats.filter(u => u.role === 'operator-admin' || u.role === 'operator-monitor').length,
+    operators: usersForStats.filter(u => u.role === 'operator_admin' || u.role === 'operator_monitor').length,
   };
 
   if (isLoading) {
@@ -198,8 +198,8 @@ export function AdminUsersPage() {
               <option value="all">Todos los roles</option>
               <option value="superuser">Superusuarios</option>
               <option value="admin">Administradores Cliente</option>
-              <option value="operator-admin">Operadores Admin</option>
-              <option value="operator-monitor">Operadores Monitor</option>
+              <option value="operator_admin">Operadores Admin</option>
+              <option value="operator_monitor">Operadores Monitor</option>
             </select>
           </div>
         </div>

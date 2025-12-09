@@ -9,7 +9,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2, Radio, Users, Info, Search, Filter, LogIn } from 'lucide-react';
+import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2, Radio, Users, Info, Search, Filter, LogIn, Download } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
 import { formatDate } from '../lib/utils';
 import { ClientFormModal } from '../components/clients/ClientFormModal';
 import type { Client } from '../lib/types';
@@ -181,7 +182,7 @@ export function ClientsPage() {
   // Helper para contar operadores del cliente
   const getClientOperatorsCount = (clientId: string) => {
     return users.filter(
-      (u) => u.client_id === clientId && (u.role === 'operator-admin' || u.role === 'operator-monitor')
+      (u) => u.client_id === clientId && (u.role === 'operator_admin' || u.role === 'operator_monitor')
     ).length;
   };
 
@@ -216,15 +217,43 @@ export function ClientsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Clientes</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Gestión de clientes y asignaciones • {filteredClients.length} de {clients.length} clientes
           </p>
         </div>
-        <Button variant="primary" onClick={handleCreateClient}>
-          <Plus className="w-4 h-4" />
-          Nuevo Cliente
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => generateListPDF({
+              title: 'Lista de Clientes',
+              subtitle: `${filteredClients.length} clientes encontrados`,
+              columns: [
+                { header: 'Empresa', key: 'company' },
+                { header: 'Contacto', key: 'contact' },
+                { header: 'Email', key: 'email' },
+                { header: 'Telefono', key: 'phone' },
+                { header: 'Estado', key: 'status' },
+              ],
+              data: filteredClients.map(c => ({
+                company: c.company_name,
+                contact: c.contact_name,
+                email: c.email,
+                phone: c.phone || '-',
+                status: c.status === 'active' ? 'Activo' : 'Suspendido',
+              })),
+              filename: 'clientes',
+              filters: statusFilter !== 'all' ? [{ label: 'Estado', value: statusFilter }] : undefined,
+            })}
+          >
+            <Download className="w-4 h-4" />
+            PDF
+          </Button>
+          <Button variant="primary" onClick={handleCreateClient}>
+            <Plus className="w-4 h-4" />
+            Nuevo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Filtros y búsqueda */}
@@ -239,13 +268,13 @@ export function ClientsPage() {
                 placeholder="Buscar por nombre, empresa, email o teléfono..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
 
             {/* Filtros de estatus */}
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-600" />
+              <Filter className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               <div className="flex gap-2">
                 <Button
                   variant={statusFilter === 'all' ? 'primary' : 'outline'}
@@ -279,6 +308,7 @@ export function ClientsPage() {
           <CardTitle>Lista de clientes</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -334,29 +364,29 @@ export function ClientsPage() {
                   <TableRow key={client.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                          <Building2 className="w-5 h-5 text-primary-600" />
+                        <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         </div>
                         <div>
                           <button
                             onClick={() => handleViewClient(client.id)}
-                            className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-left"
+                            className="font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left"
                           >
                             {client.company_name}
                           </button>
-                          <p className="text-sm text-gray-500">{client.contact_name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{client.contact_name}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{client.email}</span>
+                          <Mail className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          <span className="text-gray-600 dark:text-gray-400">{client.email}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
-                          <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{client.contact_phone}</span>
+                          <Phone className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          <span className="text-gray-600 dark:text-gray-400">{client.contact_phone}</span>
                         </div>
                       </div>
                     </TableCell>
@@ -367,21 +397,21 @@ export function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Radio className="w-4 h-4 text-gray-400" />
+                        <Radio className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <div>
                           {equipmentStats.total === 0 ? (
-                            <span className="text-sm text-gray-400">Sin equipos</span>
+                            <span className="text-sm text-gray-400 dark:text-gray-500">Sin equipos</span>
                           ) : (
                             <div className="flex flex-col gap-0.5">
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
                                 {equipmentStats.total} {equipmentStats.total === 1 ? 'equipo' : 'equipos'}
                               </span>
                               {equipmentStats.inactive > 0 ? (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
                                   {equipmentStats.active} activos, {equipmentStats.inactive} inactivos
                                 </span>
                               ) : (
-                                <span className="text-xs text-ok-600">
+                                <span className="text-xs text-ok-600 dark:text-ok-400">
                                   {equipmentStats.active} activos
                                 </span>
                               )}
@@ -392,13 +422,13 @@ export function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
+                        <Users className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
                           {operatorsCount} {operatorsCount === 1 ? 'operador' : 'operadores'}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                       {formatDate(client.created_at)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -444,6 +474,7 @@ export function ClientsPage() {
               })}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -453,11 +484,11 @@ export function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Clientes</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{clients.length}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clientes</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{clients.length}</p>
               </div>
-              <div className="bg-primary-100 p-3 rounded-lg">
-                <Building2 className="w-6 h-6 text-primary-600" />
+              <div className="bg-primary-100 dark:bg-primary-900/30 p-3 rounded-lg">
+                <Building2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </CardContent>
@@ -467,13 +498,13 @@ export function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Equipos asignados</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Equipos asignados</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {equipments.filter((e) => e.client_id).length}
                 </p>
               </div>
-              <div className="bg-ok-100 p-3 rounded-lg">
-                <Radio className="w-6 h-6 text-ok-700" />
+              <div className="bg-ok-100 dark:bg-ok-900/30 p-3 rounded-lg">
+                <Radio className="w-6 h-6 text-ok-700 dark:text-ok-400" />
               </div>
             </div>
           </CardContent>
@@ -483,13 +514,13 @@ export function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Operadores</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {users.filter((u) => u.role === 'operator-admin' || u.role === 'operator-monitor').length}
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Operadores</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  {users.filter((u) => u.role === 'operator_admin' || u.role === 'operator_monitor').length}
                 </p>
               </div>
-              <div className="bg-info-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-info-700" />
+              <div className="bg-info-100 dark:bg-info-900/30 p-3 rounded-lg">
+                <Users className="w-6 h-6 text-info-700 dark:text-info-400" />
               </div>
             </div>
           </CardContent>

@@ -22,7 +22,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
     username: '',
     password: '',
     name: '',
-    role: 'operator-monitor' as 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor',
+    role: 'operator_monitor' as 'superuser' | 'admin' | 'operator_admin' | 'operator_monitor',
     email: '',
     client_id: '',
   });
@@ -47,7 +47,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
         username: '',
         password: '',
         name: '',
-        role: 'operator-monitor',
+        role: 'operator_monitor',
         email: '',
         client_id: '',
       });
@@ -129,8 +129,8 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
-            <option value="operator-monitor">Operador Monitor (Solo lectura)</option>
-            <option value="operator-admin">Operador Administrador</option>
+            <option value="operator_monitor">Operador Monitor (Solo lectura)</option>
+            <option value="operator_admin">Operador Administrador</option>
             {currentUser?.role === 'superuser' && (
               <>
                 <option value="admin">Administrador (Cliente)</option>
@@ -140,7 +140,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
           </select>
         </div>
 
-        {(formData.role === 'admin' || formData.role === 'operator-admin' || formData.role === 'operator-monitor') && (
+        {(formData.role === 'admin' || formData.role === 'operator_admin' || formData.role === 'operator_monitor') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Cliente *
@@ -161,11 +161,11 @@ export function UserFormModal({ isOpen, onClose, onSubmit, user, isLoading }: Us
           </div>
         )}
 
-        {(formData.role === 'operator-admin' || formData.role === 'operator-monitor') && (
+        {(formData.role === 'operator_admin' || formData.role === 'operator_monitor') && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-800">
               <strong>Nota:</strong> Los operadores tendrán acceso a todos los equipos y activos asignados al cliente.
-              {formData.role === 'operator-monitor' && ' Los operadores monitor solo podrán visualizar la información, sin permisos de edición.'}
+              {formData.role === 'operator_monitor' && ' Los operadores monitor solo podrán visualizar la información, sin permisos de edición.'}
             </p>
           </div>
         )}

@@ -27,14 +27,14 @@ export function OperatorFormModal({
     username: string;
     password: string;
     phone: string;
-    role: 'operator-admin' | 'operator-monitor';
+    role: 'operator_admin' | 'operator_monitor';
   }>({
     name: '',
     email: '',
     username: '',
     password: '',
     phone: '',
-    role: 'operator-admin',
+    role: 'operator_admin',
   });
 
   useEffect(() => {
@@ -45,9 +45,9 @@ export function OperatorFormModal({
         username: operator.username,
         password: '',
         phone: operator.phone || '',
-        role: (operator.role === 'operator-admin' || operator.role === 'operator-monitor')
+        role: (operator.role === 'operator_admin' || operator.role === 'operator_monitor')
           ? operator.role
-          : 'operator-admin',
+          : 'operator_admin',
       });
     } else {
       setFormData({
@@ -56,7 +56,7 @@ export function OperatorFormModal({
         username: '',
         password: '',
         phone: '',
-        role: 'operator-admin',
+        role: 'operator_admin',
       });
     }
   }, [operator]);
@@ -160,14 +160,14 @@ export function OperatorFormModal({
             onChange={(e) =>
               setFormData({
                 ...formData,
-                role: e.target.value as 'operator-admin' | 'operator-monitor',
+                role: e.target.value as 'operator_admin' | 'operator_monitor',
               })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white"
             required
           >
-            <option value="operator-admin">Operador Administrador</option>
-            <option value="operator-monitor">Operador Monitor</option>
+            <option value="operator_admin">Operador Administrador</option>
+            <option value="operator_monitor">Operador Monitor</option>
           </select>
           <div className="mt-2 space-y-2">
             <div className="text-xs text-gray-600">

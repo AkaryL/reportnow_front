@@ -21,8 +21,8 @@ export const placesApi = {
 
     const user = getCurrentUser();
 
-    // Si es admin, operator-admin o operator-monitor, filtrar por su cliente + globales
-    if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
+    // Si es admin, operator_admin o operator_monitor, filtrar por su cliente + globales
+    if ((user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') && user?.client_id) {
       return places.filter(p => p.is_global || p.client_id === user.client_id);
     }
 
@@ -40,7 +40,7 @@ export const placesApi = {
     const user = getCurrentUser();
 
     // Verificar permisos
-    if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user?.client_id) {
+    if ((user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') && user?.client_id) {
       if (!place.is_global && place.client_id !== user.client_id) {
         return null;
       }
@@ -85,7 +85,7 @@ export const placesApi = {
     const user = getCurrentUser();
 
     // Operador monitor no puede crear
-    if (user?.role === 'operator-monitor') {
+    if (user?.role === 'operator_monitor') {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
@@ -95,7 +95,7 @@ export const placesApi = {
     }
 
     // Admin/operadores solo pueden crear en su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+    if ((user?.role === 'admin' || user?.role === 'operator_admin') && user?.client_id) {
       data.client_id = user.client_id;
       data.is_global = false;
     }
@@ -138,7 +138,7 @@ export const placesApi = {
     const place = places[index];
 
     // Operador monitor no puede actualizar
-    if (user?.role === 'operator-monitor') {
+    if (user?.role === 'operator_monitor') {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
@@ -148,7 +148,7 @@ export const placesApi = {
     }
 
     // Admin/operadores solo pueden actualizar lugares de su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+    if ((user?.role === 'admin' || user?.role === 'operator_admin') && user?.client_id) {
       if (!place.is_global && place.client_id !== user.client_id) {
         throw new Error('No tiene permiso para actualizar este lugar');
       }
@@ -184,7 +184,7 @@ export const placesApi = {
     const user = getCurrentUser();
 
     // Operador monitor no puede eliminar
-    if (user?.role === 'operator-monitor') {
+    if (user?.role === 'operator_monitor') {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
@@ -199,7 +199,7 @@ export const placesApi = {
     }
 
     // Admin/operadores solo pueden eliminar lugares de su cliente
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+    if ((user?.role === 'admin' || user?.role === 'operator_admin') && user?.client_id) {
       if (!place.is_global && place.client_id !== user.client_id) {
         throw new Error('No tiene permiso para eliminar este lugar');
       }
@@ -221,7 +221,7 @@ export const placesApi = {
     const place = places[index];
 
     // Operador monitor no puede cambiar estado
-    if (user?.role === 'operator-monitor') {
+    if (user?.role === 'operator_monitor') {
       throw new Error('Operador monitor no tiene permisos de escritura');
     }
 
@@ -230,7 +230,7 @@ export const placesApi = {
       throw new Error('Solo superuser puede cambiar el estado de lugares globales');
     }
 
-    if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+    if ((user?.role === 'admin' || user?.role === 'operator_admin') && user?.client_id) {
       if (!place.is_global && place.client_id !== user.client_id) {
         throw new Error('No tiene permiso para cambiar el estado de este lugar');
       }

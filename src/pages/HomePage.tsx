@@ -531,7 +531,7 @@ export function HomePage() {
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700'}`}>En movimiento</h3>
+              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>En movimiento</h3>
               <ButtonComponent
                 variant={isClient ? 'secondary' : 'outline'}
                 size="sm"
@@ -548,11 +548,11 @@ export function HomePage() {
             </div>
             <div>
               <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900'
+                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
               }`}>
                 {userVehicles.filter((v) => v.status === 'moving').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
+              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
                 Equipos transmitiendo posición
               </p>
             </div>
@@ -568,7 +568,7 @@ export function HomePage() {
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700'}`}>Detenidos</h3>
+              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>Detenidos</h3>
               <ButtonComponent
                 variant={isClient ? 'secondary' : 'outline'}
                 size="sm"
@@ -585,11 +585,11 @@ export function HomePage() {
             </div>
             <div>
               <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900'
+                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
               }`}>
                 {userVehicles.filter((v) => v.status === 'stopped').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
+              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
                 Última señal reciente, sin movimiento
               </p>
             </div>
@@ -605,7 +605,7 @@ export function HomePage() {
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700'}`}>Sin señal</h3>
+              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>Sin señal</h3>
               <ButtonComponent
                 variant={isClient ? 'secondary' : 'outline'}
                 size="sm"
@@ -622,11 +622,11 @@ export function HomePage() {
             </div>
             <div>
               <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900'
+                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
               }`}>
                 {userVehicles.filter((v) => v.status === 'offline').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
+              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
                 Equipos fuera de línea
               </p>
             </div>
@@ -642,7 +642,7 @@ export function HomePage() {
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700'}`}>Críticos</h3>
+              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>Críticos</h3>
               <ButtonComponent
                 variant={isClient ? 'secondary' : 'outline'}
                 size="sm"
@@ -659,11 +659,11 @@ export function HomePage() {
             </div>
             <div>
               <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900'
+                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
               }`}>
                 {userVehicles.filter((v) => v.status === 'critical').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500'}`}>
+              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
                 Equipos con alertas críticas
               </p>
             </div>
@@ -710,12 +710,12 @@ export function HomePage() {
       </CardComponent>
 
       {/* Sección principal dividida en 2 columnas */}
-      <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
         {/* Izquierda: Mapa */}
         <CardComponent className="h-[440px] p-5">
           <div className="pb-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Mapa</h3>
+              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Mapa</h3>
             </div>
             {/* Buscador y filtros del mapa */}
             <div className="flex gap-2 items-center">
@@ -748,7 +748,7 @@ export function HomePage() {
                   <select
                     value={selectedClientId || ''}
                     onChange={(e) => setSelectedClientId(e.target.value ? Number(e.target.value) : null)}
-                    className="h-9 px-3 text-[12px] rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="h-9 px-3 text-[12px] rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     title="Filtrar por cliente"
                   >
                     <option value="">Todos los clientes</option>
@@ -765,7 +765,7 @@ export function HomePage() {
                   className={`h-9 px-3 text-[12px] rounded-full border transition-colors font-medium ${
                     mapFilters.moving
                       ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                      : 'border-slate-200 bg-white text-gray-600 hover:bg-slate-50'
+                      : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'
                   }`}
                   title="Filtrar vehículos en movimiento"
                 >
@@ -777,7 +777,7 @@ export function HomePage() {
                   className={`h-9 px-3 text-[12px] rounded-full border transition-colors font-medium ${
                     mapFilters.insideGeofence
                       ? 'bg-blue-100 border-blue-300 text-blue-700'
-                      : 'border-slate-200 bg-white text-gray-600 hover:bg-slate-50'
+                      : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'
                   }`}
                   title="Filtrar vehículos dentro de geocercas"
                 >
@@ -789,7 +789,7 @@ export function HomePage() {
                   className={`h-9 px-3 text-[12px] rounded-full border transition-colors font-medium ${
                     showGeofences
                       ? 'bg-purple-100 border-purple-300 text-purple-700'
-                      : 'border-slate-200 bg-white text-gray-600 hover:bg-slate-50'
+                      : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'
                   }`}
                   title="Mostrar/ocultar geocercas en el mapa"
                 >
@@ -814,17 +814,17 @@ export function HomePage() {
           <CardComponent className="h-[440px] p-5">
             <div className="pb-4">
               <div className="flex items-center justify-between">
-                <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Equipos en mapa</h3>
-                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>{filteredVehicles.length} total</span>
+                <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Equipos en mapa</h3>
+                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>{filteredVehicles.length} total</span>
               </div>
             </div>
             <div className="space-y-0 overflow-y-auto h-[calc(100%-100px)]">
               {filteredVehicles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isClient ? 'bg-white/10' : 'bg-slate-100'}`}>
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isClient ? 'bg-white/10' : 'bg-slate-100 dark:bg-gray-700'}`}>
                     <Search className="w-8 h-8 text-slate-400" />
                   </div>
-                  <h4 className={`text-sm font-semibold mb-2 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
+                  <h4 className={`text-sm font-semibold mb-2 ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
                     No se encontraron equipos
                   </h4>
                   <p className={`text-xs mb-4 ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
@@ -866,7 +866,7 @@ export function HomePage() {
                       className={`py-3 border-t cursor-pointer transition-colors ${
                         isClient
                           ? 'border-white/10 hover:bg-white/5'
-                          : 'border-slate-200 hover:bg-slate-50'
+                          : 'border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-800'
                       }`}
                       onClick={() => setSelectedVehicle(vehicle)}
                     >
@@ -877,10 +877,10 @@ export function HomePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h4 className={`text-sm font-bold ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{vehicle.plate}</h4>
-                              <p className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{vehicle.driver}</p>
+                              <h4 className={`text-sm font-bold ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>{vehicle.plate}</h4>
+                              <p className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>{vehicle.driver}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
+                                <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
                                   <Activity className="w-3 h-3 inline mr-0.5" />
                                   {vehicle.speed} km/h
                                 </span>
@@ -901,22 +901,22 @@ export function HomePage() {
             {/* Paginación */}
             {filteredVehicles.length > 4 && (
               <div className={`pt-3 border-t flex items-center justify-between ${
-                isClient ? 'border-white/10' : 'border-slate-200'
+                isClient ? 'border-white/10' : 'border-slate-200 dark:border-gray-700'
               }`}>
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                   disabled={currentPage === 0}
-                  className="text-xs font-medium text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                  className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed"
                 >
                   ← Anterior
                 </button>
-                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
+                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
                   Página {currentPage + 1} de {Math.ceil(filteredVehicles.length / 4)}
                 </span>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredVehicles.length / 4) - 1, prev + 1))}
                   disabled={currentPage >= Math.ceil(filteredVehicles.length / 4) - 1}
-                  className="text-xs font-medium text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                  className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed"
                 >
                   Siguiente →
                 </button>
@@ -928,15 +928,15 @@ export function HomePage() {
 
       {/* Footer Estado */}
       <div className="flex justify-end">
-        <p className={`text-sm ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>{filteredVehicles.length} mostrados</p>
+        <p className={`text-sm ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>{filteredVehicles.length} mostrados</p>
       </div>
 
       {/* Notificaciones Recientes */}
       <CardComponent className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-gray-700" />
-            <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Notificaciones Recientes</h3>
+            <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Notificaciones Recientes</h3>
           </div>
           <button className="text-xs font-medium text-primary hover:text-primary/80">
             Ver todas
@@ -946,8 +946,8 @@ export function HomePage() {
         <div className="space-y-3">
           {notifications.length === 0 ? (
             <div className="text-center py-8">
-              <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>No hay notificaciones recientes</p>
+              <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+              <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}`}>No hay notificaciones recientes</p>
             </div>
           ) : (
             notifications.slice(0, 5).map((notification) => {
@@ -961,7 +961,7 @@ export function HomePage() {
                   className={`flex gap-3 p-3 rounded-lg transition-colors cursor-pointer border ${
                     isClient
                       ? `border-white/10 hover:bg-white/5 ${!notification.read_by?.includes(user?.id || '') ? 'bg-cyan-500/10' : ''}`
-                      : `border-gray-100 hover:bg-gray-50 ${!notification.read_by?.includes(user?.id || '') ? 'bg-blue-50/30' : ''}`
+                      : `border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${!notification.read_by?.includes(user?.id || '') ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''}`
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full ${style.bg} border ${style.border} flex items-center justify-center flex-shrink-0`}>
@@ -971,14 +971,14 @@ export function HomePage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className={`text-sm font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.resource_name}</h4>
+                          <h4 className={`text-sm font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>{notification.resource_name}</h4>
                           {!notification.read_by?.includes(user?.id || '') && (
                             <span className={`w-2 h-2 rounded-full ${isClient ? 'bg-cyan-400' : 'bg-primary'}`}></span>
                           )}
                         </div>
-                        <p className={`text-xs mt-0.5 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>{notification.description}</p>
+                        <p className={`text-xs mt-0.5 ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>{notification.description}</p>
                       </div>
-                      <span className={`text-xs whitespace-nowrap flex items-center gap-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
+                      <span className={`text-xs whitespace-nowrap flex items-center gap-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
                         <Clock className="w-3 h-3" />
                         {getRelativeTime(notification.ts)}
                       </span>

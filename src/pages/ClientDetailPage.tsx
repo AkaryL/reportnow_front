@@ -102,7 +102,7 @@ export function ClientDetailPage() {
 
   // Filtrar operadores del cliente
   const clientOperators = users.filter(
-    (u) => u.client_id === id && (u.role === 'operator-admin' || u.role === 'operator-monitor')
+    (u) => u.client_id === id && (u.role === 'operator_admin' || u.role === 'operator_monitor')
   );
 
   // Filtrar activos del cliente
@@ -988,7 +988,7 @@ export function ClientDetailPage() {
                     <TableCell>{operator.email}</TableCell>
                     <TableCell className="text-sm text-gray-600">{operator.username}</TableCell>
                     <TableCell>
-                      {operator.role === 'operator-admin' ? (
+                      {operator.role === 'operator_admin' ? (
                         <Badge variant="default" className="bg-purple-100 text-purple-700 border-purple-200">
                           Admin
                         </Badge>

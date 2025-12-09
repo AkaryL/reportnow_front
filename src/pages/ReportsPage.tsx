@@ -768,15 +768,15 @@ export function ReportsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reportes</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
           Generación y exportación de reportes con filtros personalizados
         </p>
       </div>
 
       {/* Report Type Selection */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Selecciona el tipo de reporte</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Selecciona el tipo de reporte</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {reportTypes.map((report) => {
             const Icon = report.icon;
@@ -787,8 +787,8 @@ export function ReportsPage() {
                 onClick={() => setSelectedReport(report.id)}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -797,10 +797,10 @@ export function ReportsPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-gray-900">{report.title}</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{report.title}</h3>
                       <Badge variant="default" className="ml-2">{report.count}</Badge>
                     </div>
-                    <p className="text-xs text-gray-600">{report.description}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{report.description}</p>
                   </div>
                 </div>
               </button>
@@ -811,13 +811,13 @@ export function ReportsPage() {
 
       {/* Filters */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Filtros <span className="text-sm font-normal text-gray-500">(Opcionales - Sin filtros se exporta todo)</span>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Filtros <span className="text-sm font-normal text-gray-500 dark:text-gray-400">(Opcionales - Sin filtros se exporta todo)</span>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Fecha Inicio - OPCIONAL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
               Fecha Inicio
             </label>
@@ -830,7 +830,7 @@ export function ReportsPage() {
 
           {/* Fecha Fin - OPCIONAL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
               Fecha Fin
             </label>
@@ -843,7 +843,7 @@ export function ReportsPage() {
 
           {/* Hora Inicio - OPCIONAL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Clock className="w-4 h-4 inline mr-1" />
               Hora Inicio (opcional)
             </label>
@@ -856,7 +856,7 @@ export function ReportsPage() {
 
           {/* Hora Fin - OPCIONAL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Clock className="w-4 h-4 inline mr-1" />
               Hora Fin (opcional)
             </label>
@@ -870,14 +870,14 @@ export function ReportsPage() {
           {/* Cliente - OPCIONAL (solo para superuser) */}
           {user?.role === 'superuser' && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <Users className="w-4 h-4 inline mr-1" />
                 Cliente (opcional)
               </label>
               <select
                 value={selectedClientId}
                 onChange={(e) => setSelectedClientId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Todos los clientes</option>
                 {clients.map((client) => (
@@ -891,7 +891,7 @@ export function ReportsPage() {
 
           {/* Export Mode */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Shield className="w-4 h-4 inline mr-1" />
               Modo
             </label>
@@ -907,7 +907,7 @@ export function ReportsPage() {
 
           {/* Export Format */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <FileText className="w-4 h-4 inline mr-1" />
               Formato
             </label>
@@ -955,8 +955,8 @@ export function ReportsPage() {
         </div>
 
         {/* Results Summary */}
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700">
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             {selectedClientId ? (
               <>
                 <strong>Modo Reporte Completo</strong> • Se generará un archivo Excel con 6 hojas: Equipos GPS, Activos, Operadores, Geocercas, Notificaciones e Información del Cliente
@@ -983,66 +983,66 @@ export function ReportsPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     {selectedReport === 'equipments' && (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IMEI</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marca/Modelo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">IMEI</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Marca/Modelo</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
                       </>
                     )}
                     {selectedReport === 'assets' && (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
                       </>
                     )}
                     {selectedReport === 'geofences' && (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
                       </>
                     )}
                     {selectedReport === 'clients' && (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Empresa</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contacto</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Empresa</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Contacto</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
                       </>
                     )}
                     {selectedReport === 'users' && (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rol</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
                       </>
                     )}
                     {selectedReport === 'notifications' && (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prioridad</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recurso</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Título</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Prioridad</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Recurso</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
                       </>
                     )}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {previewData.map((item: any, index) => (
                     <tr key={index}>
                       {selectedReport === 'equipments' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.imei}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.brand} {item.model}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.imei}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.brand} {item.model}</td>
                           <td className="px-4 py-3 text-sm">
                             <Badge variant={item.status === 'active' ? 'success' : 'default'}>
                               {item.status === 'active' ? 'Activo' : 'Inactivo'}
@@ -1055,29 +1055,29 @@ export function ReportsPage() {
                       )}
                       {selectedReport === 'assets' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.type}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.type}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin asignar'}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{formatDate(item.created_at)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{formatDate(item.created_at)}</td>
                         </>
                       )}
                       {selectedReport === 'geofences' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.geom_type || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.geom_type || 'N/A'}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin asignar'}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{formatDate(item.created_at)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{formatDate(item.created_at)}</td>
                         </>
                       )}
                       {selectedReport === 'clients' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.company_name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.contact_name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.email}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.company_name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.contact_name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.email}</td>
                           <td className="px-4 py-3 text-sm">
                             <Badge variant={item.status === 'active' ? 'success' : 'danger'}>
                               {item.status === 'active' ? 'Activo' : 'Suspendido'}
@@ -1087,9 +1087,9 @@ export function ReportsPage() {
                       )}
                       {selectedReport === 'users' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.role}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.email || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.role}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.email || 'N/A'}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin cliente'}
                           </td>
@@ -1097,14 +1097,14 @@ export function ReportsPage() {
                       )}
                       {selectedReport === 'notifications' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.title}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.title}</td>
                           <td className="px-4 py-3 text-sm">
                             <Badge variant={item.priority === 'high' ? 'danger' : 'default'}>
                               {item.priority}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.resource_name || 'N/A'}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{formatDate(item.ts)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.resource_name || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{formatDate(item.ts)}</td>
                         </>
                       )}
                     </tr>
@@ -1120,9 +1120,9 @@ export function ReportsPage() {
       {filteredData.length === 0 && (
         <Card className="p-12">
           <div className="text-center">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay datos para mostrar</h3>
-            <p className="text-gray-600">
+            <FileText className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No hay datos para mostrar</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               No se encontraron registros con los filtros aplicados
             </p>
           </div>

@@ -11,19 +11,19 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-gray-100 text-gray-700',
-  success: 'bg-ok-50 text-ok-700',
-  warning: 'bg-warn-50 text-warn-700',
-  danger: 'bg-crit-50 text-crit-700',
-  info: 'bg-info-50 text-info-700',
+  default: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  success: 'bg-ok-50 dark:bg-ok-900/30 text-ok-700 dark:text-ok-400',
+  warning: 'bg-warn-50 dark:bg-warn-900/30 text-warn-700 dark:text-warn-400',
+  danger: 'bg-crit-50 dark:bg-crit-900/30 text-crit-700 dark:text-crit-400',
+  info: 'bg-info-50 dark:bg-info-900/30 text-info-700 dark:text-info-400',
   // Vehicle statuses
-  moving: 'bg-ok-50 text-ok-700',
-  stopped: 'bg-info-50 text-info-700',
-  offline: 'bg-gray-100 text-gray-700',
-  critical: 'bg-crit-50 text-crit-700',
+  moving: 'bg-ok-50 dark:bg-ok-900/30 text-ok-700 dark:text-ok-400',
+  stopped: 'bg-info-50 dark:bg-info-900/30 text-info-700 dark:text-info-400',
+  offline: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  critical: 'bg-crit-50 dark:bg-crit-900/30 text-crit-700 dark:text-crit-400',
   // Notification types
-  warn: 'bg-warn-50 text-warn-700',
-  crit: 'bg-crit-50 text-crit-700',
+  warn: 'bg-warn-50 dark:bg-warn-900/30 text-warn-700 dark:text-warn-400',
+  crit: 'bg-crit-50 dark:bg-crit-900/30 text-crit-700 dark:text-crit-400',
 };
 
 export function Badge({ variant = 'default', children, className, ...props }: BadgeProps) {

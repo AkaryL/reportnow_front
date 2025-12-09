@@ -106,8 +106,8 @@ export function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className={`text-2xl font-bold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Notificaciones</h1>
-          <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
+          <h1 className={`text-2xl font-bold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Notificaciones</h1>
+          <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
             Alertas y notificaciones del sistema • {unreadCount} sin leer
           </p>
         </div>
@@ -124,8 +124,8 @@ export function NotificationsPage() {
         <CardComponent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Total</p>
-              <p className={`text-2xl font-bold mt-1 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
+              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600 dark:text-gray-400'}`}>Total</p>
+              <p className={`text-2xl font-bold mt-1 ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
                 {notifications.length}
               </p>
             </div>
@@ -136,7 +136,7 @@ export function NotificationsPage() {
         <CardComponent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Sin leer</p>
+              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600 dark:text-gray-400'}`}>Sin leer</p>
               <p className={`text-2xl font-bold mt-1 ${isClient ? 'text-orange-400' : 'text-warn-600'}`}>
                 {unreadCount}
               </p>
@@ -148,7 +148,7 @@ export function NotificationsPage() {
         <CardComponent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600'}`}>Críticas</p>
+              <p className={`text-sm font-medium ${isClient ? 'client-text-tertiary' : 'text-gray-600 dark:text-gray-400'}`}>Críticas</p>
               <p className={`text-2xl font-bold mt-1 ${isClient ? 'text-red-400' : 'text-crit-600'}`}>
                 {filteredNotifications.filter((n) => n.type === 'crit').length}
               </p>
@@ -215,7 +215,7 @@ export function NotificationsPage() {
                     </div>
                   </TableCellComponent>
                   <TableCellComponent className="max-w-md">
-                    <p className={`text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>{notification.description}</p>
+                    <p className={`text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>{notification.description}</p>
                   </TableCellComponent>
                   <TableCellComponent>
                     {isRead ? (

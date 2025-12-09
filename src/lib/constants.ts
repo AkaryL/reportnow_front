@@ -65,7 +65,7 @@ export const ROLE_CONFIG: Record<UserRole, {
       canExport: true,
     },
   },
-  'operator-admin': {
+  'operator_admin': {
     label: 'Operador Administrador',
     description: 'Paridad con Admin, sin cambiar roles',
     color: '#10b981',
@@ -83,7 +83,7 @@ export const ROLE_CONFIG: Record<UserRole, {
       canExport: true,
     },
   },
-  'operator-monitor': {
+  'operator_monitor': {
     label: 'Operador Monitor',
     description: 'Solo lectura',
     color: '#6b7280',
