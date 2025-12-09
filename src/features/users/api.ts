@@ -34,7 +34,7 @@ export const usersApi = {
     username: string;
     password: string;
     name: string;
-    role: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
+    role: 'superuser' | 'admin' | 'operator_admin' | 'operator_monitor';
     email: string;
     phone?: string;
     client_id?: string;
@@ -47,7 +47,7 @@ export const usersApi = {
     username?: string;
     password?: string;
     name?: string;
-    role?: 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
+    role?: 'superuser' | 'admin' | 'operator_admin' | 'operator_monitor';
     email?: string;
     phone?: string;
     client_id?: string;

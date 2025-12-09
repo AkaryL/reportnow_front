@@ -71,7 +71,7 @@ export function Drawer({
       {/* Drawer */}
       <div
         className={cn(
-          'fixed top-0 bottom-0 z-[1200] w-full sm:w-96 bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col',
+          'fixed top-0 bottom-0 z-[1200] w-full sm:w-96 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out flex flex-col',
           positionStyles[position].container,
           positionStyles[position].translate,
           className
@@ -81,13 +81,13 @@ export function Drawer({
         aria-labelledby="drawer-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-app-border shrink-0">
-          <h2 id="drawer-title" className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-app-border dark:border-gray-700 shrink-0">
+          <h2 id="drawer-title" className="text-xl font-semibold text-gray-900 dark:text-white">
             {title || 'Detalles'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             aria-label="Cerrar drawer"
           >
             <X className="w-5 h-5" />
@@ -111,7 +111,7 @@ export function DrawerSection({ title, children, className }: DrawerSectionProps
   return (
     <div className={cn('mb-6 last:mb-0', className)}>
       {title && (
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">{title}</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{title}</h3>
       )}
       {children}
     </div>
@@ -127,8 +127,8 @@ interface DrawerItemProps {
 export function DrawerItem({ label, value, className }: DrawerItemProps) {
   return (
     <div className={cn('flex justify-between items-center py-2', className)}>
-      <span className="text-sm text-gray-600">{label}</span>
-      <span className="text-sm font-medium text-gray-900">{value}</span>
+      <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{value}</span>
     </div>
   );
 }

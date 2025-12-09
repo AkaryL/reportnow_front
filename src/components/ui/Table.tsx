@@ -10,7 +10,7 @@ export function Table({ children, className, ...props }: TableProps) {
   return (
     <div className="overflow-x-auto">
       <table
-        className={cn('min-w-full divide-y divide-gray-200', className)}
+        className={cn('min-w-full divide-y divide-gray-200 dark:divide-gray-700', className)}
         {...props}
       >
         {children}
@@ -26,7 +26,7 @@ interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {
 
 export function TableHeader({ children, className, ...props }: TableHeaderProps) {
   return (
-    <thead className={cn('bg-gray-50', className)} {...props}>
+    <thead className={cn('bg-gray-50 dark:bg-gray-800', className)} {...props}>
       {children}
     </thead>
   );
@@ -40,7 +40,7 @@ interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {
 export function TableBody({ children, className, ...props }: TableBodyProps) {
   return (
     <tbody
-      className={cn('bg-white divide-y divide-gray-200', className)}
+      className={cn('bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700', className)}
       {...props}
     >
       {children}
@@ -55,7 +55,7 @@ interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
 
 export function TableRow({ children, className, ...props }: TableRowProps) {
   return (
-    <tr className={cn('hover:bg-gray-50 transition-colors', className)} {...props}>
+    <tr className={cn('hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors', className)} {...props}>
       {children}
     </tr>
   );
@@ -70,7 +70,7 @@ export function TableHead({ children, className, ...props }: TableHeadProps) {
   return (
     <th
       className={cn(
-        'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+        'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
         className
       )}
       {...props}
@@ -89,7 +89,7 @@ interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
 export function TableCell({ children, className, colSpan, ...props }: TableCellProps) {
   return (
     <td
-      className={cn('px-6 py-4 whitespace-nowrap text-sm text-gray-900', className)}
+      className={cn('px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100', className)}
       colSpan={colSpan}
       {...props}
     >

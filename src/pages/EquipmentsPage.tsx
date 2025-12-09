@@ -11,7 +11,8 @@ import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { EquipmentFormModal } from '../components/equipments/EquipmentFormModal';
 import { AssignEquipmentModal } from '../components/equipments/AssignEquipmentModal';
-import { Radio, MapPin, Plus, Edit, Trash2, Search, Building2, Link as LinkIcon, Unlink, Eye, Box } from 'lucide-react';
+import { Radio, MapPin, Plus, Edit, Trash2, Search, Building2, Link as LinkIcon, Unlink, Eye, Box, Download } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
 import { formatRelativeTime } from '../lib/utils';
 import type { Equipment } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
@@ -262,15 +263,46 @@ export function EquipmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Equipos GPS</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Equipos GPS</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Gestión global de dispositivos GPS • {filteredEquipments.length} equipos
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Nuevo Equipo
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => generateListPDF({
+              title: 'Lista de Equipos GPS',
+              subtitle: `${filteredEquipments.length} equipos encontrados`,
+              columns: [
+                { header: 'IMEI', key: 'imei' },
+                { header: 'Marca', key: 'brand' },
+                { header: 'Modelo', key: 'model' },
+                { header: 'Serial', key: 'serial' },
+                { header: 'Estado', key: 'status' },
+              ],
+              data: filteredEquipments.map(e => ({
+                imei: e.imei,
+                brand: e.brand,
+                model: e.model,
+                serial: e.serial,
+                status: e.status === 'active' ? 'Activo' : e.status === 'inactive' ? 'Inactivo' : 'Disponible',
+              })),
+              filename: 'equipos_gps',
+              filters: filterStatus !== 'all' || filterClient !== 'all' ? [
+                ...(filterStatus !== 'all' ? [{ label: 'Estado', value: filterStatus }] : []),
+                ...(filterClient !== 'all' ? [{ label: 'Cliente', value: clients.find(c => c.id === filterClient)?.company_name || filterClient }] : []),
+              ] : undefined,
+            })}
+          >
+            <Download className="w-4 h-4" />
+            PDF
+          </Button>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Nuevo Equipo
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -279,7 +311,7 @@ export function EquipmentsPage() {
           <Card key={stat.label} className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
                 <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
               </div>
               <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
@@ -309,7 +341,7 @@ export function EquipmentsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los estados</option>
             <option value="active">Activos</option>
@@ -321,7 +353,7 @@ export function EquipmentsPage() {
           <select
             value={filterClient}
             onChange={(e) => setFilterClient(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los clientes</option>
             <option value="unassigned">Sin asignar</option>
@@ -379,27 +411,27 @@ export function EquipmentsPage() {
                       <TableCell>
                         <div>
                           <div className="flex items-center gap-2">
-                            <Radio className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium text-gray-900">{equipment.imei}</span>
+                            <Radio className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span className="font-medium text-gray-900 dark:text-white">{equipment.imei}</span>
                           </div>
-                          <p className="text-sm text-gray-500 mt-0.5">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                             {equipment.brand} {equipment.model}
                           </p>
-                          <p className="text-xs text-gray-400">S/N: {equipment.serial}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">S/N: {equipment.serial}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
                           <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            <span className={equipment.client_id ? 'text-gray-900' : 'text-gray-400'}>
+                            <Building2 className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span className={equipment.client_id ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}>
                               {getClientName(equipment.client_id)}
                             </span>
                           </div>
                           {equipment.asset_id && getAssetName(equipment.asset_id) && (
                             <div className="flex items-center gap-2 mt-1">
-                              <Box className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs text-gray-500">
+                              <Box className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {getAssetName(equipment.asset_id)}
                               </span>
                             </div>
@@ -409,25 +441,25 @@ export function EquipmentsPage() {
                       <TableCell>{getStatusBadge(equipment.status)}</TableCell>
                       <TableCell>
                         {equipment.last_seen ? (
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             {formatRelativeTime(
                               Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000)
                             )}
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-400">Nunca</span>
+                          <span className="text-sm text-gray-400 dark:text-gray-500">Nunca</span>
                         )}
                       </TableCell>
                       <TableCell>
                         {equipment.lat && equipment.lng ? (
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                             <MapPin className="w-3 h-3" />
                             <span>
                               {formatCoord(equipment.lat)}, {formatCoord(equipment.lng)}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">Sin ubicación</span>
+                          <span className="text-sm text-gray-400 dark:text-gray-500">Sin ubicación</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

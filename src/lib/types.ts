@@ -1,5 +1,5 @@
 // ==================== User & Auth ====================
-export type UserRole = 'superuser' | 'admin' | 'operator-admin' | 'operator-monitor';
+export type UserRole = 'superuser' | 'admin' | 'operator_admin' | 'operator_monitor';
 
 export interface User {
   id: string;

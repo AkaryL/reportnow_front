@@ -62,7 +62,7 @@ export const driversApi = {
       let clientId = data.client_id;
 
       // Admin/operadores usan su propio client_id
-      if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+      if ((user?.role === 'admin' || user?.role === 'operator_admin') && user?.client_id) {
         clientId = user.client_id;
       }
 
@@ -99,7 +99,7 @@ export const driversApi = {
       let clientId = data.client_id;
 
       // Admin/operadores usan su propio client_id
-      if ((user?.role === 'admin' || user?.role === 'operator-admin') && user?.client_id) {
+      if ((user?.role === 'admin' || user?.role === 'operator_admin') && user?.client_id) {
         clientId = user.client_id;
       }
 

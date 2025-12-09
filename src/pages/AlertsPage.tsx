@@ -17,8 +17,11 @@ import {
   LogOut,
   Clock,
   Radio,
-  Filter
+  Filter,
+  Download
 } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
+import { Button } from '../components/ui/Button';
 import type { Alert, Equipment, Geofence, Client } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
 import { cn } from '../lib/utils';
@@ -120,11 +123,38 @@ export function AlertsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Alertas</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Alertas</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Historial de alertas de geocercas • {filteredAlerts.length} alertas
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => generateListPDF({
+            title: 'Historial de Alertas',
+            subtitle: `${filteredAlerts.length} alertas encontradas`,
+            columns: [
+              { header: 'Fecha', key: 'date' },
+              { header: 'Tipo', key: 'type' },
+              { header: 'Equipo', key: 'equipment' },
+              { header: 'Geocerca', key: 'geofence' },
+            ],
+            data: filteredAlerts.map(a => ({
+              date: formatDate(a.created_at),
+              type: a.type === 'geofence_enter' ? 'Entrada' : 'Salida',
+              equipment: getEquipmentInfo(a.equipment_id)?.imei || '-',
+              geofence: getGeofenceName(a.geofence_id),
+            })),
+            filename: 'alertas',
+            filters: filterType !== 'all' || filterClient !== 'all' ? [
+              ...(filterType !== 'all' ? [{ label: 'Tipo', value: filterType === 'geofence_enter' ? 'Entrada' : 'Salida' }] : []),
+              ...(filterClient !== 'all' ? [{ label: 'Cliente', value: clients.find(c => c.id === filterClient)?.company_name || filterClient }] : []),
+            ] : undefined,
+          })}
+        >
+          <Download className="w-4 h-4" />
+          PDF
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -133,25 +163,11 @@ export function AlertsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Alertas</p>
-                <p className="text-3xl font-bold text-gray-900">{totalAlerts}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Alertas</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalAlerts}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <Bell className="w-6 h-6 text-gray-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Entradas</p>
-                <p className="text-3xl font-bold text-green-600">{entryAlerts}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <LogIn className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full">
+                <Bell className="w-6 h-6 text-gray-600 dark:text-gray-300" />
               </div>
             </div>
           </CardContent>
@@ -161,11 +177,25 @@ export function AlertsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Salidas</p>
-                <p className="text-3xl font-bold text-red-600">{exitAlerts}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Entradas</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{entryAlerts}</p>
               </div>
-              <div className="p-3 bg-red-100 rounded-full">
-                <LogOut className="w-6 h-6 text-red-600" />
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <LogIn className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Salidas</p>
+                <p className="text-3xl font-bold text-red-600 dark:text-red-400">{exitAlerts}</p>
+              </div>
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <LogOut className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </CardContent>
@@ -192,7 +222,7 @@ export function AlertsPage() {
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">Todos los clientes</option>
                 {clients.map((client) => (
@@ -206,7 +236,7 @@ export function AlertsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as 'all' | 'geofence_enter' | 'geofence_exit')}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">Todos los tipos</option>
               <option value="geofence_enter">Entradas</option>
@@ -228,8 +258,8 @@ export function AlertsPage() {
           <div className="overflow-x-auto">
             {filteredAlerts.length === 0 ? (
               <div className="text-center py-12">
-                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No se encontraron alertas</p>
+                <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No se encontraron alertas</p>
               </div>
             ) : (
               <Table>
@@ -265,20 +295,20 @@ export function AlertsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Radio className="w-4 h-4 text-gray-400" />
+                            <Radio className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                             <div>
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-gray-900 dark:text-white">
                                 {equipment?.imei || 'Desconocido'}
                               </p>
                               {equipment?.serial && (
-                                <p className="text-xs text-gray-500">{equipment.serial}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{equipment.serial}</p>
                               )}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                             {getGeofenceName(alert.geofence_id)}
                           </div>
                         </TableCell>
@@ -288,33 +318,33 @@ export function AlertsPage() {
                           </TableCell>
                         )}
                         <TableCell>
-                          <span className="text-gray-700 line-clamp-2">
+                          <span className="text-gray-700 dark:text-gray-300 line-clamp-2">
                             {alert.message}
                           </span>
                         </TableCell>
                         <TableCell>
                           {alert.lat && alert.lng ? (
-                            <span className="font-mono text-xs text-gray-600">
+                            <span className="font-mono text-xs text-gray-600 dark:text-gray-400">
                               {alert.lat.toFixed(4)}, {alert.lng.toFixed(4)}
                             </span>
                           ) : (
-                            <span className="text-gray-400">-</span>
+                            <span className="text-gray-400 dark:text-gray-500">-</span>
                           )}
                         </TableCell>
                         <TableCell>
                           {alert.speed !== undefined && alert.speed !== null ? (
                             <span className={cn(
                               'font-medium',
-                              alert.speed > 80 ? 'text-red-600' : 'text-gray-700'
+                              alert.speed > 80 ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
                             )}>
                               {alert.speed.toFixed(0)} km/h
                             </span>
                           ) : (
-                            <span className="text-gray-400">-</span>
+                            <span className="text-gray-400 dark:text-gray-500">-</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-gray-600">
+                          <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                             <Clock className="w-3 h-3" />
                             <span className="text-sm">{formatDate(alert.created_at)}</span>
                           </div>

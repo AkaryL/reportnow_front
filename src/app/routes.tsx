@@ -77,7 +77,7 @@ export function AppRoutes() {
           <Route
             path={ROUTES.ALERTS}
             element={
-              <RequireRole allowedRoles={['superuser', 'admin', 'operator-admin', 'operator-monitor']}>
+              <RequireRole allowedRoles={['superuser', 'admin', 'operator_admin', 'operator_monitor']}>
                 <AlertsPage />
               </RequireRole>
             }
@@ -147,7 +147,7 @@ export function AppRoutes() {
           <Route
             path={ROUTES.ASSETS}
             element={
-              <RequireRole allowedRoles={['superuser', 'admin', 'operator-admin', 'operator-monitor']}>
+              <RequireRole allowedRoles={['superuser', 'admin', 'operator_admin', 'operator_monitor']}>
                 <AssetsPage />
               </RequireRole>
             }
@@ -157,7 +157,7 @@ export function AppRoutes() {
           <Route
             path={ROUTES.DRIVERS}
             element={
-              <RequireRole allowedRoles={['admin', 'operator-admin', 'operator-monitor']}>
+              <RequireRole allowedRoles={['admin', 'operator_admin', 'operator_monitor']}>
                 <DriversPage />
               </RequireRole>
             }
@@ -167,7 +167,7 @@ export function AppRoutes() {
           <Route
             path={ROUTES.PLACES}
             element={
-              <RequireRole allowedRoles={['admin', 'operator-admin', 'operator-monitor']}>
+              <RequireRole allowedRoles={['admin', 'operator_admin', 'operator_monitor']}>
                 <PlacesPage />
               </RequireRole>
             }

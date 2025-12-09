@@ -47,9 +47,9 @@ export function VehiclesPage() {
 
   // Get vehicles based on user role
   const { data: vehicles, isLoading } = useQuery({
-    queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
+    queryKey: (user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
     queryFn: async () => {
-      if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
+      if ((user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') && user.client_id) {
         // Get only vehicles for this client/cliente
         const allVehicles = await vehiclesApi.getAll();
         return allVehicles.filter(v => v.clientId === user.client_id);
@@ -109,8 +109,8 @@ export function VehiclesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className={`text-2xl font-bold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Vehículos</h1>
-          <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
+          <h1 className={`text-2xl font-bold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Vehículos</h1>
+          <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
             Gestión y monitoreo de vehículos • {filteredVehicles.length} vehículos
           </p>
         </div>
@@ -201,14 +201,14 @@ export function VehiclesPage() {
 
           {filteredVehicles.length === 0 && (
             <div className="text-center py-12">
-              <p className={isClient ? 'client-text-tertiary' : 'text-gray-500'}>No se encontraron vehículos</p>
+              <p className={isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}>No se encontraron vehículos</p>
             </div>
           )}
 
           {/* Pagination */}
           {filteredVehicles.length > itemsPerPage && (
-            <div className={`px-6 py-4 border-t flex items-center justify-between ${isClient ? 'border-white/8' : 'border-gray-200'}`}>
-              <div className={`flex items-center gap-2 text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
+            <div className={`px-6 py-4 border-t flex items-center justify-between ${isClient ? 'border-white/8' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div className={`flex items-center gap-2 text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
                 <span>
                   Mostrando {startIndex + 1} - {Math.min(endIndex, filteredVehicles.length)} de {filteredVehicles.length} vehículos
                 </span>
@@ -234,7 +234,7 @@ export function VehiclesPage() {
                             : 'bg-primary text-white'
                           : isClient
                             ? 'text-white/70 hover:bg-white/5'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                     >
                       {page + 1}
@@ -314,8 +314,8 @@ export function VehiclesPage() {
                 label="Longitud"
                 value={selectedVehicle.lng.toFixed(6)}
               />
-              <div className={`mt-4 p-3 rounded-lg ${isClient ? 'bg-white/5 border border-white/10' : 'bg-gray-50'}`}>
-                <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600'}`}>
+              <div className={`mt-4 p-3 rounded-lg ${isClient ? 'bg-white/5 border border-white/10' : 'bg-gray-50 dark:bg-gray-700/50'}`}>
+                <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
                   <MapPin className="w-4 h-4 inline mr-1" />
                   Zapopan, Jalisco
                 </p>

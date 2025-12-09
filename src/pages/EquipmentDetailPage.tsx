@@ -1,4 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import {
+  generateFullPDF,
+  generateHistoryPDF,
+  generateStatsPDF,
+  type PDFGeneratorOptions,
+} from '../lib/pdfGenerator';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, Circle, Polygon } from 'react-leaflet';
@@ -7,6 +13,8 @@ import { es } from 'date-fns/locale';
 import { equipmentsApi } from '../features/equipments/api';
 import { vehicleHistoryApi } from '../features/vehicle-history/api';
 import type { RoutePoint } from '../features/vehicle-history/api';
+import { alertsApi } from '../features/alerts/api';
+import { driversApi } from '../features/drivers/api';
 import { QUERY_KEYS, EQUIPMENT_STATUS_CONFIG } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -31,7 +39,17 @@ import {
   Power,
   Car,
   CircleStop,
-  PowerOff
+  PowerOff,
+  Download,
+  Users,
+  AlertTriangle,
+  Trophy,
+  Bell,
+  LogIn,
+  LogOut,
+  User,
+  Phone,
+  Award
 } from 'lucide-react';
 import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import type { Equipment } from '../lib/types';
@@ -80,6 +98,11 @@ export function EquipmentDetailPage() {
   const [endTime, setEndTime] = useState('23:59');
   const [showGeofences, setShowGeofences] = useState(false);
   const [activeTab, setActiveTab] = useState<'historial' | 'estadisticas'>('historial');
+
+  // Refs para capturas de pantalla en PDFs
+  const mapRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
 
   // Obtener el equipo específico
   const { data: equipment, isLoading: isLoadingEquipment } = useQuery({
@@ -130,6 +153,20 @@ export function EquipmentDetailPage() {
       end_date: `${endDate}T${endTime}:59`,
     }),
     enabled: !!equipment?.imei,
+  });
+
+  // Obtener alertas del equipo
+  const { data: equipmentAlerts = [] } = useQuery({
+    queryKey: ['alerts', 'equipment', id],
+    queryFn: () => alertsApi.getByEquipment(id!),
+    enabled: !!id,
+  });
+
+  // Obtener conductores del cliente
+  const { data: drivers = [] } = useQuery({
+    queryKey: QUERY_KEYS.DRIVERS,
+    queryFn: driversApi.getAll,
+    enabled: !!equipment?.client_id,
   });
 
   // Helpers
@@ -295,6 +332,50 @@ export function EquipmentDetailPage() {
     return `${seconds}s`;
   };
 
+  // Preparar opciones para generación de PDF
+  const getPDFOptions = (): PDFGeneratorOptions => {
+    const asset = getAssetInfo(equipment?.asset_id);
+    const sim = getSimInfo(equipment?.sim_id);
+
+    return {
+      equipment: {
+        brand: equipment?.brand || '',
+        model: equipment?.model || '',
+        imei: equipment?.imei || '',
+        serial: equipment?.serial || '',
+        status: equipment?.status || 'inactive',
+        clientName: getClientName(equipment?.client_id),
+        assetName: asset?.name || 'Sin activo asignado',
+        simInfo: sim ? `${sim.phone_number} · ${sim.carrier}` : 'Sin SIM',
+        lastSignal: equipment?.last_seen
+          ? formatRelativeTime(Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000))
+          : 'Sin señal',
+      },
+      dateRange: `${startDate} ${startTime} - ${endDate} ${endTime}`,
+      routeStats: routes.length > 0 ? routeStats : undefined,
+      statusSegments: statusSegments.length > 0 ? statusSegments : undefined,
+      mapElement: mapRef.current,
+      timelineElement: timelineRef.current,
+      statsElement: statsRef.current,
+    };
+  };
+
+  // Funciones de descarga de PDF
+  const handleDownloadAll = async () => {
+    const options = getPDFOptions();
+    await generateFullPDF(options);
+  };
+
+  const handleDownloadHistory = async () => {
+    const options = getPDFOptions();
+    await generateHistoryPDF(options);
+  };
+
+  const handleDownloadStats = async () => {
+    const options = getPDFOptions();
+    await generateStatsPDF(options);
+  };
+
   if (isLoadingEquipment) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -339,11 +420,17 @@ export function EquipmentDetailPage() {
               </p>
             </div>
           </div>
-          <Badge
-            className={`${EQUIPMENT_STATUS_CONFIG[equipment.status]?.bgColor} ${EQUIPMENT_STATUS_CONFIG[equipment.status]?.textColor}`}
-          >
-            {EQUIPMENT_STATUS_CONFIG[equipment.status]?.label || equipment.status}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button onClick={handleDownloadAll} variant="outline" size="sm">
+              <Download className="w-4 h-4" />
+              Descargar PDF
+            </Button>
+            <Badge
+              className={`${EQUIPMENT_STATUS_CONFIG[equipment.status]?.bgColor} ${EQUIPMENT_STATUS_CONFIG[equipment.status]?.textColor}`}
+            >
+              {EQUIPMENT_STATUS_CONFIG[equipment.status]?.label || equipment.status}
+            </Badge>
+          </div>
         </div>
       </Card>
 
@@ -462,14 +549,24 @@ export function EquipmentDetailPage() {
               <MapPin className="w-5 h-5 text-primary" />
               Historial de Recorrido
             </CardTitle>
-            <Button
-              variant={showGeofences ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setShowGeofences(!showGeofences)}
-            >
-              <MapPin className="w-4 h-4" />
-              {showGeofences ? 'Ocultar geocercas' : 'Mostrar geocercas'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadHistory}
+              >
+                <Download className="w-4 h-4" />
+                PDF Historial
+              </Button>
+              <Button
+                variant={showGeofences ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setShowGeofences(!showGeofences)}
+              >
+                <MapPin className="w-4 h-4" />
+                {showGeofences ? 'Ocultar geocercas' : 'Mostrar geocercas'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -548,7 +645,7 @@ export function EquipmentDetailPage() {
           {/* Mapa y Timeline */}
           <div className="flex gap-4 h-[500px]">
             {/* Mapa - 2/3 del ancho */}
-            <div className="w-2/3 rounded-xl overflow-hidden border border-gray-200">
+            <div ref={mapRef} className="w-2/3 rounded-xl overflow-hidden border border-gray-200">
               {isLoadingRoutes ? (
                 <div className="flex items-center justify-center h-full bg-gray-50">
                   <div className="text-center">
@@ -763,7 +860,7 @@ export function EquipmentDetailPage() {
             </div>
 
             {/* Timeline de estados - 1/3 del ancho */}
-            <div className="w-1/3 rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
+            <div ref={timelineRef} className="w-1/3 rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
               <div className="p-3 border-b border-gray-200 bg-gray-50">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" />
@@ -880,12 +977,22 @@ export function EquipmentDetailPage() {
       {activeTab === 'estadisticas' && (
       <Card>
         <CardHeader className="p-6 border-b">
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            Estadísticas del Equipo
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              Estadísticas del Equipo
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadStats}
+            >
+              <Download className="w-4 h-4" />
+              PDF Estadísticas
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent ref={statsRef} className="p-6">
           {/* Filtros de Fecha para estadísticas */}
           <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2 mb-4">
@@ -1189,6 +1296,253 @@ export function EquipmentDetailPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Ranking de Conductores */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Ranking de Conductores
+                </h3>
+                {(() => {
+                  // Filtrar conductores del mismo cliente
+                  const clientDrivers = drivers.filter(d => d.client_id === equipment?.client_id);
+                  const currentDriver = equipment?.driver_id
+                    ? drivers.find(d => d.id === equipment.driver_id)
+                    : null;
+
+                  if (clientDrivers.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No hay conductores registrados para este cliente</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Conductor actual asignado */}
+                      {currentDriver && (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-green-100 rounded-full">
+                              <User className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-green-800">{currentDriver.name}</p>
+                                <Badge className="bg-green-600 text-white text-xs">Asignado</Badge>
+                              </div>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-green-700">
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3" />
+                                  {currentDriver.phone}
+                                </span>
+                                <span>Lic: {currentDriver.license_number}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Otros conductores disponibles */}
+                      <p className="text-sm text-gray-500 font-medium mt-4">
+                        {currentDriver ? 'Otros conductores disponibles:' : 'Conductores disponibles:'}
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {clientDrivers
+                          .filter(d => d.id !== equipment?.driver_id)
+                          .slice(0, 4)
+                          .map((driver, index) => (
+                            <div
+                              key={driver.id}
+                              className="p-3 bg-gray-50 rounded-lg flex items-center gap-3"
+                            >
+                              <div className={`p-2 rounded-full ${
+                                index === 0 ? 'bg-yellow-100' :
+                                index === 1 ? 'bg-gray-200' :
+                                index === 2 ? 'bg-orange-100' : 'bg-gray-100'
+                              }`}>
+                                {index < 3 ? (
+                                  <Award className={`w-4 h-4 ${
+                                    index === 0 ? 'text-yellow-600' :
+                                    index === 1 ? 'text-gray-500' : 'text-orange-600'
+                                  }`} />
+                                ) : (
+                                  <User className="w-4 h-4 text-gray-500" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{driver.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {driver.status === 'available' ? 'Disponible' :
+                                   driver.status === 'on_trip' ? 'En viaje' : 'Inactivo'}
+                                </p>
+                              </div>
+                              <Badge className={`text-xs ${
+                                driver.status === 'available' ? 'bg-green-100 text-green-700' :
+                                driver.status === 'on_trip' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {driver.status === 'available' ? 'Libre' :
+                                 driver.status === 'on_trip' ? 'Ocupado' : 'Inactivo'}
+                              </Badge>
+                            </div>
+                          ))}
+                      </div>
+                      {clientDrivers.filter(d => d.id !== equipment?.driver_id).length > 4 && (
+                        <p className="text-xs text-gray-400 text-center mt-2">
+                          +{clientDrivers.filter(d => d.id !== equipment?.driver_id).length - 4} conductores más
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Top Alertas del Equipo */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-red-500" />
+                  Top Alertas del Equipo
+                </h3>
+                {(() => {
+                  if (equipmentAlerts.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No hay alertas registradas para este equipo</p>
+                      </div>
+                    );
+                  }
+
+                  // Agrupar alertas por geocerca
+                  const alertsByGeofence = equipmentAlerts.reduce((acc, alert) => {
+                    const geofenceId = alert.geofence_id || 'sin_geocerca';
+                    if (!acc[geofenceId]) {
+                      acc[geofenceId] = { enters: 0, exits: 0, total: 0, name: '' };
+                    }
+                    if (alert.type === 'geofence_enter') {
+                      acc[geofenceId].enters++;
+                    } else {
+                      acc[geofenceId].exits++;
+                    }
+                    acc[geofenceId].total++;
+                    // Obtener nombre de geocerca
+                    const geofence = geofences.find(g => g.id === geofenceId);
+                    acc[geofenceId].name = geofence?.name || 'Geocerca desconocida';
+                    return acc;
+                  }, {} as Record<string, { enters: number; exits: number; total: number; name: string }>);
+
+                  // Ordenar por total de alertas
+                  const sortedGeofences = Object.entries(alertsByGeofence)
+                    .sort(([, a], [, b]) => b.total - a.total)
+                    .slice(0, 5);
+
+                  const totalEnters = equipmentAlerts.filter(a => a.type === 'geofence_enter').length;
+                  const totalExits = equipmentAlerts.filter(a => a.type === 'geofence_exit').length;
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Resumen general */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="p-3 bg-gray-50 rounded-lg text-center">
+                          <p className="text-2xl font-bold text-gray-900">{equipmentAlerts.length}</p>
+                          <p className="text-xs text-gray-500">Total alertas</p>
+                        </div>
+                        <div className="p-3 bg-green-50 rounded-lg text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <LogIn className="w-4 h-4 text-green-600" />
+                            <p className="text-2xl font-bold text-green-600">{totalEnters}</p>
+                          </div>
+                          <p className="text-xs text-green-700">Entradas</p>
+                        </div>
+                        <div className="p-3 bg-red-50 rounded-lg text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <LogOut className="w-4 h-4 text-red-600" />
+                            <p className="text-2xl font-bold text-red-600">{totalExits}</p>
+                          </div>
+                          <p className="text-xs text-red-700">Salidas</p>
+                        </div>
+                      </div>
+
+                      {/* Top geocercas con más alertas */}
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium mb-3">Geocercas con más actividad:</p>
+                        <div className="space-y-2">
+                          {sortedGeofences.map(([geofenceId, data], index) => (
+                            <div
+                              key={geofenceId}
+                              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                            >
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                                index === 1 ? 'bg-gray-200 text-gray-600' :
+                                index === 2 ? 'bg-orange-100 text-orange-700' :
+                                'bg-gray-100 text-gray-500'
+                              }`}>
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{data.name}</p>
+                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                  <span className="flex items-center gap-1">
+                                    <LogIn className="w-3 h-3 text-green-500" />
+                                    {data.enters} entradas
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <LogOut className="w-3 h-3 text-red-500" />
+                                    {data.exits} salidas
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-gray-900">{data.total}</p>
+                                <p className="text-xs text-gray-400">alertas</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Últimas alertas */}
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium mb-3">Últimas alertas:</p>
+                        <div className="space-y-2">
+                          {equipmentAlerts.slice(0, 3).map((alert) => {
+                            const geofence = geofences.find(g => g.id === alert.geofence_id);
+                            return (
+                              <div
+                                key={alert.id}
+                                className="flex items-center gap-3 p-2 border border-gray-100 rounded-lg"
+                              >
+                                {alert.type === 'geofence_enter' ? (
+                                  <div className="p-1.5 bg-green-100 rounded-full">
+                                    <LogIn className="w-3 h-3 text-green-600" />
+                                  </div>
+                                ) : (
+                                  <div className="p-1.5 bg-red-100 rounded-full">
+                                    <LogOut className="w-3 h-3 text-red-600" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-900 truncate">
+                                    {alert.type === 'geofence_enter' ? 'Entrada a ' : 'Salida de '}
+                                    {geofence?.name || 'geocerca'}
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    {format(new Date(alert.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {routes.length === 0 && (

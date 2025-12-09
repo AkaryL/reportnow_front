@@ -28,22 +28,22 @@ export function ConfirmDialog({
   const getIcon = () => {
     switch (variant) {
       case 'danger':
-        return <Trash2 className="w-6 h-6 text-red-600" />;
+        return <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />;
       case 'warning':
-        return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
+        return <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />;
       case 'info':
-        return <Info className="w-6 h-6 text-blue-600" />;
+        return <Info className="w-6 h-6 text-blue-600 dark:text-blue-400" />;
     }
   };
 
   const getIconBgColor = () => {
     switch (variant) {
       case 'danger':
-        return 'bg-red-100';
+        return 'bg-red-100 dark:bg-red-900/30';
       case 'warning':
-        return 'bg-yellow-100';
+        return 'bg-yellow-100 dark:bg-yellow-900/30';
       case 'info':
-        return 'bg-blue-100';
+        return 'bg-blue-100 dark:bg-blue-900/30';
     }
   };
 
@@ -66,8 +66,8 @@ export function ConfirmDialog({
             {getIcon()}
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-            <p className="text-sm text-gray-600">{message}</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
           </div>
         </div>
 

@@ -10,7 +10,8 @@ import { ClientButton } from '../components/ui/ClientButton';
 import { Topbar } from '../components/Topbar';
 import { GeofenceModal } from '../components/Geofence/GeofenceModal';
 import { LeafletMap } from '../components/map/LeafletMap';
-import { MapPin, Trash2, Edit, Plus, Navigation, Filter } from 'lucide-react';
+import { MapPin, Trash2, Edit, Plus, Navigation, Filter, Download } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
 import { useAuth } from '../features/auth/hooks';
 import { useToast } from '../hooks/useToast';
 import { useConfirm } from '../hooks/useConfirm';
@@ -202,8 +203,8 @@ export function GeofencesPage() {
             <div>
               {!isClient && (
                 <>
-                  <h2 className="text-2xl font-bold text-gray-900">Geocercas</h2>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Geocercas</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {geofences.length} geocerca{geofences.length !== 1 ? 's' : ''} registrada{geofences.length !== 1 ? 's' : ''}
                   </p>
                 </>
@@ -214,6 +215,30 @@ export function GeofencesPage() {
                 </p>
               )}
             </div>
+            <ButtonComponent
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => generateListPDF({
+                title: 'Lista de Geocercas',
+                subtitle: `${geofences.length} geocercas encontradas`,
+                columns: [
+                  { header: 'Nombre', key: 'name' },
+                  { header: 'Tipo', key: 'type' },
+                  { header: 'Color', key: 'color' },
+                  { header: 'Permiso', key: 'permission' },
+                ],
+                data: geofences.map((g: any) => ({
+                  name: g.name,
+                  type: g.type || 'Poligono',
+                  color: g.color || '#3b82f6',
+                  permission: g.permission === 'own' ? 'Propia' : 'Global',
+                })),
+                filename: 'geocercas',
+              })}
+            >
+              <Download className="w-4 h-4" />
+              PDF
+            </ButtonComponent>
             <ButtonComponent
               onClick={() => {
                 setEditingGeofence(null);
@@ -230,8 +255,8 @@ export function GeofencesPage() {
           {/* Filtros */}
           <CardComponent className="p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Filter className={`w-4 h-4 ${isClient ? 'text-cyan-400' : 'text-gray-600'}`} />
-              <span className={`text-sm font-medium ${isClient ? 'client-text-primary' : 'text-gray-700'}`}>Filtros</span>
+              <Filter className={`w-4 h-4 ${isClient ? 'text-cyan-400' : 'text-gray-600 dark:text-gray-400'}`} />
+              <span className={`text-sm font-medium ${isClient ? 'client-text-primary' : 'text-gray-700 dark:text-gray-300'}`}>Filtros</span>
             </div>
 
             <div className="space-y-3">
@@ -266,7 +291,7 @@ export function GeofencesPage() {
               {isSuperuser && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Ver geocercas de:
                     </label>
                     <div className="flex gap-2">
@@ -276,7 +301,7 @@ export function GeofencesPage() {
                           setSelectedClientId(e.target.value);
                           setFilter('all');
                         }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
                       >
                         <option value="">Solo geocercas globales</option>
                         {clients.map((client: any) => (
@@ -296,7 +321,7 @@ export function GeofencesPage() {
                       )}
                     </div>
                     {selectedClientId && (
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         Mostrando geocercas del cliente seleccionado + geocercas globales
                       </p>
                     )}
@@ -308,12 +333,12 @@ export function GeofencesPage() {
         </div>
 
         {/* Grid: Mapa + Lista */}
-        <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-5">
           {/* Mapa */}
           <CardComponent className="h-[600px] p-5">
             <div className="pb-4">
-              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Mapa de Geocercas</h3>
-              <p className={`text-xs mt-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
+              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Mapa de Geocercas</h3>
+              <p className={`text-xs mt-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
                 Visualiza todas las geocercas en el mapa
               </p>
             </div>
@@ -330,15 +355,15 @@ export function GeofencesPage() {
 
           {/* Lista de Geocercas */}
           <CardComponent className="h-[600px] p-5">
-            <div className={`pb-4 ${isClient ? '' : 'border-b border-gray-200'}`}>
-              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900'}`}>Lista de Geocercas</h3>
+            <div className={`pb-4 ${isClient ? '' : 'border-b border-gray-200 dark:border-gray-700'}`}>
+              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Lista de Geocercas</h3>
             </div>
             <div className="overflow-y-auto h-[calc(100%-60px)] space-y-3 pt-4">
               {geofences.length === 0 ? (
                 <div className="text-center py-12">
-                  <MapPin className={`w-12 h-12 mx-auto mb-3 ${isClient ? 'text-white/30' : 'text-gray-300'}`} />
-                  <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>No hay geocercas registradas</p>
-                  <p className={`text-xs mt-1 ${isClient ? 'client-text-tertiary' : 'text-gray-400'}`}>
+                  <MapPin className={`w-12 h-12 mx-auto mb-3 ${isClient ? 'text-white/30' : 'text-gray-300 dark:text-gray-600'}`} />
+                  <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}`}>No hay geocercas registradas</p>
+                  <p className={`text-xs mt-1 ${isClient ? 'client-text-tertiary' : 'text-gray-400 dark:text-gray-500'}`}>
                     Crea tu primera geocerca haciendo clic en "Nueva Geocerca"
                   </p>
                 </div>
@@ -353,7 +378,7 @@ export function GeofencesPage() {
                           : 'border-white/10 hover:border-white/20 hover:bg-white/5'
                         : selectedGeofence?.id === geofence.id
                         ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md dark:hover:shadow-lg'
                     }`}
                     onClick={() => setSelectedGeofence(geofence)}
                   >
@@ -365,14 +390,14 @@ export function GeofencesPage() {
                           style={{ backgroundColor: geofence.color }}
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className={`font-semibold text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
+                          <h4 className={`font-semibold text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
                             {geofence.name}
                           </h4>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
+                            <span className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}`}>
                               Tipo: {geofence.type}
                             </span>
-                            <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-400'}`}>
+                            <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-400 dark:text-gray-500'}`}>
                               {new Date(geofence.created_at).toLocaleDateString()}
                             </span>
                           </div>
@@ -387,7 +412,7 @@ export function GeofencesPage() {
                           className={`p-2 rounded-lg transition-colors ${
                             isClient
                               ? 'text-cyan-400 hover:text-cyan-300 hover:bg-white/5'
-                              : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'
                           }`}
                           title="Centrar en mapa"
                         >
@@ -401,7 +426,7 @@ export function GeofencesPage() {
                           className={`p-2 rounded-lg transition-colors ${
                             isClient
                               ? 'text-cyan-400 hover:text-cyan-300 hover:bg-white/5'
-                              : 'text-gray-500 hover:text-primary hover:bg-primary/10'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-primary/10'
                           }`}
                           title="Editar"
                         >
@@ -415,7 +440,7 @@ export function GeofencesPage() {
                           className={`p-2 rounded-lg transition-colors ${
                             isClient
                               ? 'text-red-400 hover:text-red-300 hover:bg-white/5'
-                              : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
                           }`}
                           title="Eliminar"
                         >
@@ -425,21 +450,21 @@ export function GeofencesPage() {
                     </div>
 
                     {selectedGeofence?.id === geofence.id && (
-                      <div className={`mt-3 pt-3 ${isClient ? 'border-t border-white/10' : 'border-t border-gray-200'}`}>
+                      <div className={`mt-3 pt-3 ${isClient ? 'border-t border-white/10' : 'border-t border-gray-200 dark:border-gray-700'}`}>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
-                            <span className={isClient ? 'client-text-secondary' : 'text-gray-500'}>Color:</span>
+                            <span className={isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}>Color:</span>
                             <div className="flex items-center gap-2 mt-1">
                               <div
                                 className="w-6 h-6 rounded border border-gray-300"
                                 style={{ backgroundColor: geofence.color }}
                               />
-                              <span className={`font-mono ${isClient ? 'client-text-primary' : 'text-gray-700'}`}>{geofence.color}</span>
+                              <span className={`font-mono ${isClient ? 'client-text-primary' : 'text-gray-700 dark:text-gray-300'}`}>{geofence.color}</span>
                             </div>
                           </div>
                           <div>
-                            <span className={isClient ? 'client-text-secondary' : 'text-gray-500'}>Puntos:</span>
-                            <p className={`font-semibold mt-1 ${isClient ? 'client-text-primary' : 'text-gray-900'}`}>
+                            <span className={isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}>Puntos:</span>
+                            <p className={`font-semibold mt-1 ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
                               {geofence.geom?.coordinates?.[0]?.length || 0}
                             </p>
                           </div>

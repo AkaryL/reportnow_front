@@ -27,8 +27,10 @@ import {
   User,
   Container,
   Link,
-  Unlink
+  Unlink,
+  Download
 } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
 import type { Asset, VehicleAsset, CargoAsset, ContainerAsset, PersonAsset, OtherAsset } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
 import { useToast } from '../hooks/useToast';
@@ -280,10 +282,39 @@ export function AssetsPage() {
             Gestión de activos rastreados • {filteredAssets.length} activos
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Nuevo Activo
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => generateListPDF({
+              title: 'Lista de Activos',
+              subtitle: `${filteredAssets.length} activos encontrados`,
+              columns: [
+                { header: 'Nombre', key: 'name' },
+                { header: 'Tipo', key: 'type' },
+                { header: 'Identificador', key: 'identifier' },
+                { header: 'Estado', key: 'status' },
+              ],
+              data: filteredAssets.map(a => ({
+                name: a.name,
+                type: a.type,
+                identifier: a.type === 'vehiculo' ? (a as VehicleAsset).plates : a.type === 'cargo' ? (a as CargoAsset).tracking_code : '-',
+                status: a.status === 'active' ? 'Activo' : 'Inactivo',
+              })),
+              filename: 'activos',
+              filters: filterClient !== 'all' || activeTab !== 'all' ? [
+                ...(filterClient !== 'all' ? [{ label: 'Cliente', value: clients.find(c => c.id === filterClient)?.company_name || filterClient }] : []),
+                ...(activeTab !== 'all' ? [{ label: 'Tipo', value: activeTab }] : []),
+              ] : undefined,
+            })}
+          >
+            <Download className="w-4 h-4" />
+            PDF
+          </Button>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Nuevo Activo
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

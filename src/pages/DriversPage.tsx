@@ -18,7 +18,9 @@ import {
   Mail,
   CreditCard,
   Calendar,
+  Download,
 } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
 import type { Driver } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
 import { useToast } from '../hooks/useToast';
@@ -225,15 +227,43 @@ export function DriversPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Conductores</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Conductores</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Gestión de conductores • {filteredDrivers.length} conductores
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Nuevo Conductor
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => generateListPDF({
+              title: 'Lista de Conductores',
+              subtitle: `${filteredDrivers.length} conductores encontrados`,
+              columns: [
+                { header: 'Nombre', key: 'name' },
+                { header: 'Telefono', key: 'phone' },
+                { header: 'Email', key: 'email' },
+                { header: 'Licencia', key: 'license' },
+                { header: 'Estado', key: 'status' },
+              ],
+              data: filteredDrivers.map(d => ({
+                name: `${d.first_name} ${d.last_name}`,
+                phone: d.phone || '-',
+                email: d.email || '-',
+                license: d.license_number || '-',
+                status: d.status === 'active' ? 'Activo' : 'Inactivo',
+              })),
+              filename: 'conductores',
+              filters: filterStatus !== 'all' ? [{ label: 'Estado', value: filterStatus }] : undefined,
+            })}
+          >
+            <Download className="w-4 h-4" />
+            PDF
+          </Button>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Nuevo Conductor
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -242,7 +272,7 @@ export function DriversPage() {
           <Card key={stat.label} className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
                 <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
               </div>
               <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
@@ -272,7 +302,7 @@ export function DriversPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los estados</option>
             <option value="available">Disponibles</option>
@@ -329,28 +359,28 @@ export function DriversPage() {
                       <TableRow key={driver.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <UserCircle className="w-5 h-5 text-gray-400" />
+                            <UserCircle className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                             <div>
-                              <div className="font-medium text-gray-900">{driver.name}</div>
+                              <div className="font-medium text-gray-900 dark:text-white">{driver.name}</div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">{driver.license_number}</span>
+                            <CreditCard className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">{driver.license_number}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">{driver.phone}</span>
+                              <Phone className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                              <span className="text-sm text-gray-600 dark:text-gray-400">{driver.phone}</span>
                             </div>
                             {driver.email && (
                               <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{driver.email}</span>
+                                <Mail className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{driver.email}</span>
                               </div>
                             )}
                           </div>
@@ -358,15 +388,15 @@ export function DriversPage() {
                         <TableCell>{getStatusBadge(driver.status)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                             <div>
                               <span
                                 className={`text-sm ${
                                   expired
-                                    ? 'text-red-600 font-semibold'
+                                    ? 'text-red-600 dark:text-red-400 font-semibold'
                                     : expiringSoon
-                                    ? 'text-yellow-600 font-semibold'
-                                    : 'text-gray-600'
+                                    ? 'text-yellow-600 dark:text-yellow-400 font-semibold'
+                                    : 'text-gray-600 dark:text-gray-400'
                                 }`}
                               >
                                 {new Date(driver.license_expiry).toLocaleDateString('es-MX')}
@@ -386,7 +416,7 @@ export function DriversPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {user?.role !== 'operator-monitor' && (
+                            {user?.role !== 'operator_monitor' && (
                               <>
                                 <Button
                                   variant="ghost"

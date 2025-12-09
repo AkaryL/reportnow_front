@@ -23,7 +23,9 @@ import {
   TrendingUp,
   Building2,
   Box,
+  Download,
 } from 'lucide-react';
+import { generateListPDF } from '../lib/pdfGenerator';
 import type { SIM } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
 import { useToast } from '../hooks/useToast';
@@ -369,10 +371,38 @@ export function SIMsPage() {
             Gestión de tarjetas SIM para equipos GPS • {filteredSIMs.length} SIMs
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Nueva SIM
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => generateListPDF({
+              title: 'Lista de Tarjetas SIM',
+              subtitle: `${filteredSIMs.length} SIMs encontradas`,
+              columns: [
+                { header: 'ICCID', key: 'iccid' },
+                { header: 'Telefono', key: 'phone' },
+                { header: 'Operador', key: 'carrier' },
+                { header: 'Plan', key: 'plan' },
+                { header: 'Estado', key: 'status' },
+              ],
+              data: filteredSIMs.map(s => ({
+                iccid: s.iccid,
+                phone: s.phone_number,
+                carrier: s.carrier,
+                plan: s.data_plan || '-',
+                status: s.status === 'active' ? 'Activa' : s.status === 'inactive' ? 'Inactiva' : 'Suspendida',
+              })),
+              filename: 'tarjetas_sim',
+              filters: filterStatus !== 'all' ? [{ label: 'Estado', value: filterStatus }] : undefined,
+            })}
+          >
+            <Download className="w-4 h-4" />
+            PDF
+          </Button>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Nueva SIM
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

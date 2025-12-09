@@ -35,9 +35,9 @@ export function VehicleDetailPage() {
 
   // Obtener todos los vehículos
   const { data: vehicles, isLoading } = useQuery({
-    queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
+    queryKey: (user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') ? ['user-vehicles', user.client_id] : QUERY_KEYS.VEHICLES,
     queryFn: async () => {
-      if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
+      if ((user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') && user.client_id) {
         // Get only vehicles for this client/cliente
         const allVehicles = await vehiclesApi.getAll();
         return allVehicles.filter(v => v.clientId === user.client_id);
@@ -52,11 +52,11 @@ export function VehicleDetailPage() {
 
   // Obtener geocercas filtradas según el rol del usuario
   const { data: geofences = [] } = useQuery({
-    queryKey: (user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') ? ['geofences', 'all'] : ['geofences'],
+    queryKey: (user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') ? ['geofences', 'all'] : ['geofences'],
     queryFn: async () => {
       const allGeofences = await geofencesApi.getAll();
 
-      if ((user?.role === 'admin' || user?.role === 'operator-admin' || user?.role === 'operator-monitor') && user.client_id) {
+      if ((user?.role === 'admin' || user?.role === 'operator_admin' || user?.role === 'operator_monitor') && user.client_id) {
         // Para admin/operadores: obtener sus geocercas + las asignadas + las globales
         return allGeofences.filter(g => g.is_global || g.client_id === user.client_id);
       }
