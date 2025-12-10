@@ -77,7 +77,7 @@ export function OperatorFormModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nombre completo *
           </label>
           <Input
@@ -90,7 +90,7 @@ export function OperatorFormModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Email *
           </label>
           <Input
@@ -103,7 +103,7 @@ export function OperatorFormModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Usuario (nombre de usuario para login) *
           </label>
           <Input
@@ -115,14 +115,14 @@ export function OperatorFormModal({
             disabled={!!operator} // No permitir cambiar username al editar
           />
           {operator && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               El nombre de usuario no se puede modificar
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {operator ? 'Nueva Contraseña (opcional)' : 'Contraseña *'}
           </label>
           <Input
@@ -133,14 +133,14 @@ export function OperatorFormModal({
             placeholder={operator ? 'Dejar en blanco para mantener actual' : 'Contraseña'}
           />
           {operator && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Dejar en blanco si no desea cambiar la contraseña
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Teléfono
           </label>
           <Input
@@ -152,7 +152,7 @@ export function OperatorFormModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tipo de Operador *
           </label>
           <select
@@ -163,24 +163,24 @@ export function OperatorFormModal({
                 role: e.target.value as 'operator_admin' | 'operator_monitor',
               })
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="operator_admin">Operador Administrador</option>
             <option value="operator_monitor">Operador Monitor</option>
           </select>
           <div className="mt-2 space-y-2">
-            <div className="text-xs text-gray-600">
-              <strong className="text-purple-700">Operador Administrador:</strong> Puede ver, editar y gestionar equipos, activos y configuraciones del cliente.
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              <strong className="text-purple-700 dark:text-purple-400">Operador Administrador:</strong> Puede ver, editar y gestionar equipos, activos y configuraciones del cliente.
             </div>
-            <div className="text-xs text-gray-600">
-              <strong className="text-blue-700">Operador Monitor:</strong> Solo puede ver y monitorear equipos. No puede hacer cambios.
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              <strong className="text-blue-700 dark:text-blue-400">Operador Monitor:</strong> Solo puede ver y monitorear equipos. No puede hacer cambios.
             </div>
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-xs text-blue-800">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+          <p className="text-xs text-blue-800 dark:text-blue-300">
             <strong>Nota:</strong> Los operadores solo tendrán acceso a los equipos y datos de este cliente específico.
           </p>
         </div>

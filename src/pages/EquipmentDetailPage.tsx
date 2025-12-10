@@ -55,6 +55,7 @@ import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import type { Equipment } from '../lib/types';
 import { useAuth } from '../features/auth/hooks';
 import { geofencesApi } from '../features/geofences/api';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   BarChart,
   Bar,
@@ -78,6 +79,7 @@ export function EquipmentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isDark } = useTheme();
 
   // Estados para filtros de fecha/hora
   const today = new Date();
@@ -411,11 +413,11 @@ export function EquipmentDetailPage() {
             <div>
               <div className="flex items-center gap-3">
                 <Radio className="w-6 h-6 text-primary" />
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {equipment.brand} {equipment.model}
                 </h1>
               </div>
-              <p className="text-gray-500 mt-1">
+              <p className="text-gray-500 dark:text-gray-400 mt-1">
                 IMEI: {equipment.imei} • S/N: {equipment.serial}
               </p>
             </div>
@@ -439,12 +441,12 @@ export function EquipmentDetailPage() {
         {/* Cliente */}
         <Card className="p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Building2 className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 uppercase">Cliente</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
                 {getClientName(equipment.client_id)}
               </p>
             </div>
@@ -454,18 +456,18 @@ export function EquipmentDetailPage() {
         {/* Activo */}
         <Card className="p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Box className="w-5 h-5 text-purple-600" />
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <Box className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 uppercase">Activo Asignado</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Activo Asignado</p>
               {asset ? (
                 <div className="mt-1">
-                  <p className="text-lg font-semibold text-gray-900">{asset.name}</p>
-                  <p className="text-sm text-gray-500">{getAssetTypeLabel(asset.type)}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{asset.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{getAssetTypeLabel(asset.type)}</p>
                 </div>
               ) : (
-                <p className="text-lg font-semibold text-gray-400 mt-1">Sin activo</p>
+                <p className="text-lg font-semibold text-gray-400 dark:text-gray-500 mt-1">Sin activo</p>
               )}
             </div>
           </div>
@@ -474,18 +476,18 @@ export function EquipmentDetailPage() {
         {/* SIM */}
         <Card className="p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Smartphone className="w-5 h-5 text-orange-600" />
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <Smartphone className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 uppercase">SIM Asignada</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SIM Asignada</p>
               {sim ? (
                 <div className="mt-1">
-                  <p className="text-lg font-semibold text-gray-900">{sim.phone_number}</p>
-                  <p className="text-sm text-gray-500">{sim.carrier}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{sim.phone_number}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{sim.carrier}</p>
                 </div>
               ) : (
-                <p className="text-lg font-semibold text-gray-400 mt-1">Sin SIM</p>
+                <p className="text-lg font-semibold text-gray-400 dark:text-gray-500 mt-1">Sin SIM</p>
               )}
             </div>
           </div>
@@ -494,18 +496,18 @@ export function EquipmentDetailPage() {
         {/* Última señal */}
         <Card className="p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Activity className="w-5 h-5 text-green-600" />
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <Activity className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 uppercase">Última Señal</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Última Señal</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
                 {equipment.last_seen
                   ? formatRelativeTime(Math.floor((Date.now() - new Date(equipment.last_seen).getTime()) / 60000))
                   : 'Nunca'}
               </p>
               {equipment.speed !== undefined && equipment.speed !== null && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {formatSpeed(equipment.speed)}
                 </p>
               )}
@@ -515,13 +517,13 @@ export function EquipmentDetailPage() {
       </div>
 
       {/* Tabs de navegación */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('historial')}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'historial'
               ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
           }`}
         >
           <Route className="w-4 h-4" />
@@ -532,7 +534,7 @@ export function EquipmentDetailPage() {
           className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'estadisticas'
               ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
           }`}
         >
           <BarChart3 className="w-4 h-4" />
@@ -571,71 +573,71 @@ export function EquipmentDetailPage() {
         </CardHeader>
         <CardContent className="p-6">
           {/* Filtros de Fecha y Hora */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filtrar por fecha y hora</span>
+              <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por fecha y hora</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Inicio</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fecha Inicio</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   max={todayStr}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hora Inicio</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hora Inicio</label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Fin</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fecha Fin</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   max={todayStr}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hora Fin</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hora Fin</label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
 
             {/* Estadísticas del recorrido */}
             {routes.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">{routeStats.totalPoints}</p>
-                    <p className="text-xs text-gray-500">Puntos registrados</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{routeStats.totalPoints}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Puntos registrados</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">{routeStats.maxSpeed.toFixed(0)} km/h</p>
-                    <p className="text-xs text-gray-500">Velocidad máxima</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{routeStats.maxSpeed.toFixed(0)} km/h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Velocidad máxima</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">{routeStats.avgSpeed.toFixed(0)} km/h</p>
-                    <p className="text-xs text-gray-500">Velocidad promedio</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{routeStats.avgSpeed.toFixed(0)} km/h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Velocidad promedio</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-600">{routeStats.stoppedPoints}</p>
-                    <p className="text-xs text-gray-500">Puntos detenido</p>
+                    <p className="text-2xl font-bold text-gray-600 dark:text-gray-300">{routeStats.stoppedPoints}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Puntos detenido</p>
                   </div>
                 </div>
               </div>
@@ -645,12 +647,12 @@ export function EquipmentDetailPage() {
           {/* Mapa y Timeline */}
           <div className="flex gap-4 h-[500px]">
             {/* Mapa - 2/3 del ancho */}
-            <div ref={mapRef} className="w-2/3 rounded-xl overflow-hidden border border-gray-200">
+            <div ref={mapRef} className="w-2/3 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
               {isLoadingRoutes ? (
-                <div className="flex items-center justify-center h-full bg-gray-50">
+                <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-800">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando historial...</p>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando historial...</p>
                   </div>
                 </div>
               ) : routes.length > 0 ? (
@@ -662,7 +664,7 @@ export function EquipmentDetailPage() {
                 >
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    url={isDark ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
                   />
 
                   {/* Polilínea de la ruta */}
@@ -849,20 +851,20 @@ export function EquipmentDetailPage() {
                   })}
                 </MapContainer>
               ) : (
-                <div className="flex items-center justify-center h-full bg-gray-50">
+                <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-800">
                   <div className="text-center">
-                    <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">No se encontraron puntos de ruta</p>
-                    <p className="text-sm text-gray-400 mt-1">para el período seleccionado</p>
+                    <MapPin className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400">No se encontraron puntos de ruta</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">para el período seleccionado</p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Timeline de estados - 1/3 del ancho */}
-            <div ref={timelineRef} className="w-1/3 rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
-              <div className="p-3 border-b border-gray-200 bg-gray-50">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <div ref={timelineRef} className="w-1/3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden flex flex-col">
+              <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" />
                   Timeline de Estados
                 </h3>
@@ -914,7 +916,7 @@ export function EquipmentDetailPage() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-gray-400">
+                    <div className="text-center text-gray-400 dark:text-gray-500">
                       <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Sin datos de estado</p>
                     </div>
@@ -924,14 +926,14 @@ export function EquipmentDetailPage() {
 
               {/* Leyenda de estados */}
               {statusSegments.length > 0 && (
-                <div className="p-3 border-t border-gray-200 bg-gray-50">
+                <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {Object.entries(STATUS_CONFIG).map(([key, config]) => {
                       const Icon = config.icon;
                       return (
                         <div key={key} className="flex items-center gap-1.5">
                           <Icon className={`w-3 h-3 ${config.color}`} />
-                          <span className="text-gray-600 truncate">{config.label}</span>
+                          <span className="text-gray-600 dark:text-gray-400 truncate">{config.label}</span>
                         </div>
                       );
                     })}
@@ -943,7 +945,7 @@ export function EquipmentDetailPage() {
 
           {/* Leyenda de colores */}
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-            <span className="text-gray-500">Leyenda:</span>
+            <span className="text-gray-500 dark:text-gray-400">Leyenda:</span>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
               <span>Inicio</span>
@@ -994,48 +996,48 @@ export function EquipmentDetailPage() {
         </CardHeader>
         <CardContent ref={statsRef} className="p-6">
           {/* Filtros de Fecha para estadísticas */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Período de análisis</span>
+              <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Período de análisis</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Inicio</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fecha Inicio</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   max={todayStr}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hora Inicio</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hora Inicio</label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Fin</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fecha Fin</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   max={todayStr}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hora Fin</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hora Fin</label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -1045,35 +1047,35 @@ export function EquipmentDetailPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
+                <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando estadísticas...</p>
               </div>
             </div>
           ) : (
             <div className="space-y-6">
               {/* Estadísticas principales */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-blue-600">{routes.length > 0 ? routeStats.totalPoints : 245}</p>
-                  <p className="text-sm text-blue-700 mt-1">Puntos registrados</p>
+                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{routes.length > 0 ? routeStats.totalPoints : 245}</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">Puntos registrados</p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-red-600">{routes.length > 0 ? routeStats.maxSpeed.toFixed(0) : 78}</p>
-                  <p className="text-sm text-red-700 mt-1">Vel. máxima (km/h)</p>
+                <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-red-600 dark:text-red-400">{routes.length > 0 ? routeStats.maxSpeed.toFixed(0) : 78}</p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">Vel. máxima (km/h)</p>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-green-600">{routes.length > 0 ? routeStats.avgSpeed.toFixed(0) : 42}</p>
-                  <p className="text-sm text-green-700 mt-1">Vel. promedio (km/h)</p>
+                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">{routes.length > 0 ? routeStats.avgSpeed.toFixed(0) : 42}</p>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">Vel. promedio (km/h)</p>
                 </div>
-                <div className="bg-gray-100 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-gray-600">{routes.length > 0 ? routeStats.stoppedPoints : 38}</p>
-                  <p className="text-sm text-gray-700 mt-1">Puntos detenido</p>
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-gray-600 dark:text-gray-300">{routes.length > 0 ? routeStats.stoppedPoints : 38}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-400 mt-1">Puntos detenido</p>
                 </div>
               </div>
 
               {/* Gráfico de Velocidad en el Tiempo */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-gray-600" />
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   Velocidad en el Tiempo
                 </h3>
                 <div className="h-80">
@@ -1131,8 +1133,8 @@ export function EquipmentDetailPage() {
               {/* Gráficos de Distribución */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico de Barras - Distribución de Velocidad */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución de Velocidad</h3>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución de Velocidad</h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1175,12 +1177,12 @@ export function EquipmentDetailPage() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  <p className="text-xs text-gray-500 text-center mt-2">Velocidad en km/h</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">Velocidad en km/h</p>
                 </div>
 
                 {/* Gráfico de Pie - Estado de Movimiento */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado de Movimiento</h3>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Estado de Movimiento</h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -1219,51 +1221,51 @@ export function EquipmentDetailPage() {
               </div>
 
               {/* Análisis de velocidad detallado */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Gauge className="w-5 h-5 text-gray-600" />
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Gauge className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   Análisis Detallado
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg text-center">
-                    <p className="text-sm text-gray-500">Puntos en movimiento</p>
-                    <p className="text-2xl font-bold text-green-600">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Puntos en movimiento</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 0).length : 207}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routes.filter(p => p.speed_kph && p.speed_kph > 0).length / routes.length) * 100).toFixed(1)
                         : '84.5'}%
                     </p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg text-center">
-                    <p className="text-sm text-gray-500">Exceso de velocidad</p>
-                    <p className="text-2xl font-bold text-orange-600">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Exceso de velocidad</p>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                       {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 60).length : 66}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routes.filter(p => p.speed_kph && p.speed_kph > 60).length / routes.length) * 100).toFixed(1)
                         : '26.9'}%
                     </p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg text-center">
-                    <p className="text-sm text-gray-500">Alta velocidad (&gt;80)</p>
-                    <p className="text-2xl font-bold text-red-600">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Alta velocidad (&gt;80)</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                       {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 80).length : 18}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routes.filter(p => p.speed_kph && p.speed_kph > 80).length / routes.length) * 100).toFixed(1)
                         : '7.3'}%
                     </p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg text-center">
-                    <p className="text-sm text-gray-500">Tiempo detenido</p>
-                    <p className="text-2xl font-bold text-gray-600">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Tiempo detenido</p>
+                    <p className="text-2xl font-bold text-gray-600 dark:text-gray-300">
                       {routes.length > 0 ? routeStats.stoppedPoints : 38}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routeStats.stoppedPoints / routes.length) * 100).toFixed(1)
                         : '15.5'}%
@@ -1273,23 +1275,23 @@ export function EquipmentDetailPage() {
               </div>
 
               {/* Información del período */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-gray-600" />
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   Información del Período
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Primer registro</p>
-                    <p className="text-lg font-semibold text-gray-900">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Primer registro</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {routes.length > 0
                         ? format(new Date(routes[0].recv_time), "dd/MM/yyyy HH:mm:ss", { locale: es })
                         : format(new Date(dayBeforeYesterdayStr + 'T08:00:00'), "dd/MM/yyyy HH:mm:ss", { locale: es })}
                     </p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Último registro</p>
-                    <p className="text-lg font-semibold text-gray-900">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Último registro</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {routes.length > 0
                         ? format(new Date(routes[routes.length - 1].recv_time), "dd/MM/yyyy HH:mm:ss", { locale: es })
                         : format(new Date(yesterdayStr + 'T17:30:00'), "dd/MM/yyyy HH:mm:ss", { locale: es })}
@@ -1299,8 +1301,8 @@ export function EquipmentDetailPage() {
               </div>
 
               {/* Ranking de Conductores */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-yellow-500" />
                   Ranking de Conductores
                 </h3>
@@ -1314,8 +1316,8 @@ export function EquipmentDetailPage() {
                   if (clientDrivers.length === 0) {
                     return (
                       <div className="text-center py-8">
-                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">No hay conductores registrados para este cliente</p>
+                        <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400">No hay conductores registrados para este cliente</p>
                       </div>
                     );
                   }
@@ -1347,7 +1349,7 @@ export function EquipmentDetailPage() {
                       )}
 
                       {/* Otros conductores disponibles */}
-                      <p className="text-sm text-gray-500 font-medium mt-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-4">
                         {currentDriver ? 'Otros conductores disponibles:' : 'Conductores disponibles:'}
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1357,7 +1359,7 @@ export function EquipmentDetailPage() {
                           .map((driver, index) => (
                             <div
                               key={driver.id}
-                              className="p-3 bg-gray-50 rounded-lg flex items-center gap-3"
+                              className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center gap-3"
                             >
                               <div className={`p-2 rounded-full ${
                                 index === 0 ? 'bg-yellow-100' :
@@ -1374,8 +1376,8 @@ export function EquipmentDetailPage() {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 truncate">{driver.name}</p>
-                                <p className="text-xs text-gray-500">
+                                <p className="font-medium text-gray-900 dark:text-white truncate">{driver.name}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                   {driver.status === 'available' ? 'Disponible' :
                                    driver.status === 'on_trip' ? 'En viaje' : 'Inactivo'}
                                 </p>
@@ -1392,7 +1394,7 @@ export function EquipmentDetailPage() {
                           ))}
                       </div>
                       {clientDrivers.filter(d => d.id !== equipment?.driver_id).length > 4 && (
-                        <p className="text-xs text-gray-400 text-center mt-2">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2">
                           +{clientDrivers.filter(d => d.id !== equipment?.driver_id).length - 4} conductores más
                         </p>
                       )}
@@ -1402,8 +1404,8 @@ export function EquipmentDetailPage() {
               </div>
 
               {/* Top Alertas del Equipo */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <Bell className="w-5 h-5 text-red-500" />
                   Top Alertas del Equipo
                 </h3>
@@ -1411,8 +1413,8 @@ export function EquipmentDetailPage() {
                   if (equipmentAlerts.length === 0) {
                     return (
                       <div className="text-center py-8">
-                        <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">No hay alertas registradas para este equipo</p>
+                        <AlertTriangle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400">No hay alertas registradas para este equipo</p>
                       </div>
                     );
                   }
@@ -1447,34 +1449,34 @@ export function EquipmentDetailPage() {
                     <div className="space-y-4">
                       {/* Resumen general */}
                       <div className="grid grid-cols-3 gap-4">
-                        <div className="p-3 bg-gray-50 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-gray-900">{equipmentAlerts.length}</p>
-                          <p className="text-xs text-gray-500">Total alertas</p>
+                        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white">{equipmentAlerts.length}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total alertas</p>
                         </div>
-                        <div className="p-3 bg-green-50 rounded-lg text-center">
+                        <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg text-center">
                           <div className="flex items-center justify-center gap-1">
                             <LogIn className="w-4 h-4 text-green-600" />
                             <p className="text-2xl font-bold text-green-600">{totalEnters}</p>
                           </div>
-                          <p className="text-xs text-green-700">Entradas</p>
+                          <p className="text-xs text-green-700 dark:text-green-400">Entradas</p>
                         </div>
-                        <div className="p-3 bg-red-50 rounded-lg text-center">
+                        <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg text-center">
                           <div className="flex items-center justify-center gap-1">
                             <LogOut className="w-4 h-4 text-red-600" />
                             <p className="text-2xl font-bold text-red-600">{totalExits}</p>
                           </div>
-                          <p className="text-xs text-red-700">Salidas</p>
+                          <p className="text-xs text-red-700 dark:text-red-400">Salidas</p>
                         </div>
                       </div>
 
                       {/* Top geocercas con más alertas */}
                       <div>
-                        <p className="text-sm text-gray-500 font-medium mb-3">Geocercas con más actividad:</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-3">Geocercas con más actividad:</p>
                         <div className="space-y-2">
                           {sortedGeofences.map(([geofenceId, data], index) => (
                             <div
                               key={geofenceId}
-                              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                              className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                             >
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                                 index === 0 ? 'bg-yellow-100 text-yellow-700' :
@@ -1485,8 +1487,8 @@ export function EquipmentDetailPage() {
                                 {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 truncate">{data.name}</p>
-                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <p className="font-medium text-gray-900 dark:text-white truncate">{data.name}</p>
+                                <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                                   <span className="flex items-center gap-1">
                                     <LogIn className="w-3 h-3 text-green-500" />
                                     {data.enters} entradas
@@ -1498,8 +1500,8 @@ export function EquipmentDetailPage() {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-lg font-bold text-gray-900">{data.total}</p>
-                                <p className="text-xs text-gray-400">alertas</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">{data.total}</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500">alertas</p>
                               </div>
                             </div>
                           ))}
@@ -1508,14 +1510,14 @@ export function EquipmentDetailPage() {
 
                       {/* Últimas alertas */}
                       <div>
-                        <p className="text-sm text-gray-500 font-medium mb-3">Últimas alertas:</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-3">Últimas alertas:</p>
                         <div className="space-y-2">
                           {equipmentAlerts.slice(0, 3).map((alert) => {
                             const geofence = geofences.find(g => g.id === alert.geofence_id);
                             return (
                               <div
                                 key={alert.id}
-                                className="flex items-center gap-3 p-2 border border-gray-100 rounded-lg"
+                                className="flex items-center gap-3 p-2 border border-gray-100 dark:border-gray-700 rounded-lg"
                               >
                                 {alert.type === 'geofence_enter' ? (
                                   <div className="p-1.5 bg-green-100 rounded-full">
@@ -1527,11 +1529,11 @@ export function EquipmentDetailPage() {
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-gray-900 truncate">
+                                  <p className="text-sm text-gray-900 dark:text-white truncate">
                                     {alert.type === 'geofence_enter' ? 'Entrada a ' : 'Salida de '}
                                     {geofence?.name || 'geocerca'}
                                   </p>
-                                  <p className="text-xs text-gray-400">
+                                  <p className="text-xs text-gray-400 dark:text-gray-500">
                                     {format(new Date(alert.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
                                   </p>
                                 </div>
@@ -1546,8 +1548,8 @@ export function EquipmentDetailPage() {
               </div>
 
               {routes.length === 0 && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800 text-center">
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-400 text-center">
                     Mostrando datos de ejemplo. Selecciona un período con datos reales del equipo para ver estadísticas actuales.
                   </p>
                 </div>
@@ -1562,38 +1564,38 @@ export function EquipmentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Información del equipo */}
         <Card>
-          <CardHeader className="p-6 border-b bg-gray-50">
+          <CardHeader className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <CardTitle className="flex items-center gap-2">
-              <Radio className="w-5 h-5 text-gray-600" />
+              <Radio className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               Información del Equipo
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">IMEI</span>
-                <span className="font-mono font-semibold text-gray-900">{equipment.imei}</span>
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">IMEI</span>
+                <span className="font-mono font-semibold text-gray-900 dark:text-white">{equipment.imei}</span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Número de Serie</span>
-                <span className="font-mono font-semibold text-gray-900">{equipment.serial}</span>
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Número de Serie</span>
+                <span className="font-mono font-semibold text-gray-900 dark:text-white">{equipment.serial}</span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Marca</span>
-                <span className="font-semibold text-gray-900">{equipment.brand}</span>
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Marca</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{equipment.brand}</span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Modelo</span>
-                <span className="font-semibold text-gray-900">{equipment.model}</span>
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Modelo</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{equipment.model}</span>
               </div>
               {equipment.firmware_version && (
-                <div className="flex justify-between py-3 border-b border-gray-100">
-                  <span className="text-gray-500">Firmware</span>
-                  <span className="font-mono text-gray-900">{equipment.firmware_version}</span>
+                <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-500 dark:text-gray-400">Firmware</span>
+                  <span className="font-mono text-gray-900 dark:text-white">{equipment.firmware_version}</span>
                 </div>
               )}
               <div className="flex justify-between py-3">
-                <span className="text-gray-500">Estado</span>
+                <span className="text-gray-500 dark:text-gray-400">Estado</span>
                 <Badge className={`${EQUIPMENT_STATUS_CONFIG[equipment.status]?.bgColor} ${EQUIPMENT_STATUS_CONFIG[equipment.status]?.textColor}`}>
                   {EQUIPMENT_STATUS_CONFIG[equipment.status]?.label}
                 </Badge>
@@ -1604,45 +1606,45 @@ export function EquipmentDetailPage() {
 
         {/* Ubicación actual */}
         <Card>
-          <CardHeader className="p-6 border-b bg-gray-50">
+          <CardHeader className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-gray-600" />
+              <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               Ubicación Actual
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Latitud</span>
-                <span className="font-mono font-semibold text-gray-900">
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Latitud</span>
+                <span className="font-mono font-semibold text-gray-900 dark:text-white">
                   {equipment.lat != null ? Number(equipment.lat).toFixed(6) : 'N/A'}
                 </span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Longitud</span>
-                <span className="font-mono font-semibold text-gray-900">
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Longitud</span>
+                <span className="font-mono font-semibold text-gray-900 dark:text-white">
                   {equipment.lng != null ? Number(equipment.lng).toFixed(6) : 'N/A'}
                 </span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Velocidad</span>
-                <span className="font-semibold text-gray-900">
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Velocidad</span>
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {equipment.speed != null
                     ? formatSpeed(Number(equipment.speed))
                     : 'N/A'}
                 </span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Dirección</span>
-                <span className="font-semibold text-gray-900">
+              <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">Dirección</span>
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {equipment.bearing != null
                     ? `${Number(equipment.bearing).toFixed(0)}°`
                     : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between py-3">
-                <span className="text-gray-500">Última actualización</span>
-                <span className="text-gray-900">
+                <span className="text-gray-500 dark:text-gray-400">Última actualización</span>
+                <span className="text-gray-900 dark:text-white">
                   {equipment.last_seen
                     ? format(new Date(equipment.last_seen), "dd/MM/yyyy HH:mm:ss", { locale: es })
                     : 'Nunca'}

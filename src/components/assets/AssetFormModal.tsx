@@ -287,7 +287,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
             value={formData.type}
             onChange={(e) => {setFormData({ ...formData, type: e.target.value as AssetType });console.log(e.target.value)} }
             disabled={!!asset}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           >
             <option value="vehiculo">Vehículo</option>
@@ -306,7 +306,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
               id="client_id"
               value={formData.client_id}
               onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
             >
               <option value="">Seleccionar cliente...</option>
@@ -540,8 +540,8 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         )}
 
         {/* Common Fields */}
-        <div className="border-t pt-4 mt-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Datos adicionales</h3>
+        <div className="border-t dark:border-gray-700 pt-4 mt-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Datos adicionales</h3>
           <div className="space-y-3">
             <div>
               <Label htmlFor="icon">Ícono</Label>
@@ -568,7 +568,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 rows={3}
               />
             </div>
@@ -576,7 +576,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 border-t dark:border-gray-700">
           <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>

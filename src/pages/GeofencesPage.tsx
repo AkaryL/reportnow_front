@@ -94,6 +94,7 @@ export function GeofencesPage() {
     mutationFn: (id: string) => geofencesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
+      queryClient.invalidateQueries({ queryKey: ['client-geofences'] });
       toast.success('Geocerca eliminada exitosamente');
     },
     onError: () => {
@@ -140,6 +141,7 @@ export function GeofencesPage() {
       }
 
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GEOFENCES });
+      queryClient.invalidateQueries({ queryKey: ['client-geofences'] });
       setIsModalOpen(false);
       setEditingGeofence(null);
     } catch (error: any) {
@@ -385,9 +387,13 @@ export function GeofencesPage() {
                           <h4 className={`font-semibold text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
                             {geofence.name}
                           </h4>
-                          <div className="flex items-center gap-3 mt-1">
+                          <div className="flex flex-col gap-1 mt-1">
                             <span className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}`}>
-                              Tipo: {geofence.type}
+                              Tipo: {geofence.event_type === 'entry' ? 'Solo entrada' :
+                              geofence.event_type === 'exit' ? 'Solo salida' :
+                              geofence.event_type === 'both' ? 'Ambas' :
+                              geofence.event_type === 'speed_limit' ? 'Límite de velocidad' :
+                              geofence.event_type || 'N/A'}
                             </span>
                             <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-400 dark:text-gray-500'}`}>
                               {new Date(geofence.created_at).toLocaleDateString()}

@@ -88,7 +88,11 @@ export function ClientDetailPage() {
 
   const { data: geofences = [], isLoading: isLoadingGeofences } = useQuery({
     queryKey: ['client-geofences', id],
-    queryFn: () => clientsApi.getGeofences(id!),
+    queryFn: async () => {
+      const allGeofences = await geofencesApi.getAll();
+      // Filtrar geocercas del cliente + globales
+      return allGeofences.filter(g => g.is_global || g.client_id === id);
+    },
     enabled: !!id,
   });
 
@@ -572,7 +576,7 @@ export function ClientDetailPage() {
   if (!client) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-gray-600 mb-4">Cliente no encontrado</p>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">Cliente no encontrado</p>
         <Button variant="outline" onClick={() => navigate('/clientes')}>
           <ArrowLeft className="w-4 h-4" />
           Volver a Clientes
@@ -596,8 +600,8 @@ export function ClientDetailPage() {
             Volver
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{client.company_name}</h1>
-            <p className="text-gray-600 mt-2">{client.contact_name} • {clientEquipments.length} equipos • {clientOperators.length} operadores</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{client.company_name}</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">{client.contact_name} • {clientEquipments.length} equipos • {clientOperators.length} operadores</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -624,10 +628,10 @@ export function ClientDetailPage() {
 
       {/* Client Info Card */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 p-6">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-3 text-gray-900">
-              <Building2 className="w-6 h-6 text-blue-600" />
+            <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+              <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               Información del Cliente
             </CardTitle>
             {isSuperUser && (
@@ -649,28 +653,28 @@ export function ClientDetailPage() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Estatus */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
               <div
                 className={`p-3 rounded-xl ${
                   client.status === 'active'
-                    ? 'bg-green-100'
+                    ? 'bg-green-100 dark:bg-green-900/30'
                     : client.status === 'suspended'
-                    ? 'bg-red-100'
-                    : 'bg-gray-100'
+                    ? 'bg-red-100 dark:bg-red-900/30'
+                    : 'bg-gray-100 dark:bg-gray-700'
                 }`}
               >
                 <AlertTriangle
                   className={`w-5 h-5 ${
                     client.status === 'active'
-                      ? 'text-green-600'
+                      ? 'text-green-600 dark:text-green-400'
                       : client.status === 'suspended'
-                      ? 'text-red-600'
-                      : 'text-gray-600'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-600 dark:text-gray-400'
                   }`}
                 />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Estatus</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Estatus</p>
                 <Badge
                   variant={
                     client.status === 'active'
@@ -686,82 +690,82 @@ export function ClientDetailPage() {
             </div>
 
             {/* Fecha Alta */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="p-3 rounded-xl bg-indigo-100">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
+                <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Fecha Alta</p>
-                <p className="text-sm font-semibold text-gray-900">{formatDate(client.created_at)}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fecha Alta</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(client.created_at)}</p>
               </div>
             </div>
 
             {/* Nombre Empresa */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="p-3 rounded-xl bg-blue-100">
-                <Building2 className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Nombre Empresa</p>
-                <p className="text-sm font-semibold text-gray-900">{client.company_name}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Nombre Empresa</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{client.company_name}</p>
               </div>
             </div>
 
             {/* Nombre Contacto */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="p-3 rounded-xl bg-blue-100">
-                <Users className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Nombre Contacto</p>
-                <p className="text-sm font-semibold text-gray-900">{client.contact_name}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Nombre Contacto</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{client.contact_name}</p>
               </div>
             </div>
 
             {/* Cargo de Contacto */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="p-3 rounded-xl bg-purple-100">
-                <FileText className="w-5 h-5 text-purple-600" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Cargo de Contacto</p>
-                <p className="text-sm font-semibold text-gray-900">{client.contact_position}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cargo de Contacto</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{client.contact_position}</p>
               </div>
             </div>
 
             {/* Tel Contacto */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="p-3 rounded-xl bg-green-100">
-                <Phone className="w-5 h-5 text-green-600" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900/30">
+                <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Tel Contacto</p>
-                <p className="text-sm font-semibold text-gray-900">{client.contact_phone}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tel Contacto</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{client.contact_phone}</p>
               </div>
             </div>
 
             {/* Email */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="p-3 rounded-xl bg-blue-100">
-                <Mail className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Email</p>
-                <p className="text-sm font-semibold text-gray-900">{client.email}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{client.email}</p>
               </div>
             </div>
 
             {/* Tels Autorizados */}
             {client.authorized_phones && client.authorized_phones.length > 0 && (
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 md:col-span-2">
-                <div className="p-3 rounded-xl bg-emerald-100">
-                  <Phone className="w-5 h-5 text-emerald-600" />
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 md:col-span-2">
+                <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                  <Phone className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-2">Teléfonos Autorizados</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Teléfonos Autorizados</p>
                   <div className="flex flex-wrap gap-2">
                     {client.authorized_phones.map((phone, index) => (
-                      <Badge key={index} variant="default" className="bg-emerald-50 text-emerald-700">
+                      <Badge key={index} variant="default" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                         {phone}
                       </Badge>
                     ))}
@@ -772,15 +776,15 @@ export function ClientDetailPage() {
 
             {/* Emails Autorizados */}
             {client.authorized_emails && client.authorized_emails.length > 0 && (
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 md:col-span-2 lg:col-span-3">
-                <div className="p-3 rounded-xl bg-cyan-100">
-                  <Mail className="w-5 h-5 text-cyan-600" />
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 md:col-span-2 lg:col-span-3">
+                <div className="p-3 rounded-xl bg-cyan-100 dark:bg-cyan-900/30">
+                  <Mail className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-2">Emails Autorizados</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Emails Autorizados</p>
                   <div className="flex flex-wrap gap-2">
                     {client.authorized_emails.map((email, index) => (
-                      <Badge key={index} variant="default" className="bg-cyan-50 text-cyan-700">
+                      <Badge key={index} variant="default" className="bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
                         {email}
                       </Badge>
                     ))}
@@ -794,11 +798,11 @@ export function ClientDetailPage() {
 
       {/* Map with Equipments and Geofences */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-200 p-6">
+        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between gap-4">
-            <CardTitle>
+            <CardTitle className="dark:text-white">
               <div className="flex items-center gap-3">
-                <MapPin className="w-6 h-6 text-emerald-600" />
+                <MapPin className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 Mapa de equipos y geocercas
               </div>
             </CardTitle>
@@ -813,12 +817,12 @@ export function ClientDetailPage() {
         </CardHeader>
         <CardContent className="p-6">
           {equipmentsForMap.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <Radio className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+              <Radio className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
               <p className="text-sm">No hay equipos con ubicación para mostrar en el mapa</p>
             </div>
           ) : (
-            <div className="h-[500px] rounded-xl overflow-hidden shadow-md border border-gray-200">
+            <div className="h-[500px] rounded-xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700">
               <LeafletMap
                 vehicles={equipmentsForMap as any}
                 geofences={showGeofences ? geofences : []}
@@ -834,10 +838,10 @@ export function ClientDetailPage() {
 
       {/* Equipments Card */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-200 p-6">
+        <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-3 text-gray-900">
-              <Radio className="w-6 h-6 text-violet-600" />
+            <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+              <Radio className="w-6 h-6 text-violet-600 dark:text-violet-400" />
               Equipos GPS Asignados ({clientEquipments.length})
             </CardTitle>
             <Button
@@ -857,7 +861,7 @@ export function ClientDetailPage() {
             </div>
           ) : clientEquipments.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No hay equipos asignados a este cliente</p>
+              <p className="text-gray-500 dark:text-gray-400">No hay equipos asignados a este cliente</p>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-6">
@@ -878,9 +882,9 @@ export function ClientDetailPage() {
                     <TableCell className="font-medium">{equipment.imei}</TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-gray-900">{equipment.brand} {equipment.model}</p>
-                        <p className="text-xs text-gray-500">S/N: {equipment.serial}</p>
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="font-medium text-gray-900 dark:text-white">{equipment.brand} {equipment.model}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">S/N: {equipment.serial}</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           {equipment.asset_id
                             ? `Activo: ${allAssets.find(a => a.id === equipment.asset_id)?.name || 'Desconocido'}`
                             : 'Sin asignar'}
@@ -892,7 +896,7 @@ export function ClientDetailPage() {
                         {equipment.status === 'active' ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                       {formatDate(equipment.last_seen)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -918,7 +922,7 @@ export function ClientDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveEquipment(equipment.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                           title="Desasignar equipo"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -937,10 +941,10 @@ export function ClientDetailPage() {
 
       {/* Operators Card */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-gray-200 p-6">
+        <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-3 text-gray-900">
-              <Users className="w-6 h-6 text-amber-600" />
+            <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+              <Users className="w-6 h-6 text-amber-600 dark:text-amber-400" />
               Operadores ({clientOperators.length})
             </CardTitle>
             <Button
@@ -956,7 +960,7 @@ export function ClientDetailPage() {
         <CardContent className="p-6">
           {clientOperators.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No hay operadores asignados a este cliente</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No hay operadores asignados a este cliente</p>
               <Button
                 variant="primary"
                 size="sm"
@@ -986,20 +990,20 @@ export function ClientDetailPage() {
                   <TableRow key={operator.id}>
                     <TableCell className="font-medium">{operator.name}</TableCell>
                     <TableCell>{operator.email}</TableCell>
-                    <TableCell className="text-sm text-gray-600">{operator.username}</TableCell>
+                    <TableCell className="text-sm text-gray-600 dark:text-gray-400">{operator.username}</TableCell>
                     <TableCell>
                       {operator.role === 'operator_admin' ? (
-                        <Badge variant="default" className="bg-purple-100 text-purple-700 border-purple-200">
+                        <Badge variant="default" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800">
                           Admin
                         </Badge>
                       ) : (
-                        <Badge variant="default" className="bg-blue-100 text-blue-700 border-blue-200">
+                        <Badge variant="default" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800">
                           Monitor
                         </Badge>
                       )}
                     </TableCell>
                     <TableCell>{operator.phone || '-'}</TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                       {formatDate(operator.last_activity || operator.created_at)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -1016,7 +1020,7 @@ export function ClientDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteOperator(operator.id, operator.name)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                           title="Eliminar operador"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1036,10 +1040,10 @@ export function ClientDetailPage() {
       {/* Assets Card (Super User Only) */}
       {isSuperUser && (
         <Card>
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200 p-6">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between gap-4">
-              <CardTitle className="flex items-center gap-3 text-gray-900">
-                <Package className="w-6 h-6 text-green-600" />
+              <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+                <Package className="w-6 h-6 text-green-600 dark:text-green-400" />
                 Activos ({clientAssets.length})
               </CardTitle>
               <Button
@@ -1059,7 +1063,7 @@ export function ClientDetailPage() {
               </div>
             ) : clientAssets.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">No hay activos asignados a este cliente</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No hay activos asignados a este cliente</p>
                 <Button
                   variant="primary"
                   size="sm"
@@ -1090,7 +1094,7 @@ export function ClientDetailPage() {
                         return (
                           <TableRow
                             key={asset.id}
-                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             onClick={() => handleViewAssetDetails(asset)}
                           >
                             <TableCell className="font-medium">{asset.name}</TableCell>
@@ -1111,21 +1115,21 @@ export function ClientDetailPage() {
                               {asset.status === 'active' ? (
                                 <Badge variant="success">Activo</Badge>
                               ) : (
-                                <Badge variant="default" className="bg-gray-100 text-gray-700">
+                                <Badge variant="default" className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                                   Inactivo
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell className="text-sm text-gray-600">
+                            <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                               {equipment ? (
                                 <span>
                                   {equipment.imei} ({equipment.brand} {equipment.model})
                                 </span>
                               ) : (
-                                <span className="text-gray-400">Sin equipo</span>
+                                <span className="text-gray-400 dark:text-gray-500">Sin equipo</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-sm text-gray-600">
+                            <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                               {formatDate(asset.created_at)}
                             </TableCell>
                             <TableCell className="text-right">
@@ -1142,7 +1146,7 @@ export function ClientDetailPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeleteAsset(asset.id, asset.name)}
-                                  className="text-red-600 hover:text-red-700"
+                                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                                   title="Eliminar activo"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1163,10 +1167,10 @@ export function ClientDetailPage() {
 
       {/* Geofences Card */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-200 p-6">
+        <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-3 text-gray-900">
-              <MapPin className="w-6 h-6 text-cyan-600" />
+            <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+              <MapPin className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
               Geocercas ({geofences.length})
             </CardTitle>
             <Button
@@ -1189,7 +1193,7 @@ export function ClientDetailPage() {
             </div>
           ) : geofences.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No hay geocercas asignadas a este cliente</p>
+              <p className="text-gray-500 dark:text-gray-400">No hay geocercas asignadas a este cliente</p>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-6">
@@ -1213,7 +1217,13 @@ export function ClientDetailPage() {
                     <TableRow key={geofence.id}>
                       <TableCell className="font-medium">{geofence.name}</TableCell>
                       <TableCell>
-                        <Badge variant="default">{geofence.type}</Badge>
+                        <Badge variant="default">
+                          {geofence.event_type === 'entry' ? 'Solo entrada' :
+                           geofence.event_type === 'exit' ? 'Solo salida' :
+                           geofence.event_type === 'both' ? 'Ambas' :
+                           geofence.event_type === 'speed_limit' ? 'Límite de velocidad' :
+                           geofence.event_type || 'N/A'}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {isGlobal ? (
@@ -1224,19 +1234,11 @@ export function ClientDetailPage() {
                           <Badge variant="default">Asignada</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-600">
+                      <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                         {formatDate(geofence.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/geocercas/${geofence.id}`)}
-                            title="Ver detalles"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1254,7 +1256,7 @@ export function ClientDetailPage() {
                               }
                             }}
                             disabled={!isOwnGeofence}
-                            className="text-red-600 hover:text-red-700 disabled:opacity-30"
+                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30 disabled:opacity-30"
                             title={isOwnGeofence ? "Eliminar geocerca" : "Solo puedes eliminar geocercas propias del cliente"}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1280,14 +1282,14 @@ export function ClientDetailPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Mensaje de Alerta *
             </label>
             <textarea
               value={alertMessage}
               onChange={(e) => setAlertMessage(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Escribe el mensaje de alerta aquí..."
             />
           </div>
@@ -1321,13 +1323,13 @@ export function ClientDetailPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Seleccionar Equipo *
             </label>
             <select
               value={selectedEquipmentId}
               onChange={(e) => setSelectedEquipmentId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Seleccionar...</option>
               {availableEquipments.map((equipment) => (
@@ -1337,7 +1339,7 @@ export function ClientDetailPage() {
               ))}
             </select>
             {availableEquipments.length === 0 && (
-              <p className="text-xs text-amber-600 mt-2">
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                 No hay equipos disponibles. Todos los equipos ya están asignados.
               </p>
             )}

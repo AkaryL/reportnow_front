@@ -113,7 +113,7 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               ICCID *
             </label>
             <Input
@@ -127,7 +127,7 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Número de Teléfono *
             </label>
             <Input
@@ -142,13 +142,13 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Compañía *
             </label>
             <select
               value={formData.carrier}
               onChange={(e) => handleCarrierChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               required={!isCustomCarrier}
             >
               <option value="">-- Seleccionar compañía --</option>
@@ -169,13 +169,13 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
                   required
                   className="border-blue-300 focus:ring-blue-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">Ingrese el nombre de la nueva compañía</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ingrese el nombre de la nueva compañía</p>
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               APN
             </label>
             <Input
@@ -188,13 +188,13 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Estado *
           </label>
           <select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as SIM['status'] })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="active">Activa</option>
@@ -203,13 +203,13 @@ export function SIMFormModal({ isOpen, onClose, onSubmit, sim, isLoading }: SIMF
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Equipo Asignado
           </label>
           <select
             value={formData.equipment_id}
             onChange={(e) => setFormData({ ...formData, equipment_id: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Sin asignar</option>
             {equipments.map((equipment) => (

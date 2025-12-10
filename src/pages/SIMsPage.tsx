@@ -340,17 +340,20 @@ export function SIMsPage() {
     {
       label: 'Total SIMs',
       value: sims.length,
-      color: 'bg-blue-50 text-blue-700',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/30',
+      textColor: 'text-blue-700 dark:text-blue-400',
     },
     {
       label: 'Activas',
       value: sims.filter((s) => getSIMStatus(s) === 'Active').length,
-      color: 'bg-info-50 text-info-700',
+      bgColor: 'bg-info-50 dark:bg-info-900/30',
+      textColor: 'text-info-700 dark:text-info-400',
     },
     {
       label: 'Inactivas',
       value: sims.filter((s) => getSIMStatus(s) === 'Inactive').length,
-      color: 'bg-gray-100 text-gray-700',
+      bgColor: 'bg-gray-100 dark:bg-gray-700',
+      textColor: 'text-gray-700 dark:text-gray-300',
     },
   ];
 
@@ -366,8 +369,8 @@ export function SIMsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tarjetas SIM</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tarjetas SIM</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Gestión de tarjetas SIM para equipos GPS • {filteredSIMs.length} SIMs
           </p>
         </div>
@@ -411,11 +414,11 @@ export function SIMsPage() {
           <Card key={stat.label} className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+                <p className={`text-2xl font-bold mt-1 ${stat.textColor}`}>{stat.value}</p>
               </div>
-              <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
-                <CreditCard className="w-6 h-6" />
+              <div className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center`}>
+                <CreditCard className={`w-6 h-6 ${stat.textColor}`} />
               </div>
             </div>
           </Card>
@@ -441,7 +444,7 @@ export function SIMsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los estados</option>
             <option value="active">Activas</option>
@@ -452,7 +455,7 @@ export function SIMsPage() {
           <select
             value={filterClient}
             onChange={(e) => setFilterClient(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los clientes</option>
             <option value="unassigned">Sin asignar</option>
@@ -500,7 +503,7 @@ export function SIMsPage() {
               <TableBody>
                 {filteredSIMs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">
                       No se encontraron SIMs
                     </TableCell>
                   </TableRow>
@@ -517,38 +520,38 @@ export function SIMsPage() {
                         <TableCell>
                           <div>
                             <div className="flex items-center gap-2">
-                              <CreditCard className="w-4 h-4 text-gray-400" />
-                              <span className="font-medium text-gray-900">{sim.iccid}</span>
+                              <CreditCard className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                              <span className="font-medium text-gray-900 dark:text-white">{sim.iccid}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <Phone className="w-3 h-3 text-gray-400" />
-                              <p className="text-sm text-gray-500">{sim.phone_number}</p>
+                              <Phone className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{sim.phone_number}</p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600">{sim.carrier}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-300">{sim.carrier}</span>
                         </TableCell>
                         <TableCell>
                           <div>
                             <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-gray-400" />
-                              <span className={equipment?.client_id ? 'text-gray-900' : 'text-gray-400'}>
+                              <Building2 className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                              <span className={equipment?.client_id ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}>
                                 {clientName}
                               </span>
                             </div>
                             {assetName && (
                               <div className="flex items-center gap-2 mt-1">
-                                <Box className="w-3 h-3 text-gray-400" />
-                                <span className="text-xs text-gray-500">{assetName}</span>
+                                <Box className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{assetName}</span>
                               </div>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Radio className="w-4 h-4 text-gray-400" />
-                            <span className={equipmentIMEI ? 'text-gray-900' : 'text-gray-400'}>
+                            <Radio className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span className={equipmentIMEI ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}>
                               {equipmentIMEI || 'Sin asignar'}
                             </span>
                           </div>
@@ -582,7 +585,7 @@ export function SIMsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(sim.id, sim.iccid)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
