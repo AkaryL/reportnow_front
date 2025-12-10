@@ -178,17 +178,7 @@ export function GeofencesPage() {
 
   return (
     <div className="space-y-0">
-      {/* Topbar - solo para admin/superuser */}
-      {!isClient && (
-        <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-6">
-          <Topbar
-            title="Geocercas"
-            subtitle="Gestiona las zonas de interés"
-          />
-        </div>
-      )}
-
-      <div className={isClient ? 'space-y-5' : 'pt-6 space-y-5'}>
+      <div className="space-y-5">
         {/* Header para cliente */}
         {isClient && (
           <div className="mb-6">
@@ -215,41 +205,43 @@ export function GeofencesPage() {
                 </p>
               )}
             </div>
-            <ButtonComponent
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => generateListPDF({
-                title: 'Lista de Geocercas',
-                subtitle: `${geofences.length} geocercas encontradas`,
-                columns: [
-                  { header: 'Nombre', key: 'name' },
-                  { header: 'Tipo', key: 'type' },
-                  { header: 'Color', key: 'color' },
-                  { header: 'Permiso', key: 'permission' },
-                ],
-                data: geofences.map((g: any) => ({
-                  name: g.name,
-                  type: g.type || 'Poligono',
-                  color: g.color || '#3b82f6',
-                  permission: g.permission === 'own' ? 'Propia' : 'Global',
-                })),
-                filename: 'geocercas',
-              })}
-            >
-              <Download className="w-4 h-4" />
-              PDF
-            </ButtonComponent>
-            <ButtonComponent
-              onClick={() => {
-                setEditingGeofence(null);
-                setIsModalOpen(true);
-              }}
-              variant={isClient ? 'primary' : 'primary'}
-              className={`flex items-center gap-2 ${isClient ? '' : ''}`}
-            >
-              <Plus className="w-4 h-4" />
-              Nueva Geocerca
-            </ButtonComponent>
+            <div className="flex items-center gap-2">
+              <ButtonComponent
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => generateListPDF({
+                  title: 'Lista de Geocercas',
+                  subtitle: `${geofences.length} geocercas encontradas`,
+                  columns: [
+                    { header: 'Nombre', key: 'name' },
+                    { header: 'Tipo', key: 'type' },
+                    { header: 'Color', key: 'color' },
+                    { header: 'Permiso', key: 'permission' },
+                  ],
+                  data: geofences.map((g: any) => ({
+                    name: g.name,
+                    type: g.type || 'Poligono',
+                    color: g.color || '#3b82f6',
+                    permission: g.permission === 'own' ? 'Propia' : 'Global',
+                  })),
+                  filename: 'geocercas',
+                })}
+              >
+                <Download className="w-4 h-4" />
+                PDF
+              </ButtonComponent>
+              <ButtonComponent
+                onClick={() => {
+                  setEditingGeofence(null);
+                  setIsModalOpen(true);
+                }}
+                variant="primary"
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Nueva Geocerca
+              </ButtonComponent>
+            </div>
           </div>
 
           {/* Filtros */}

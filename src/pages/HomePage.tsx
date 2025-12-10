@@ -764,7 +764,7 @@ export function HomePage() {
                   onClick={() => toggleMapFilter('moving')}
                   className={`h-9 px-3 text-[12px] rounded-full border transition-colors font-medium ${
                     mapFilters.moving
-                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400'
                       : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'
                   }`}
                   title="Filtrar vehículos en movimiento"
@@ -776,7 +776,7 @@ export function HomePage() {
                   onClick={() => toggleMapFilter('insideGeofence')}
                   className={`h-9 px-3 text-[12px] rounded-full border transition-colors font-medium ${
                     mapFilters.insideGeofence
-                      ? 'bg-blue-100 border-blue-300 text-blue-700'
+                      ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400'
                       : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'
                   }`}
                   title="Filtrar vehículos dentro de geocercas"
@@ -788,7 +788,7 @@ export function HomePage() {
                   onClick={() => setShowGeofences(!showGeofences)}
                   className={`h-9 px-3 text-[12px] rounded-full border transition-colors font-medium ${
                     showGeofences
-                      ? 'bg-purple-100 border-purple-300 text-purple-700'
+                      ? 'bg-purple-100 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-400'
                       : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'
                   }`}
                   title="Mostrar/ocultar geocercas en el mapa"
@@ -852,10 +852,26 @@ export function HomePage() {
                   .slice(currentPage * 4, (currentPage * 4) + 4)
                   .map((vehicle) => {
                   const statusColors = {
-                    moving: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-                    stopped: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-                    offline: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' },
-                    critical: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
+                    moving: {
+                      bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+                      text: 'text-emerald-700 dark:text-emerald-400',
+                      border: 'border-emerald-200 dark:border-emerald-800'
+                    },
+                    stopped: {
+                      bg: 'bg-blue-50 dark:bg-blue-900/30',
+                      text: 'text-blue-700 dark:text-blue-400',
+                      border: 'border-blue-200 dark:border-blue-800'
+                    },
+                    offline: {
+                      bg: 'bg-gray-50 dark:bg-gray-700/50',
+                      text: 'text-gray-700 dark:text-gray-300',
+                      border: 'border-gray-200 dark:border-gray-600'
+                    },
+                    critical: {
+                      bg: 'bg-red-50 dark:bg-red-900/30',
+                      text: 'text-red-700 dark:text-red-400',
+                      border: 'border-red-200 dark:border-red-800'
+                    }
                   };
 
                   const statusColor = statusColors[vehicle.status];
@@ -926,10 +942,6 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Footer Estado */}
-      <div className="flex justify-end">
-        <p className={`text-sm ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>{filteredVehicles.length} mostrados</p>
-      </div>
 
       {/* Notificaciones Recientes */}
       <CardComponent className="p-5">

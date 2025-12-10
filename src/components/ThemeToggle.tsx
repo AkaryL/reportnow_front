@@ -20,9 +20,11 @@ export function ThemeToggle({ className, size = 'md' }: ThemeToggleProps) {
       className={cn(
         buttonSize,
         'rounded-lg transition-all duration-200',
-        'hover:bg-gray-100 dark:hover:bg-gray-700',
-        'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800',
-        'text-gray-600 dark:text-gray-300',
+        // Light mode styles
+        'bg-gray-100 hover:bg-gray-200 text-gray-600',
+        // Dark mode styles
+        'dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-yellow-400',
+        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900',
         className
       )}
       aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
@@ -35,7 +37,7 @@ export function ThemeToggle({ className, size = 'md' }: ThemeToggleProps) {
             iconSize,
             'absolute inset-0 transition-all duration-300',
             isDark
-              ? 'opacity-100 rotate-0 scale-100'
+              ? 'opacity-100 rotate-0 scale-100 text-yellow-400'
               : 'opacity-0 rotate-90 scale-50'
           )}
         />
@@ -46,7 +48,7 @@ export function ThemeToggle({ className, size = 'md' }: ThemeToggleProps) {
             'transition-all duration-300',
             isDark
               ? 'opacity-0 -rotate-90 scale-50'
-              : 'opacity-100 rotate-0 scale-100'
+              : 'opacity-100 rotate-0 scale-100 text-gray-600'
           )}
         />
       </div>

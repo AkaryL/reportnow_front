@@ -1,6 +1,7 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import type { Vehicle } from '../../lib/types';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface LeafletMapProps {
   vehicles: Vehicle[];
@@ -33,6 +34,12 @@ export function LeafletMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
   const initialFitDoneRef = useRef(false);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const { isDark } = useTheme();
+
+  // Tile URLs for light and dark modes
+  const lightTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
   // Initialize map once
   useEffect(() => {
@@ -45,10 +52,11 @@ export function LeafletMap({
       attributionControl: false,
     });
 
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Add initial tile layer based on current theme
+    const tileLayer = L.tileLayer(isDark ? darkTileUrl : lightTileUrl, {
       maxZoom: 19,
     }).addTo(map);
+    tileLayerRef.current = tileLayer;
 
     // Create geofences layer
     geofencesLayerRef.current = L.layerGroup().addTo(map);
@@ -59,11 +67,24 @@ export function LeafletMap({
     return () => {
       map.remove();
       mapRef.current = null;
+      tileLayerRef.current = null;
       initializedRef.current = false;
       initialFitDoneRef.current = false;
       markersRef.current.clear();
     };
   }, []);
+
+  // Update tile layer when theme changes
+  useEffect(() => {
+    if (!mapRef.current || !tileLayerRef.current) return;
+
+    // Remove old tile layer and add new one
+    tileLayerRef.current.remove();
+    const newTileLayer = L.tileLayer(isDark ? darkTileUrl : lightTileUrl, {
+      maxZoom: 19,
+    }).addTo(mapRef.current);
+    tileLayerRef.current = newTileLayer;
+  }, [isDark]);
 
   // Update vehicle markers efficiently
   useEffect(() => {

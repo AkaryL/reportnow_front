@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface PolygonDrawMapProps {
   onPolygonComplete: (coordinates: [number, number][]) => void;
@@ -12,11 +13,13 @@ export function PolygonDrawMap({
   color = '#3BA2E8',
   initialCoordinates = []
 }: PolygonDrawMapProps) {
+  const { isDark } = useTheme();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [points, setPoints] = useState<[number, number][]>(initialCoordinates);
-  const [isComplete, setIsComplete] = useState(false);
-  const isCompleteRef = useRef(false); // Ref para evitar problemas de closure
+  // Si hay coordenadas iniciales con 3+ puntos, el polígono ya está completo
+  const [isComplete, setIsComplete] = useState(initialCoordinates.length >= 3);
+  const isCompleteRef = useRef(initialCoordinates.length >= 3); // Ref para evitar problemas de closure
   const markersRef = useRef<L.CircleMarker[]>([]);
   const linesRef = useRef<L.Polyline[]>([]);
   const polygonRef = useRef<L.Polygon | null>(null);
@@ -28,19 +31,42 @@ export function PolygonDrawMap({
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
+    // Determinar centro inicial: si hay coordenadas iniciales, calcular el centro del polígono
+    let initialCenter: [number, number] = [20.7167, -103.3830]; // Zapopan, Jalisco por defecto
+    let initialZoom = 13;
+
+    if (initialCoordinates && initialCoordinates.length > 0) {
+      // Calcular el centro del polígono (promedio de todas las coordenadas)
+      const centerLat = initialCoordinates.reduce((sum, coord) => sum + coord[0], 0) / initialCoordinates.length;
+      const centerLng = initialCoordinates.reduce((sum, coord) => sum + coord[1], 0) / initialCoordinates.length;
+      initialCenter = [centerLat, centerLng];
+      initialZoom = 15; // Zoom más cercano al editar
+    }
+
     // Inicializar el mapa
     const map = L.map(mapContainerRef.current, {
-      center: [20.7167, -103.3830], // Zapopan, Jalisco
-      zoom: 13,
+      center: initialCenter,
+      zoom: initialZoom,
       zoomControl: true,
       attributionControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Usar tiles oscuros o claros según el tema
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+    L.tileLayer(tileUrl, {
       maxZoom: 19,
     }).addTo(map);
 
     mapInstanceRef.current = map;
+
+    // Si hay coordenadas iniciales y el polígono está completo, ajustar bounds para mostrar todo
+    if (initialCoordinates && initialCoordinates.length >= 3) {
+      const bounds = L.latLngBounds(initialCoordinates);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
 
     // Manejar clics en el mapa
     map.on('click', (e: L.LeafletMouseEvent) => {
@@ -233,9 +259,9 @@ export function PolygonDrawMap({
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center text-sm">
-        <div className="text-gray-600">
+        <div className="text-gray-600 dark:text-gray-400">
           {isComplete ? (
-            <span className="text-green-600 font-medium">
+            <span className="text-green-600 dark:text-green-400 font-medium">
               ✓ Polígono completado ({points.length} puntos)
             </span>
           ) : points.length === 0 ? (
@@ -243,7 +269,7 @@ export function PolygonDrawMap({
           ) : points.length < 3 ? (
             <span>Puntos agregados: {points.length} (mínimo 3)</span>
           ) : (
-            <span className="text-blue-600 font-medium">
+            <span className="text-blue-600 dark:text-blue-400 font-medium">
               {points.length} puntos - Haz clic en el punto rojo para cerrar
             </span>
           )}
@@ -254,7 +280,7 @@ export function PolygonDrawMap({
             <button
               type="button"
               onClick={undoLastPoint}
-              className="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              className="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
             >
               Deshacer
             </button>
@@ -263,7 +289,7 @@ export function PolygonDrawMap({
             <button
               type="button"
               onClick={resetPolygon}
-              className="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors"
+              className="px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded transition-colors"
             >
               Reiniciar
             </button>
@@ -273,24 +299,24 @@ export function PolygonDrawMap({
 
       <div
         ref={mapContainerRef}
-        className="w-full h-[400px] rounded-lg border border-gray-300 cursor-crosshair"
+        className="w-full h-[400px] rounded-lg border border-gray-300 dark:border-gray-600 cursor-crosshair"
         style={{ cursor: isComplete ? 'default' : 'crosshair' }}
       />
 
       {isComplete && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-800">
+        <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-sm text-green-800 dark:text-green-400">
             <strong>Polígono creado exitosamente</strong>
           </p>
-          <p className="text-xs text-green-700 mt-1">
+          <p className="text-xs text-green-700 dark:text-green-500 mt-1">
             {points.length} puntos definidos. Puedes continuar con el guardado.
           </p>
         </div>
       )}
 
       {points.length > 0 && !isComplete && points.length < 3 && (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800">
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-xs text-blue-800 dark:text-blue-400">
             Necesitas al menos 3 puntos para crear un polígono. Continúa haciendo clic en el mapa.
           </p>
         </div>

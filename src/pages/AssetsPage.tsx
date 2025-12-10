@@ -277,8 +277,8 @@ export function AssetsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activos</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Activos</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Gestión de activos rastreados • {filteredAssets.length} activos
           </p>
         </div>
@@ -336,7 +336,7 @@ export function AssetsPage() {
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">Todos los clientes</option>
                 {clients.map((client) => (
@@ -349,7 +349,7 @@ export function AssetsPage() {
             <select
               value={filterEquipment}
               onChange={(e) => setFilterEquipment(e.target.value as 'all' | 'with' | 'without')}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">Todos los activos</option>
               <option value="with">Con equipo GPS</option>
@@ -360,7 +360,7 @@ export function AssetsPage() {
       </Card>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -376,15 +376,17 @@ export function AssetsPage() {
                 className={cn(
                   'flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors',
                   isActive
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary dark:text-primary-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 )}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
                 <span className={cn(
                   'ml-2 py-0.5 px-2 rounded-full text-xs',
-                  isActive ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
+                  isActive
+                    ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-400'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 )}>
                   {count}
                 </span>
@@ -405,7 +407,7 @@ export function AssetsPage() {
           <div className="overflow-x-auto">
             {filteredAssets.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">No se encontraron activos</p>
+                <p className="text-gray-500 dark:text-gray-400">No se encontraron activos</p>
               </div>
             ) : (
               <>
@@ -487,14 +489,14 @@ function AllAssetsTable({ assets, onView, onEdit, onDelete, onAssignEquipment, g
         {assets.map((asset: Asset) => {
           const hasEquipment = !!getEquipmentForAsset(asset.id);
           return (
-            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onView(asset)}>
               <TableCell className="font-medium">{asset.name}</TableCell>
               <TableCell>
-                {asset.type === 'vehiculo' && <Badge variant="default" className="bg-blue-50 text-blue-700">Vehículo</Badge>}
-                {asset.type === 'cargo' && <Badge variant="default" className="bg-orange-50 text-orange-700">Mercancía</Badge>}
-                {asset.type === 'container' && <Badge variant="default" className="bg-purple-50 text-purple-700">Contenedor</Badge>}
-                {asset.type === 'person' && <Badge variant="default" className="bg-green-50 text-green-700">Persona</Badge>}
-                {asset.type === 'other' && <Badge variant="default" className="bg-gray-50 text-gray-700">Otro</Badge>}
+                {asset.type === 'vehiculo' && <Badge variant="default" className="bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">Vehículo</Badge>}
+                {asset.type === 'cargo' && <Badge variant="default" className="bg-orange-50 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400">Mercancía</Badge>}
+                {asset.type === 'container' && <Badge variant="default" className="bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400">Contenedor</Badge>}
+                {asset.type === 'person' && <Badge variant="default" className="bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400">Persona</Badge>}
+                {asset.type === 'other' && <Badge variant="default" className="bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300">Otro</Badge>}
               </TableCell>
               {isSuperuser && <TableCell>{getClientName(asset.client_id)}</TableCell>}
               <TableCell>{getEquipmentSerial(asset.id)}</TableCell>
@@ -547,7 +549,7 @@ function VehicleTable({ assets, onView, onEdit, onDelete, onAssignEquipment, get
         {assets.map((asset: VehicleAsset) => {
           const hasEquipment = !!getEquipmentForAsset(asset.id);
           return (
-            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onView(asset)}>
               <TableCell className="font-medium">{asset.name}</TableCell>
               <TableCell>{asset.brand}</TableCell>
               <TableCell>{asset.model}</TableCell>
@@ -602,7 +604,7 @@ function CargoTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getCl
         {assets.map((asset: CargoAsset) => {
           const hasEquipment = !!getEquipmentForAsset(asset.id);
           return (
-            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onView(asset)}>
               <TableCell className="font-medium">{asset.name}</TableCell>
               <TableCell>{asset.cargo_type || '-'}</TableCell>
               <TableCell className="font-mono">{asset.box_id || '-'}</TableCell>
@@ -655,7 +657,7 @@ function ContainerTable({ assets, onView, onEdit, onDelete, onAssignEquipment, g
         {assets.map((asset: ContainerAsset) => {
           const hasEquipment = !!getEquipmentForAsset(asset.id);
           return (
-            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onView(asset)}>
               <TableCell className="font-medium">{asset.name}</TableCell>
               <TableCell>{asset.container_type || '-'}</TableCell>
               <TableCell className="font-mono">{asset.box_plate || '-'}</TableCell>
@@ -709,7 +711,7 @@ function PersonTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getC
         {assets.map((asset: PersonAsset) => {
           const hasEquipment = !!getEquipmentForAsset(asset.id);
           return (
-            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onView(asset)}>
               <TableCell className="font-medium">{asset.person_name}</TableCell>
               <TableCell>{asset.phone}</TableCell>
               <TableCell>{asset.emergency_phone || '-'}</TableCell>
@@ -761,7 +763,7 @@ function OtherTable({ assets, onView, onEdit, onDelete, onAssignEquipment, getCl
         {assets.map((asset: OtherAsset) => {
           const hasEquipment = !!getEquipmentForAsset(asset.id);
           return (
-            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onView(asset)}>
+            <TableRow key={asset.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onView(asset)}>
               <TableCell className="font-medium">{asset.name}</TableCell>
               <TableCell>{asset.asset_type || '-'}</TableCell>
               <TableCell>{asset.category || '-'}</TableCell>

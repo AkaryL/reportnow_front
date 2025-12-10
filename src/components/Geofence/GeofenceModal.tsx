@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { clientsApi } from '../../features/clients/api';
 import L from 'leaflet';
 import { PolygonDrawMap } from '../map/PolygonDrawMap';
+import { useTheme } from '../../contexts/ThemeContext';
 import { longFormatters } from 'date-fns';
 
 interface GeofenceModalProps {
@@ -30,6 +31,7 @@ interface GeofenceModalProps {
 
 export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editingGeofence }: GeofenceModalProps) {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3BA2E8');
   const [latitude, setLatitude] = useState('');
@@ -184,16 +186,58 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       setTimeout(() => {
         if (!mapContainerRef.current) return;
 
+        // Determinar centro inicial: si estamos editando, usar la ubicación existente
+        let initialCenter: [number, number] = [20.7167, -103.3830]; // Zapopan, Jalisco por defecto
+        let initialZoom = 13;
+
+        if (editingGeofence && editingGeofence.center_lat && editingGeofence.center_lng) {
+          initialCenter = [
+            parseFloat(editingGeofence.center_lat),
+            parseFloat(editingGeofence.center_lng)
+          ];
+          initialZoom = 15; // Zoom más cercano al editar
+        } else if (mapSelectedLocation) {
+          initialCenter = mapSelectedLocation;
+          initialZoom = 15;
+        }
+
         const map = L.map(mapContainerRef.current, {
-          center: [20.7167, -103.3830], // Zapopan, Jalisco
-          zoom: 13,
+          center: initialCenter,
+          zoom: initialZoom,
           zoomControl: true,
           attributionControl: false,
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Usar tiles oscuros o claros según el tema
+        const tileUrl = isDark
+          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+        L.tileLayer(tileUrl, {
           maxZoom: 19,
         }).addTo(map);
+
+        // Si estamos editando, mostrar el círculo existente
+        if (editingGeofence && editingGeofence.center_lat && editingGeofence.center_lng) {
+          const lat = parseFloat(editingGeofence.center_lat);
+          const lng = parseFloat(editingGeofence.center_lng);
+          const rad = editingGeofence.radius || 500;
+
+          markerRef.current = L.circle([lat, lng], {
+            radius: rad,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.2,
+            weight: 2,
+          }).addTo(map);
+
+          markerRef.current.bindPopup(`
+            <div class="p-2">
+              <div class="text-sm font-semibold">${name || 'Geocerca'}</div>
+              <div class="text-xs text-gray-600 mt-1">Radio: ${rad}m</div>
+            </div>
+          `).openPopup();
+        }
 
         // Add click handler
         map.on('click', (e: L.LeafletMouseEvent) => {
@@ -237,7 +281,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         markerRef.current = null;
       }
     };
-  }, [selectedTab, isOpen]);
+  }, [selectedTab, isOpen, isDark, editingGeofence]);
 
   // Update marker when radius or color changes
   useEffect(() => {
@@ -462,29 +506,29 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 z-[9999] max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 z-[9999] max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {editingGeofence ? 'Editar Geocerca' : 'Nueva Geocerca'}
             </h2>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-4 border-b border-gray-200">
+          <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={() => setSelectedTab('address')}
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
                 selectedTab === 'address'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <MapPin className="w-4 h-4 inline mr-2" />
@@ -496,7 +540,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
                 selectedTab === 'coordinates'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <Search className="w-4 h-4 inline mr-2" />
@@ -508,7 +552,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
                 selectedTab === 'pin'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <Map className="w-4 h-4 inline mr-2" />
@@ -519,7 +563,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nombre de la geocerca
               </label>
               <input
@@ -529,14 +573,14 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ej: Zona Industrial"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
             {selectedTab === 'address' ? (
               // Búsqueda por dirección
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Dirección
                 </label>
                 <div className="flex gap-2">
@@ -549,7 +593,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                       setSearchError('');
                     }}
                     placeholder="Ej: Av. Chapultepec 480, Guadalajara, Jalisco"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                   <Button
                     type="button"
@@ -567,10 +611,10 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   </Button>
                 </div>
                 {searchError && (
-                  <p className="text-xs text-red-600 mt-1">{searchError}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{searchError}</p>
                 )}
                 {latitude && longitude && (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800">
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded text-xs text-green-800 dark:text-green-400">
                     ✓ Coordenadas encontradas: {parseFloat(latitude).toFixed(4)}, {parseFloat(longitude).toFixed(4)}
                   </div>
                 )}
@@ -578,7 +622,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
             ) : selectedTab === 'coordinates' ? (
               // Dibujo de polígono por coordenadas
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Dibuja la geocerca en el mapa
                 </label>
                 <PolygonDrawMap
@@ -590,15 +634,15 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
             ) : (
               // Selección en mapa
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Haz clic en el mapa para seleccionar la ubicación
                 </label>
                 <div
                   ref={mapContainerRef}
-                  className="w-full h-[300px] rounded-lg border border-gray-300"
+                  className="w-full h-[300px] rounded-lg border border-gray-300 dark:border-gray-600"
                 />
                 {mapSelectedLocation && (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800">
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded text-xs text-green-800 dark:text-green-400">
                     ✓ Ubicación seleccionada: {mapSelectedLocation[0].toFixed(4)}, {mapSelectedLocation[1].toFixed(4)}
                   </div>
                 )}
@@ -608,7 +652,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
             {/* Radio solo para círculos (tabs: address y map) */}
             {selectedTab !== 'coordinates' && (
               <div>
-                <label htmlFor="radius" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="radius" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Radio (metros)
                 </label>
                 <input
@@ -619,13 +663,13 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   placeholder="Ej: 500"
                   required
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
                 />
               </div>
             )}
 
             <div>
-              <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="color" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Color
               </label>
               <div className="flex items-center gap-3">
@@ -634,15 +678,15 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   type="color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="h-10 w-20 rounded border border-gray-300 cursor-pointer"
+                  className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                 />
-                <span className="text-sm text-gray-600">{color}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{color}</span>
               </div>
             </div>
 
             {/* Tipo de Alerta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Tipo de alerta
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -651,8 +695,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   onClick={() => setAlertType('entry')}
                   className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
                     alertType === 'entry'
-                      ? 'border-primary-600 bg-primary-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-900 hover:border-gray-400 hover:bg-gray-50'
+                      ? 'border-gray-900 bg-gray-900 text-white dark:border-primary-500 dark:bg-primary-600'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Solo entrada
@@ -662,8 +706,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   onClick={() => setAlertType('exit')}
                   className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
                     alertType === 'exit'
-                      ? 'border-primary-600 bg-primary-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-900 hover:border-gray-400 hover:bg-gray-50'
+                      ? 'border-gray-900 bg-gray-900 text-white dark:border-primary-500 dark:bg-primary-600'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Solo salida
@@ -673,8 +717,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   onClick={() => setAlertType('both')}
                   className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
                     alertType === 'both'
-                      ? 'border-primary-600 bg-primary-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-900 hover:border-gray-400 hover:bg-gray-50'
+                      ? 'border-gray-900 bg-gray-900 text-white dark:border-primary-500 dark:bg-primary-600'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Ambas
@@ -684,8 +728,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                   onClick={() => setAlertType('speed_limit')}
                   className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
                     alertType === 'speed_limit'
-                      ? 'border-primary-600 bg-primary-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-900 hover:border-gray-400 hover:bg-gray-50'
+                      ? 'border-gray-900 bg-gray-900 text-white dark:border-primary-500 dark:bg-primary-600'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Límite de velocidad
@@ -695,7 +739,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
               {/* Campo de límite de velocidad */}
               {alertType === 'speed_limit' && (
                 <div className="mt-3">
-                  <label htmlFor="speedLimit" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="speedLimit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Límite de velocidad (km/h)
                   </label>
                   <input
@@ -707,9 +751,9 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                     required
                     min="0"
                     max="300"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Se generará una alerta cuando un vehículo supere este límite dentro de la geocerca.
                   </p>
                 </div>
@@ -718,8 +762,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
 
             {/* Asignación (solo para superuser y cuando no hay defaultClientId) */}
             {isSuperuser && !defaultClientId && (
-              <div className="border-t border-gray-200 pt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Asignación
                 </label>
                 <div className="space-y-2">
@@ -730,7 +774,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                       onChange={() => setAssignmentType('global')}
                       className="w-4 h-4 text-primary"
                     />
-                    <span className="text-sm">Global (visible para todos)</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Global (visible para todos)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -739,13 +783,13 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                       onChange={() => setAssignmentType('client')}
                       className="w-4 h-4 text-primary"
                     />
-                    <span className="text-sm">Asignar a cliente específico</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Asignar a cliente específico</span>
                   </label>
                 </div>
 
                 {assignmentType === 'client' && (
                   <div className="mt-3">
-                    <label htmlFor="client" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="client" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Seleccionar cliente
                     </label>
                     <select
@@ -753,7 +797,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                       value={selectedClientId}
                       onChange={(e) => setSelectedClientId(e.target.value)}
                       required={assignmentType === 'client'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
                     >
                       <option value="">Selecciona un cliente...</option>
                       {clients.map((client: any) => (
@@ -767,8 +811,8 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
               </div>
             )}
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-              <p className="text-xs text-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 space-y-2">
+              <p className="text-xs text-blue-800 dark:text-blue-400">
                 <strong>Nota:</strong> La geocerca generará alertas cuando un vehículo {
                   alertType === 'entry' ? 'entre en' :
                   alertType === 'exit' ? 'salga de' :
@@ -777,7 +821,7 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                 } esta zona.
               </p>
               {isAdmin && (
-                <p className="text-xs text-blue-800">
+                <p className="text-xs text-blue-800 dark:text-blue-400">
                   <strong>Info:</strong> Esta geocerca se creará automáticamente para tu cliente.
                 </p>
               )}

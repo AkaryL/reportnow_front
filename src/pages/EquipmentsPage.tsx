@@ -122,12 +122,23 @@ export function EquipmentsPage() {
 
   // Filtrar equipos
   const filteredEquipments = equipments.filter((equipment) => {
+    // Obtener nombre del cliente y activo para búsqueda
+    const clientName = equipment.client_id
+      ? (clients.find((c) => c.id === equipment.client_id)?.company_name || '').toLowerCase()
+      : '';
+    const assetName = equipment.asset_id
+      ? (assets.find((a) => a.id === equipment.asset_id)?.name || '').toLowerCase()
+      : '';
+
+    const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
-      equipment.imei.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      equipment.serial.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      equipment.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      equipment.model.toLowerCase().includes(searchQuery.toLowerCase());
+      equipment.imei.toLowerCase().includes(searchLower) ||
+      equipment.serial.toLowerCase().includes(searchLower) ||
+      equipment.brand.toLowerCase().includes(searchLower) ||
+      equipment.model.toLowerCase().includes(searchLower) ||
+      clientName.includes(searchLower) ||
+      assetName.includes(searchLower);
 
     const matchesStatus = filterStatus === 'all' || equipment.status === filterStatus;
     const matchesClient =
@@ -227,27 +238,32 @@ export function EquipmentsPage() {
     {
       label: 'Total Equipos',
       value: equipments.length,
-      color: 'bg-blue-50 text-blue-700',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/30',
+      textColor: 'text-blue-700 dark:text-blue-400',
     },
     {
       label: 'Activos',
       value: equipments.filter((e) => e.status === 'active').length,
-      color: 'bg-green-50 text-green-700',
+      bgColor: 'bg-green-50 dark:bg-green-900/30',
+      textColor: 'text-green-700 dark:text-green-400',
     },
     {
       label: 'Inactivos',
       value: equipments.filter((e) => e.status === 'inactive').length,
-      color: 'bg-gray-100 text-gray-700',
+      bgColor: 'bg-gray-100 dark:bg-gray-700',
+      textColor: 'text-gray-700 dark:text-gray-300',
     },
     {
       label: 'Disponibles',
       value: equipments.filter((e) => e.status === 'available').length,
-      color: 'bg-purple-50 text-purple-700',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/30',
+      textColor: 'text-purple-700 dark:text-purple-400',
     },
     {
       label: 'Sin Asignar',
       value: equipments.filter((e) => !e.client_id).length,
-      color: 'bg-yellow-50 text-yellow-700',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/30',
+      textColor: 'text-yellow-700 dark:text-yellow-400',
     },
   ];
 
@@ -312,10 +328,10 @@ export function EquipmentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
+                <p className={`text-2xl font-bold mt-1 ${stat.textColor}`}>{stat.value}</p>
               </div>
-              <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
-                <Radio className="w-6 h-6" />
+              <div className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center`}>
+                <Radio className={`w-6 h-6 ${stat.textColor}`} />
               </div>
             </div>
           </Card>
@@ -330,7 +346,7 @@ export function EquipmentsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="text"
-              placeholder="Buscar IMEI, serial, marca..."
+              placeholder="Buscar IMEI, serial, marca, cliente, activo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -498,7 +514,7 @@ export function EquipmentsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(equipment.id, equipment.imei)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
