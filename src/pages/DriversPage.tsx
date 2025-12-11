@@ -160,9 +160,9 @@ export function DriversPage() {
 
   const getStatusBadge = (status: Driver['status']) => {
     const config = {
-      available: { label: 'Disponible', color: 'bg-ok-50 text-ok-700' },
-      on_trip: { label: 'En viaje', color: 'bg-info-50 text-info-700' },
-      inactive: { label: 'Inactivo', color: 'bg-gray-100 text-gray-700' },
+      available: { label: 'Disponible', color: 'bg-ok-50 text-ok-700 dark:bg-ok-900/30 dark:text-ok-400' },
+      on_trip: { label: 'En viaje', color: 'bg-info-50 text-info-700 dark:bg-info-900/30 dark:text-info-400' },
+      inactive: { label: 'Inactivo', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
     };
     const statusConfig = config[status];
     return (
@@ -190,28 +190,28 @@ export function DriversPage() {
     {
       label: 'Total Conductores',
       value: drivers.length,
-      color: 'bg-blue-50 text-blue-700',
+      color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     },
     {
       label: 'Disponibles',
       value: drivers.filter((d) => d.status === 'available').length,
-      color: 'bg-ok-50 text-ok-700',
+      color: 'bg-ok-50 text-ok-700 dark:bg-ok-900/30 dark:text-ok-400',
     },
     {
       label: 'En viaje',
       value: drivers.filter((d) => d.status === 'on_trip').length,
-      color: 'bg-info-50 text-info-700',
+      color: 'bg-info-50 text-info-700 dark:bg-info-900/30 dark:text-info-400',
     },
     {
       label: 'Inactivos',
       value: drivers.filter((d) => d.status === 'inactive').length,
-      color: 'bg-gray-100 text-gray-700',
+      color: 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-white',
     },
     {
       label: 'Licencias por vencer',
       value: drivers.filter((d) => isLicenseExpiringSoon(d.license_expiry) && !isLicenseExpired(d.license_expiry))
         .length,
-      color: 'bg-warn-50 text-warn-700',
+      color: 'bg-warn-50 text-warn-700 dark:bg-warn-900/30 dark:text-warn-400',
     },
   ];
 
@@ -327,7 +327,7 @@ export function DriversPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="px-6 py-4">
           <CardTitle>Lista de conductores</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -346,7 +346,7 @@ export function DriversPage() {
               <TableBody>
                 {filteredDrivers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">
                       No se encontraron conductores
                     </TableCell>
                   </TableRow>
@@ -402,12 +402,12 @@ export function DriversPage() {
                                 {new Date(driver.license_expiry).toLocaleDateString('es-MX')}
                               </span>
                               {expired && (
-                                <Badge variant="default" className="ml-2 bg-crit-50 text-crit-700">
+                                <Badge variant="default" className="ml-2 bg-crit-50 text-crit-700 dark:bg-crit-900/30 dark:text-crit-400">
                                   Vencida
                                 </Badge>
                               )}
                               {expiringSoon && !expired && (
-                                <Badge variant="default" className="ml-2 bg-warn-50 text-warn-700">
+                                <Badge variant="default" className="ml-2 bg-warn-50 text-warn-700 dark:bg-warn-900/30 dark:text-warn-400">
                                   Por vencer
                                 </Badge>
                               )}
@@ -437,7 +437,7 @@ export function DriversPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDelete(driver.id, driver.name)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>

@@ -63,7 +63,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nombre Completo *
           </label>
           <Input
@@ -77,7 +77,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Número de Licencia *
             </label>
             <Input
@@ -90,7 +90,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Vencimiento de Licencia *
             </label>
             <Input
@@ -104,7 +104,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Teléfono *
             </label>
             <Input
@@ -117,7 +117,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Teléfono de Emergencia *
             </label>
             <Input
@@ -131,7 +131,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Email
           </label>
           <Input
@@ -143,7 +143,7 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Dirección *
           </label>
           <Input
@@ -156,13 +156,13 @@ export function DriverFormModal({ isOpen, onClose, onSubmit, driver, isLoading }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Estado *
           </label>
           <select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as Driver['status'] })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="available">Disponible</option>
