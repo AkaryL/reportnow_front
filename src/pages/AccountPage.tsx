@@ -27,23 +27,22 @@ export function AccountPage() {
 
   const isAdmin = user?.role === 'admin';
 
-  // Query para obtener todos los usuarios (solo si es admin)
-  const { data: allUsers = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: QUERY_KEYS.USERS,
-    queryFn: usersApi.getAll,
-    enabled: isAdmin,
+  // Query para obtener usuarios del cliente (solo si es admin)
+  const { data: clientUsers = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users', 'client', user?.client_id],
+    queryFn: () => usersApi.getByClientId(user?.client_id!),
+    enabled: isAdmin && !!user?.client_id,
   });
 
-  // Filtrar solo operadores del mismo cliente que el admin
-  const operators = allUsers.filter(
-    (u) =>
-      String(u.client_id) === String(user?.client_id) &&
-      (u.role === 'operator_admin' || u.role === 'operator_monitor')
+  // Filtrar solo operadores del cliente
+  const operators = clientUsers.filter(
+    (u) => u.role === 'operator_admin' || u.role === 'operator_monitor'
   );
 
   const createMutation = useMutation({
     mutationFn: usersApi.create,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users', 'client', user?.client_id] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
       setIsModalOpen(false);
       setSelectedUser(null);
@@ -57,6 +56,7 @@ export function AccountPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => usersApi.update(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users', 'client', user?.client_id] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
       setIsModalOpen(false);
       setSelectedUser(null);
@@ -70,6 +70,7 @@ export function AccountPage() {
   const deleteMutation = useMutation({
     mutationFn: usersApi.delete,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users', 'client', user?.client_id] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
       toast.success('Operador eliminado exitosamente');
     },

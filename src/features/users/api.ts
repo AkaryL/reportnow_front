@@ -75,6 +75,17 @@ export const usersApi = {
       assigned_vehicles: 0,
     }));
   },
+
+  // Obtener usuarios/operadores de un cliente específico
+  getByClientId: async (clientId: string): Promise<UserWithVehicles[]> => {
+    const response = await apiClient.get<User[]>('/users', {
+      params: { client_id: clientId }
+    });
+    return response.data.map(user => ({
+      ...user,
+      assigned_vehicles: 0,
+    }));
+  },
 };
 
 // ==================== ACTIVITY LOGS API ====================
