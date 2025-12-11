@@ -377,7 +377,7 @@ export function GeofencesPage() {
                       <div className="flex items-start gap-3 flex-1">
                         {/* Color indicator */}
                         <div
-                          className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0 mt-0.5"
+                          className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 flex-shrink-0 mt-0.5"
                           style={{ backgroundColor: geofence.color }}
                         />
                         <div className="flex-1 min-w-0">
@@ -451,7 +451,7 @@ export function GeofencesPage() {
                             <span className={isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}>Color:</span>
                             <div className="flex items-center gap-2 mt-1">
                               <div
-                                className="w-6 h-6 rounded border border-gray-300"
+                                className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
                                 style={{ backgroundColor: geofence.color }}
                               />
                               <span className={`font-mono ${isClient ? 'client-text-primary' : 'text-gray-700 dark:text-gray-300'}`}>{geofence.color}</span>
