@@ -81,7 +81,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nombre *
           </label>
           <Input
@@ -95,7 +95,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Latitud *
             </label>
             <Input
@@ -109,7 +109,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Longitud *
             </label>
             <Input
@@ -124,7 +124,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Dirección
           </label>
           <Input
@@ -137,7 +137,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Radio (metros) *
             </label>
             <Input
@@ -151,7 +151,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Color *
             </label>
             <Input
@@ -165,13 +165,13 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ícono *
             </label>
             <select
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
               required
             >
               {PLACE_ICONS.map((icon) => (
@@ -183,13 +183,13 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tipo de Evento *
             </label>
             <select
               value={formData.event_type}
               onChange={(e) => setFormData({ ...formData, event_type: e.target.value as Place['event_type'] })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
               required
             >
               <option value="entry">Solo Entrada</option>
@@ -200,13 +200,13 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Estado *
           </label>
           <select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as Place['status'] })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="active">Activo</option>
@@ -223,7 +223,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
               onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
               className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
-            <label htmlFor="is_global" className="text-sm text-gray-700">
+            <label htmlFor="is_global" className="text-sm text-gray-700 dark:text-gray-300">
               Lugar global (visible para todos los clientes)
             </label>
           </div>
@@ -236,7 +236,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
               onChange={(e) => setFormData({ ...formData, notify_entry: e.target.checked })}
               className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
-            <label htmlFor="notify_entry" className="text-sm text-gray-700">
+            <label htmlFor="notify_entry" className="text-sm text-gray-700 dark:text-gray-300">
               Notificar al entrar
             </label>
           </div>
@@ -249,7 +249,7 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
               onChange={(e) => setFormData({ ...formData, notify_exit: e.target.checked })}
               className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
-            <label htmlFor="notify_exit" className="text-sm text-gray-700">
+            <label htmlFor="notify_exit" className="text-sm text-gray-700 dark:text-gray-300">
               Notificar al salir
             </label>
           </div>

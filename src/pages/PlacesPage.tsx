@@ -163,8 +163,8 @@ export function PlacesPage() {
 
   const getStatusBadge = (status: Place['status']) => {
     const config = {
-      active: { label: 'Activo', color: 'bg-ok-50 text-ok-700' },
-      inactive: { label: 'Inactivo', color: 'bg-gray-100 text-gray-700' },
+      active: { label: 'Activo', color: 'bg-ok-50 text-ok-700 dark:bg-ok-900/30 dark:text-ok-400' },
+      inactive: { label: 'Inactivo', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
     };
     const statusConfig = config[status];
     return (
@@ -181,9 +181,9 @@ export function PlacesPage() {
 
   const getEventTypeBadge = (eventType: Place['event_type']) => {
     const config = {
-      entry: { label: 'Entrada', color: 'bg-info-50 text-info-700' },
-      exit: { label: 'Salida', color: 'bg-warn-50 text-warn-700' },
-      both: { label: 'Ambos', color: 'bg-purple-50 text-purple-700' },
+      entry: { label: 'Entrada', color: 'bg-info-50 text-info-700 dark:bg-info-900/30 dark:text-info-400' },
+      exit: { label: 'Salida', color: 'bg-warn-50 text-warn-700 dark:bg-warn-900/30 dark:text-warn-400' },
+      both: { label: 'Ambos', color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
     };
     const typeConfig = config[eventType];
     return <Badge className={typeConfig.color}>{typeConfig.label}</Badge>;
@@ -203,27 +203,27 @@ export function PlacesPage() {
     {
       label: 'Total Lugares',
       value: placesForStats.length,
-      color: 'bg-blue-50 text-blue-700',
+      color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     },
     {
       label: 'Activos',
       value: placesForStats.filter((p) => p.status === 'active').length,
-      color: 'bg-ok-50 text-ok-700',
+      color: 'bg-ok-50 text-ok-700 dark:bg-ok-900/30 dark:text-ok-400',
     },
     {
       label: 'Inactivos',
       value: placesForStats.filter((p) => p.status === 'inactive').length,
-      color: 'bg-gray-100 text-gray-700',
+      color: 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-white',
     },
     {
       label: 'Globales',
       value: placesForStats.filter((p) => p.is_global).length,
-      color: 'bg-purple-50 text-purple-700',
+      color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
     },
     {
       label: 'Del Cliente',
       value: placesForStats.filter((p) => !p.is_global).length,
-      color: 'bg-info-50 text-info-700',
+      color: 'bg-info-50 text-info-700 dark:bg-info-900/30 dark:text-info-400',
     },
   ];
 
@@ -239,8 +239,8 @@ export function PlacesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lugares</h1>
-          <p className="text-gray-600 mt-1">Gestión de lugares de interés • {filteredPlaces.length} lugares</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Lugares</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Gestión de lugares de interés • {filteredPlaces.length} lugares</p>
         </div>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
@@ -254,8 +254,8 @@ export function PlacesPage() {
           <Card key={stat.label} className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+                <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]} ${stat.color.split(' ')[3]}`}>{stat.value}</p>
               </div>
               <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
                 <MapPin className="w-6 h-6" />
@@ -284,7 +284,7 @@ export function PlacesPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los estados</option>
             <option value="active">Activos</option>
@@ -295,7 +295,7 @@ export function PlacesPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos los tipos</option>
             <option value="global">Globales</option>
@@ -320,7 +320,7 @@ export function PlacesPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="px-6 py-4">
           <CardTitle>Lista de lugares</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -339,7 +339,7 @@ export function PlacesPage() {
               <TableBody>
                 {filteredPlaces.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">
                       No se encontraron lugares
                     </TableCell>
                   </TableRow>
@@ -358,12 +358,12 @@ export function PlacesPage() {
                               <IconComponent className="w-4 h-4" style={{ color: place.color }} />
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{place.name}</div>
+                              <div className="font-medium text-gray-900 dark:text-white">{place.name}</div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                             <MapPin className="w-3 h-3" />
                             <span>
                               {place.lat.toFixed(6)}, {place.lng.toFixed(6)}
@@ -371,7 +371,7 @@ export function PlacesPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600">{place.radius}m</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{place.radius}m</span>
                         </TableCell>
                         <TableCell>{getEventTypeBadge(place.event_type)}</TableCell>
                         <TableCell>{getStatusBadge(place.status)}</TableCell>
@@ -400,13 +400,13 @@ export function PlacesPage() {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleDelete(place.id, place.name)}
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </Button>
                                   </>
                                 ) : (
-                                  <span className="text-xs text-gray-400">Solo lectura</span>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500">Solo lectura</span>
                                 )}
                               </>
                             )}

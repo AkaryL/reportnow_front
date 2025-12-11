@@ -273,7 +273,7 @@ export function DriversPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
+                <p className={`text-2xl font-bold mt-1 ${stat.color.split(' ')[1]} ${stat.color.split(' ')[3]}`}>{stat.value}</p>
               </div>
               <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
                 <UserCircle className="w-6 h-6" />
