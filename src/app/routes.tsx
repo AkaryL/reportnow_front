@@ -22,7 +22,6 @@ const AssetsPage = lazy(() => import('../pages/AssetsPage').then(m => ({ default
 const DriversPage = lazy(() => import('../pages/DriversPage').then(m => ({ default: m.DriversPage })));
 const PlacesPage = lazy(() => import('../pages/PlacesPage').then(m => ({ default: m.PlacesPage })));
 const SIMsPage = lazy(() => import('../pages/SIMsPage').then(m => ({ default: m.SIMsPage })));
-const AlertsPage = lazy(() => import('../pages/AlertsPage').then(m => ({ default: m.AlertsPage })));
 const VehicleHistoryPage = lazy(() => import('../pages/VehicleHistoryPage'));
 const RouteSimulationPage = lazy(() => import('../pages/RouteSimulationPage').then(m => ({ default: m.RouteSimulationPage })));
 
@@ -73,15 +72,8 @@ export function AppRoutes() {
           <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
           <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
 
-          {/* Alertas - Para superuser, admin y clientes */}
-          <Route
-            path={ROUTES.ALERTS}
-            element={
-              <RequireRole allowedRoles={['superuser', 'admin', 'operator_admin', 'operator_monitor']}>
-                <AlertsPage />
-              </RequireRole>
-            }
-          />
+          {/* Redirigir /alertas a /notificaciones */}
+          <Route path={ROUTES.ALERTS} element={<Navigate to={ROUTES.NOTIFICATIONS} replace />} />
 
           <Route path={ROUTES.ACCOUNT} element={<AccountPage />} />
 

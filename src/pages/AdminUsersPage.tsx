@@ -22,10 +22,10 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  superuser: 'bg-purple-100 text-purple-700',
-  admin: 'bg-blue-100 text-blue-700',
-  'operator_admin': 'bg-green-100 text-green-700',
-  'operator_monitor': 'bg-yellow-100 text-yellow-700',
+  superuser: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  admin: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  'operator_admin': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  'operator_monitor': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
 };
 
 export function AdminUsersPage() {
@@ -121,8 +121,8 @@ export function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Usuarios del Sistema</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Usuarios del Sistema</h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">
             Gestión de todos los usuarios registrados en el sistema
           </p>
         </div>
@@ -133,40 +133,40 @@ export function AdminUsersPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
-              <p className="text-2xl font-bold mt-1 text-gray-900">{stats.total}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Usuarios</p>
+              <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">{stats.total}</p>
             </div>
-            <Users className="w-6 h-6 text-gray-400" />
+            <Users className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
         </Card>
 
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Superusuarios</p>
-              <p className="text-2xl font-bold mt-1 text-purple-600">{stats.superusers}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Superusuarios</p>
+              <p className="text-2xl font-bold mt-1 text-purple-600 dark:text-purple-400">{stats.superusers}</p>
             </div>
-            <Shield className="w-6 h-6 text-purple-600" />
+            <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
         </Card>
 
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Administradores</p>
-              <p className="text-2xl font-bold mt-1 text-blue-600">{stats.admins}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Administradores</p>
+              <p className="text-2xl font-bold mt-1 text-blue-600 dark:text-blue-400">{stats.admins}</p>
             </div>
-            <User className="w-6 h-6 text-blue-600" />
+            <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
         </Card>
 
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Operadores</p>
-              <p className="text-2xl font-bold mt-1 text-green-600">{stats.operators}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Operadores</p>
+              <p className="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">{stats.operators}</p>
             </div>
-            <Users className="w-6 h-6 text-green-600" />
+            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
         </Card>
       </div>
@@ -175,7 +175,7 @@ export function AdminUsersPage() {
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Buscar usuario
             </label>
             <Input
@@ -187,13 +187,13 @@ export function AdminUsersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Filtrar por rol
             </label>
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">Todos los roles</option>
               <option value="superuser">Superusuarios</option>
@@ -227,29 +227,29 @@ export function AdminUsersPage() {
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell className="font-medium text-gray-900 dark:text-white">{user.name}</TableCell>
                     <TableCell>
-                      <Badge variant="default" className="bg-gray-100 text-gray-700">
+                      <Badge variant="default" className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                         {user.username}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-600">{user.email || 'N/A'}</TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400">{user.email || 'N/A'}</TableCell>
                     <TableCell>
-                      <Badge className={ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-700'}>
+                      <Badge className={ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}>
                         {ROLE_LABELS[user.role] || user.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-600">
+                    <TableCell className="text-gray-600 dark:text-gray-400">
                       {user.client_id ? (
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-400" />
+                          <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                           <span className="text-sm">{getClientName(user.client_id)}</span>
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-sm">Sin cliente</span>
+                        <span className="text-gray-400 dark:text-gray-500 text-sm">Sin cliente</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                       {user.created_at ? formatDate(user.created_at) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
@@ -282,8 +282,8 @@ export function AdminUsersPage() {
 
             {filteredUsers.length === 0 && (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">
+                <Users className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">
                   {searchQuery || filterRole !== 'all'
                     ? 'No se encontraron usuarios con los filtros aplicados'
                     : 'No hay usuarios registrados'}

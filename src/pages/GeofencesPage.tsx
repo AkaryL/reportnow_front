@@ -71,14 +71,9 @@ export function GeofencesPage() {
         );
       }
 
-      // For clients (admin), show their own + global geofences
+      // For clients (admin), show only their own geofences
       if (isClient && user?.client_id) {
-        if (filter === 'own') {
-          return allGeofences.filter(g => g.client_id === user.client_id && !g.is_global);
-        } else if (filter === 'global') {
-          return allGeofences.filter(g => g.is_global);
-        }
-        return allGeofences.filter(g => g.is_global || g.client_id === user.client_id);
+        return allGeofences.filter(g => String(g.client_id) === String(user.client_id));
       }
 
       // For non-superuser operators, also filter by client_id
@@ -246,84 +241,86 @@ export function GeofencesPage() {
             </div>
           </div>
 
-          {/* Filtros */}
-          <CardComponent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className={`w-4 h-4 ${isClient ? 'text-cyan-400' : 'text-gray-600 dark:text-gray-400'}`} />
-              <span className={`text-sm font-medium ${isClient ? 'client-text-primary' : 'text-gray-700 dark:text-gray-300'}`}>Filtros</span>
-            </div>
+          {/* Filtros - solo para operadores y superuser, no para clientes */}
+          {!isClient && (
+            <CardComponent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Filter className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
+              </div>
 
-            <div className="space-y-3">
-              {/* Filtro de tipo para admin/operadores */}
-              {(isAdmin || !isSuperuser) && (
-                <div className="flex gap-2">
-                  <ButtonComponent
-                    variant={filter === 'own' ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setFilter('own')}
-                  >
-                    Propias
-                  </ButtonComponent>
-                  <ButtonComponent
-                    variant={filter === 'global' ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setFilter('global')}
-                  >
-                    Globales
-                  </ButtonComponent>
-                  <ButtonComponent
-                    variant={filter === 'all' ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setFilter('all')}
-                  >
-                    Todas
-                  </ButtonComponent>
-                </div>
-              )}
+              <div className="space-y-3">
+                {/* Filtro de tipo para operadores (no superuser) */}
+                {!isSuperuser && (
+                  <div className="flex gap-2">
+                    <ButtonComponent
+                      variant={filter === 'own' ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setFilter('own')}
+                    >
+                      Propias
+                    </ButtonComponent>
+                    <ButtonComponent
+                      variant={filter === 'global' ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setFilter('global')}
+                    >
+                      Globales
+                    </ButtonComponent>
+                    <ButtonComponent
+                      variant={filter === 'all' ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setFilter('all')}
+                    >
+                      Todas
+                    </ButtonComponent>
+                  </div>
+                )}
 
-              {/* Selector de cliente para superuser */}
-              {isSuperuser && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Ver geocercas de:
-                    </label>
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedClientId}
-                        onChange={(e) => {
-                          setSelectedClientId(e.target.value);
-                          setFilter('all');
-                        }}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-                      >
-                        <option value="">Solo geocercas globales</option>
-                        {clients.map((client: any) => (
-                          <option key={client.id} value={client.id}>
-                            {client.name}
-                          </option>
-                        ))}
-                      </select>
-                      {selectedClientId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedClientId('')}
+                {/* Selector de cliente para superuser */}
+                {isSuperuser && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Ver geocercas de:
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedClientId}
+                          onChange={(e) => {
+                            setSelectedClientId(e.target.value);
+                            setFilter('all');
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
                         >
-                          Limpiar
-                        </Button>
+                          <option value="">Solo geocercas globales</option>
+                          {clients.map((client: any) => (
+                            <option key={client.id} value={client.id}>
+                              {client.name}
+                            </option>
+                          ))}
+                        </select>
+                        {selectedClientId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedClientId('')}
+                          >
+                            Limpiar
+                          </Button>
+                        )}
+                      </div>
+                      {selectedClientId && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Mostrando geocercas del cliente seleccionado + geocercas globales
+                        </p>
                       )}
                     </div>
-                    {selectedClientId && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Mostrando geocercas del cliente seleccionado + geocercas globales
-                      </p>
-                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          </CardComponent>
+                )}
+              </div>
+            </CardComponent>
+          )}
         </div>
 
         {/* Grid: Mapa + Lista */}

@@ -94,7 +94,7 @@ export function ReportsPage() {
       title: 'Equipos GPS',
       description: 'Reporte de todos los equipos GPS registrados',
       icon: Radio,
-      color: 'bg-purple-100 text-purple-600',
+      color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
       count: filteredEquipments.length,
     },
     {
@@ -102,7 +102,7 @@ export function ReportsPage() {
       title: 'Activos',
       description: 'Reporte de vehículos, personas, contenedores, etc.',
       icon: Package,
-      color: 'bg-blue-100 text-blue-600',
+      color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
       count: filteredAssets.length,
     },
     {
@@ -110,7 +110,7 @@ export function ReportsPage() {
       title: 'Geocercas',
       description: 'Reporte de todas las geocercas configuradas',
       icon: MapPin,
-      color: 'bg-green-100 text-green-600',
+      color: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
       count: filteredGeofences.length,
     },
     {
@@ -118,7 +118,7 @@ export function ReportsPage() {
       title: 'Clientes',
       description: 'Reporte de todos los clientes del sistema',
       icon: Users,
-      color: 'bg-yellow-100 text-yellow-600',
+      color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
       count: clients.length,
     },
     {
@@ -126,7 +126,7 @@ export function ReportsPage() {
       title: 'Usuarios',
       description: 'Reporte de administradores y operadores',
       icon: Shield,
-      color: 'bg-indigo-100 text-indigo-600',
+      color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
       count: filteredUsers.length,
     },
     {
@@ -134,7 +134,7 @@ export function ReportsPage() {
       title: 'Notificaciones',
       description: 'Historial de notificaciones del sistema',
       icon: Bell,
-      color: 'bg-red-100 text-red-600',
+      color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
       count: filteredNotifications.length,
     },
   ];
@@ -898,7 +898,7 @@ export function ReportsPage() {
             <select
               value={exportMode}
               onChange={(e) => setExportMode(e.target.value as ExportMode)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="lite">Lite (Resumen)</option>
               <option value="pro">Pro (Completo)</option>
@@ -914,7 +914,7 @@ export function ReportsPage() {
             <select
               value={exportFormat}
               onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="csv">{exportMode === 'pro' ? 'Excel (múltiples hojas)' : 'CSV'}</option>
               <option value="pdf">PDF</option>
@@ -1048,7 +1048,7 @@ export function ReportsPage() {
                               {item.status === 'active' ? 'Activo' : 'Inactivo'}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin asignar'}
                           </td>
                         </>
@@ -1057,7 +1057,7 @@ export function ReportsPage() {
                         <>
                           <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
                           <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.type}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin asignar'}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{formatDate(item.created_at)}</td>
@@ -1067,7 +1067,7 @@ export function ReportsPage() {
                         <>
                           <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
                           <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.geom_type || 'N/A'}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin asignar'}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{formatDate(item.created_at)}</td>
@@ -1090,7 +1090,7 @@ export function ReportsPage() {
                           <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
                           <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.role}</td>
                           <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.email || 'N/A'}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                             {clients.find(c => c.id === item.client_id)?.company_name || 'Sin cliente'}
                           </td>
                         </>

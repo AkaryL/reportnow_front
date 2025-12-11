@@ -7,17 +7,12 @@ import { clientsApi } from '../features/clients/api';
 import { notificationsApi } from '../features/notifications/api';
 import { QUERY_KEYS, VEHICLE_LAST_STATUS_CONFIG } from '../lib/constants';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import { ClientCard } from '../components/ui/ClientCard';
 import { Input } from '../components/ui/Input';
-import { ClientInput } from '../components/ui/ClientInput';
 import { Badge } from '../components/ui/Badge';
-import { ClientBadge } from '../components/ui/ClientBadge';
 import { Button } from '../components/ui/Button';
-import { ClientButton } from '../components/ui/ClientButton';
 import { MapView } from '../components/map/MapView';
 import { LeafletMap } from '../components/map/LeafletMap';
 import { Drawer, DrawerSection, DrawerItem } from '../components/ui/Drawer';
-import { ClientDrawer, ClientDrawerSection, ClientDrawerItem } from '../components/ui/ClientDrawer';
 import { GeofenceModal } from '../components/Geofence/GeofenceModal';
 import { Modal } from '../components/ui/Modal';
 import { Topbar } from '../components/Topbar';
@@ -49,15 +44,8 @@ export function HomePage() {
   const { user } = useAuth();
   const toast = useToast();
 
-  // Determine if current user is a client/admin for conditional styling
+  // Determine if current user is a client/admin
   const isClient = user?.role === 'admin';
-  const CardComponent = isClient ? ClientCard : Card;
-  const BadgeComponent = isClient ? ClientBadge : Badge;
-  const ButtonComponent = isClient ? ClientButton : Button;
-  const InputComponent = isClient ? ClientInput : Input;
-  const DrawerComponent = isClient ? ClientDrawer : Drawer;
-  const DrawerSectionComponent = isClient ? ClientDrawerSection : DrawerSection;
-  const DrawerItemComponent = isClient ? ClientDrawerItem : DrawerItem;
 
   // Get vehicles based on user role
   const { data: vehicles = [], isLoading } = useQuery({
@@ -91,6 +79,11 @@ export function HomePage() {
   const userVehicles = isClient && user?.client_id
     ? vehicles.filter(v => String(v.clientId) === String(user.client_id))
     : vehicles;
+
+  // Filter geofences by client if user is a client
+  const userGeofences = isClient && user?.client_id
+    ? geofences.filter((g: any) => String(g.client_id) === String(user.client_id))
+    : geofences;
 
   // WebSocket connection for real-time updates
   useEffect(() => {
@@ -212,9 +205,9 @@ export function HomePage() {
 
   // Helper function: Check if vehicle is inside any geofence
   const isVehicleInGeofence = (vehicle: Vehicle) => {
-    if (!geofences || geofences.length === 0) return false;
+    if (!userGeofences || userGeofences.length === 0) return false;
 
-    return geofences.some((geofence: any) => {
+    return userGeofences.some((geofence: any) => {
       // Handle Circle type geofences (from database: geom_type = 'Circle')
       if (geofence.geom_type === 'Circle' && geofence.coordinates) {
         try {
@@ -501,178 +494,145 @@ export function HomePage() {
 
   return (
     <div className="space-y-0">
-      {/* Topbar - solo para admin/superuser */}
-      {!isClient && (
-        <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-6">
-          <Topbar
-            title="Home"
-            subtitle="Visión general en tiempo real"
-          />
-        </div>
-      )}
+      {/* Topbar */}
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-6">
+        <Topbar
+          title="Home"
+          subtitle="Visión general en tiempo real"
+        />
+      </div>
 
-      <div className={isClient ? 'space-y-5' : 'pt-6 space-y-5'}>
-        {/* Header para cliente */}
-        {isClient && (
-          <div className="mb-6">
-            <h1 className="client-heading text-3xl mb-2">Dashboard</h1>
-            <p className="client-subheading">Visión general de tu flota en tiempo real</p>
-          </div>
-        )}
+      <div className="pt-6 space-y-5">
 
       {/* Tarjetas de resumen - 4 cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Card 1 - En movimiento */}
-        <CardComponent
-          className={`h-[140px] transition-shadow cursor-pointer p-5 ${
-            isClient ? 'hover:bg-white/8' : 'hover:shadow-lg'
-          }`}
+        <Card
+          className="h-[140px] transition-shadow cursor-pointer p-5 hover:shadow-lg dark:hover:shadow-gray-800/30"
           onClick={() => handleStatusFilter('moving')}
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>En movimiento</h3>
-              <ButtonComponent
-                variant={isClient ? 'secondary' : 'outline'}
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">En movimiento</h3>
+              <Button
+                variant="outline"
                 size="sm"
-                className={`h-7 px-3 text-xs rounded-full ${
-                  isClient ? '' : 'border-black text-black hover:bg-[#EEF7FE]'
-                }`}
+                className="h-7 px-3 text-xs rounded-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleStatusFilter('moving');
                 }}
               >
                 Ver
-              </ButtonComponent>
+              </Button>
             </div>
             <div>
-              <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
-              }`}>
+              <p className="text-[34px] font-semibold leading-none text-gray-900 dark:text-white">
                 {userVehicles.filter((v) => v.status === 'moving').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
+              <p className="text-[12.5px] mt-2 text-slate-500 dark:text-slate-400">
                 Equipos transmitiendo posición
               </p>
             </div>
           </div>
-        </CardComponent>
+        </Card>
 
         {/* Card 2 - Detenidos */}
-        <CardComponent
-          className={`h-[140px] transition-shadow cursor-pointer p-5 ${
-            isClient ? 'hover:bg-white/8' : 'hover:shadow-lg'
-          }`}
+        <Card
+          className="h-[140px] transition-shadow cursor-pointer p-5 hover:shadow-lg dark:hover:shadow-gray-800/30"
           onClick={() => handleStatusFilter('stopped')}
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>Detenidos</h3>
-              <ButtonComponent
-                variant={isClient ? 'secondary' : 'outline'}
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Detenidos</h3>
+              <Button
+                variant="outline"
                 size="sm"
-                className={`h-7 px-3 text-xs rounded-full ${
-                  isClient ? '' : 'border-black text-black hover:bg-[#EEF7FE]'
-                }`}
+                className="h-7 px-3 text-xs rounded-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleStatusFilter('stopped');
                 }}
               >
                 Ver
-              </ButtonComponent>
+              </Button>
             </div>
             <div>
-              <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
-              }`}>
+              <p className="text-[34px] font-semibold leading-none text-gray-900 dark:text-white">
                 {userVehicles.filter((v) => v.status === 'stopped').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
+              <p className="text-[12.5px] mt-2 text-slate-500 dark:text-slate-400">
                 Última señal reciente, sin movimiento
               </p>
             </div>
           </div>
-        </CardComponent>
+        </Card>
 
         {/* Card 3 - Sin señal */}
-        <CardComponent
-          className={`h-[140px] transition-shadow cursor-pointer p-5 ${
-            isClient ? 'hover:bg-white/8' : 'hover:shadow-lg'
-          }`}
+        <Card
+          className="h-[140px] transition-shadow cursor-pointer p-5 hover:shadow-lg dark:hover:shadow-gray-800/30"
           onClick={() => handleStatusFilter('offline')}
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>Sin señal</h3>
-              <ButtonComponent
-                variant={isClient ? 'secondary' : 'outline'}
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Sin señal</h3>
+              <Button
+                variant="outline"
                 size="sm"
-                className={`h-7 px-3 text-xs rounded-full ${
-                  isClient ? '' : 'border-black text-black hover:bg-[#EEF7FE]'
-                }`}
+                className="h-7 px-3 text-xs rounded-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleStatusFilter('offline');
                 }}
               >
                 Revisar
-              </ButtonComponent>
+              </Button>
             </div>
             <div>
-              <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
-              }`}>
+              <p className="text-[34px] font-semibold leading-none text-gray-900 dark:text-white">
                 {userVehicles.filter((v) => v.status === 'offline').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
+              <p className="text-[12.5px] mt-2 text-slate-500 dark:text-slate-400">
                 Equipos fuera de línea
               </p>
             </div>
           </div>
-        </CardComponent>
+        </Card>
 
         {/* Card 4 - Críticos */}
-        <CardComponent
-          className={`h-[140px] transition-shadow cursor-pointer p-5 ${
-            isClient ? 'hover:bg-white/8' : 'hover:shadow-lg'
-          }`}
+        <Card
+          className="h-[140px] transition-shadow cursor-pointer p-5 hover:shadow-lg dark:hover:shadow-gray-800/30"
           onClick={() => handleStatusFilter('critical')}
         >
           <div className="h-full flex flex-col justify-between">
             <div className="flex items-start justify-between">
-              <h3 className={`text-sm font-semibold ${isClient ? 'client-text-secondary' : 'text-gray-700 dark:text-gray-300'}`}>Críticos</h3>
-              <ButtonComponent
-                variant={isClient ? 'secondary' : 'outline'}
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Críticos</h3>
+              <Button
+                variant="outline"
                 size="sm"
-                className={`h-7 px-3 text-xs rounded-full ${
-                  isClient ? '' : 'border-black text-black hover:bg-[#EEF7FE]'
-                }`}
+                className="h-7 px-3 text-xs rounded-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleStatusFilter('critical');
                 }}
               >
                 Listar
-              </ButtonComponent>
+              </Button>
             </div>
             <div>
-              <p className={`text-[34px] font-semibold leading-none ${
-                isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'
-              }`}>
+              <p className="text-[34px] font-semibold leading-none text-gray-900 dark:text-white">
                 {userVehicles.filter((v) => v.status === 'critical').length}
               </p>
-              <p className={`text-[12.5px] mt-2 ${isClient ? 'client-text-tertiary' : 'text-slate-500 dark:text-slate-400'}`}>
+              <p className="text-[12.5px] mt-2 text-slate-500 dark:text-slate-400">
                 Equipos con alertas críticas
               </p>
             </div>
           </div>
-        </CardComponent>
+        </Card>
       </div>
 
       {/* Bloque Filtro de Home - OCULTO */}
-      <CardComponent className="h-[60px] p-5 hidden">
+      <Card className="h-[60px] p-5 hidden">
         <div className="h-full flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-700">Filtro de Home</h3>
           <div className="flex gap-2 items-center">
@@ -707,28 +667,26 @@ export function HomePage() {
             )}
           </div>
         </div>
-      </CardComponent>
+      </Card>
 
       {/* Sección principal dividida en 2 columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
         {/* Izquierda: Mapa */}
-        <CardComponent className="h-[440px] p-5">
+        <Card className="h-[440px] p-5">
           <div className="pb-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Mapa</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Mapa</h3>
             </div>
             {/* Buscador y filtros del mapa */}
             <div className="flex gap-2 items-center">
               <form onSubmit={handleMapSearch} className="relative flex-1">
                 <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400`} />
-                <InputComponent
+                <Input
                   type="text"
                   value={mapSearchQuery}
                   onChange={(e) => setMapSearchQuery(e.target.value)}
                   placeholder="Buscar equipo en mapa..."
-                  className={`w-full h-9 pl-10 pr-9 rounded-full text-[13px] transition-all ${
-                    !isClient && 'border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none'
-                  }`}
+                  className="w-full h-9 pl-10 pr-9 rounded-full text-[13px] transition-all border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
                 />
                 {mapSearchQuery && (
                   <button
@@ -743,8 +701,8 @@ export function HomePage() {
 
               {/* Filtros rápidos */}
               <div className="flex gap-2">
-                {/* Client filter - only for admin/superuser */}
-                {(user?.role === 'superuser' || user?.role === 'admin') && clients.length > 0 && (
+                {/* Client filter - only for superuser */}
+                {user?.role === 'superuser' && clients.length > 0 && (
                   <select
                     value={selectedClientId || ''}
                     onChange={(e) => setSelectedClientId(e.target.value ? Number(e.target.value) : null)}
@@ -802,32 +760,32 @@ export function HomePage() {
           <div className="h-[calc(100%-100px)]">
             <LeafletMap
               vehicles={filteredVehicles}
-              geofences={geofences}
+              geofences={userGeofences}
               onVehicleClick={setSelectedVehicle}
               showGeofences={showGeofences}
             />
           </div>
-        </CardComponent>
+        </Card>
 
         {/* Derecha: Lista de Equipos */}
         <div className="relative">
-          <CardComponent className="h-[440px] p-5">
+          <Card className="h-[440px] p-5">
             <div className="pb-4">
               <div className="flex items-center justify-between">
-                <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Equipos en mapa</h3>
-                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>{filteredVehicles.length} total</span>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Equipos en mapa</h3>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{filteredVehicles.length} total</span>
               </div>
             </div>
             <div className="space-y-0 overflow-y-auto h-[calc(100%-100px)]">
               {filteredVehicles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isClient ? 'bg-white/10' : 'bg-slate-100 dark:bg-gray-700'}`}>
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-slate-100 dark:bg-gray-700">
                     <Search className="w-8 h-8 text-slate-400" />
                   </div>
-                  <h4 className={`text-sm font-semibold mb-2 ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
+                  <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">
                     No se encontraron equipos
                   </h4>
-                  <p className={`text-xs mb-4 ${isClient ? 'client-text-secondary' : 'text-gray-500'}`}>
+                  <p className="text-xs mb-4 text-gray-500 dark:text-gray-400">
                     {mapFilters.insideGeofence || mapFilters.moving || mapSearchQuery || selectedClientId
                       ? 'No hay equipos que coincidan con los filtros seleccionados.'
                       : 'No hay equipos disponibles en este momento.'}
@@ -879,11 +837,7 @@ export function HomePage() {
                   return (
                     <div
                       key={vehicle.id}
-                      className={`py-3 border-t cursor-pointer transition-colors ${
-                        isClient
-                          ? 'border-white/10 hover:bg-white/5'
-                          : 'border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-800'
-                      }`}
+                      className="py-3 border-t cursor-pointer transition-colors border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-800"
                       onClick={() => setSelectedVehicle(vehicle)}
                     >
                       <div className="flex items-start gap-3">
@@ -893,10 +847,10 @@ export function HomePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h4 className={`text-sm font-bold ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>{vehicle.plate}</h4>
-                              <p className={`text-xs ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>{vehicle.driver}</p>
+                              <h4 className="text-sm font-bold text-gray-900 dark:text-white">{vehicle.plate}</h4>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">{vehicle.driver}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[11px] ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <span className="text-[11px] text-gray-500 dark:text-gray-400">
                                   <Activity className="w-3 h-3 inline mr-0.5" />
                                   {vehicle.speed} km/h
                                 </span>
@@ -916,9 +870,7 @@ export function HomePage() {
 
             {/* Paginación */}
             {filteredVehicles.length > 4 && (
-              <div className={`pt-3 border-t flex items-center justify-between ${
-                isClient ? 'border-white/10' : 'border-slate-200 dark:border-gray-700'
-              }`}>
+              <div className="pt-3 border-t flex items-center justify-between border-slate-200 dark:border-gray-700">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                   disabled={currentPage === 0}
@@ -926,7 +878,7 @@ export function HomePage() {
                 >
                   ← Anterior
                 </button>
-                <span className={`text-xs ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   Página {currentPage + 1} de {Math.ceil(filteredVehicles.length / 4)}
                 </span>
                 <button
@@ -938,17 +890,17 @@ export function HomePage() {
                 </button>
               </div>
             )}
-          </CardComponent>
+          </Card>
         </div>
       </div>
 
 
       {/* Notificaciones Recientes */}
-      <CardComponent className="p-5">
+      <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-            <h3 className={`text-base font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>Notificaciones Recientes</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Notificaciones Recientes</h3>
           </div>
           <button className="text-xs font-medium text-primary hover:text-primary/80">
             Ver todas
@@ -959,7 +911,7 @@ export function HomePage() {
           {notifications.length === 0 ? (
             <div className="text-center py-8">
               <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-500 dark:text-gray-400'}`}>No hay notificaciones recientes</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No hay notificaciones recientes</p>
             </div>
           ) : (
             notifications.slice(0, 5).map((notification) => {
@@ -970,11 +922,7 @@ export function HomePage() {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`flex gap-3 p-3 rounded-lg transition-colors cursor-pointer border ${
-                    isClient
-                      ? `border-white/10 hover:bg-white/5 ${!notification.read_by?.includes(user?.id || '') ? 'bg-cyan-500/10' : ''}`
-                      : `border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${!notification.read_by?.includes(user?.id || '') ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''}`
-                  }`}
+                  className={`flex gap-3 p-3 rounded-lg transition-colors cursor-pointer border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${!notification.read_by?.includes(user?.id || '') ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''}`}
                 >
                   <div className={`w-10 h-10 rounded-full ${style.bg} border ${style.border} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-5 h-5 ${style.iconColor}`} />
@@ -983,14 +931,14 @@ export function HomePage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className={`text-sm font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>{notification.resource_name}</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{notification.resource_name}</h4>
                           {!notification.read_by?.includes(user?.id || '') && (
-                            <span className={`w-2 h-2 rounded-full ${isClient ? 'bg-cyan-400' : 'bg-primary'}`}></span>
+                            <span className="w-2 h-2 rounded-full bg-primary"></span>
                           )}
                         </div>
-                        <p className={`text-xs mt-0.5 ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>{notification.description}</p>
+                        <p className="text-xs mt-0.5 text-gray-600 dark:text-gray-400">{notification.description}</p>
                       </div>
-                      <span className={`text-xs whitespace-nowrap flex items-center gap-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <span className="text-xs whitespace-nowrap flex items-center gap-1 text-gray-500 dark:text-gray-400">
                         <Clock className="w-3 h-3" />
                         {getRelativeTime(notification.ts)}
                       </span>
@@ -1001,73 +949,73 @@ export function HomePage() {
             })
           )}
         </div>
-      </CardComponent>
+      </Card>
 
       {/* Equipment Details Drawer */}
       {selectedVehicle && (
-        <DrawerComponent
+        <Drawer
           isOpen={!!selectedVehicle}
           onClose={() => setSelectedVehicle(null)}
           title={`Equipo GPS - ${selectedVehicle.plate}`}
         >
-          <DrawerSectionComponent title="Información del Equipo">
+          <DrawerSection title="Información del Equipo">
             <div className="space-y-3">
-              <DrawerItemComponent
+              <DrawerItem
                 label="Identificador"
                 value={selectedVehicle.plate}
               />
-              <DrawerItemComponent
+              <DrawerItem
                 label="Estado"
                 value={
-                  <BadgeComponent variant={selectedVehicle.status}>
+                  <Badge variant={selectedVehicle.status}>
                     {VEHICLE_STATUS_CONFIG[selectedVehicle.status].label}
-                  </BadgeComponent>
+                  </Badge>
                 }
               />
-              <DrawerItemComponent
+              <DrawerItem
                 label="Asignado a"
                 value={selectedVehicle.driver || 'Sin asignar'}
               />
-              <DrawerItemComponent
+              <DrawerItem
                 label="Última señal"
                 value={formatRelativeTime(selectedVehicle.lastSeenMin)}
               />
             </div>
-          </DrawerSectionComponent>
+          </DrawerSection>
 
-          <DrawerSectionComponent title="Datos de Transmisión">
+          <DrawerSection title="Datos de Transmisión">
             <div className="space-y-3">
-              <DrawerItemComponent
+              <DrawerItem
                 label="Velocidad actual"
                 value={formatSpeed(selectedVehicle.speed)}
               />
             </div>
-          </DrawerSectionComponent>
+          </DrawerSection>
 
-          <DrawerSectionComponent title="Coordenadas GPS">
+          <DrawerSection title="Coordenadas GPS">
             <div className="space-y-3">
-              <DrawerItemComponent
+              <DrawerItem
                 label="Latitud"
                 value={selectedVehicle.lat != null ? Number(selectedVehicle.lat).toFixed(6) : 'N/A'}
               />
-              <DrawerItemComponent
+              <DrawerItem
                 label="Longitud"
                 value={selectedVehicle.lng != null ? Number(selectedVehicle.lng).toFixed(6) : 'N/A'}
               />
             </div>
-          </DrawerSectionComponent>
+          </DrawerSection>
 
           <div className="mt-6 space-y-3">
-            <ButtonComponent className="w-full" variant="primary" onClick={handleViewRouteHistory}>
+            <Button className="w-full" variant="primary" onClick={handleViewRouteHistory}>
               <Navigation className="w-4 h-4" />
               Ver historial de ruta
-            </ButtonComponent>
-            <ButtonComponent className="w-full" variant={isClient ? 'secondary' : 'outline'} onClick={handleViewAlerts}>
+            </Button>
+            <Button className="w-full" variant="outline" onClick={handleViewAlerts}>
               <AlertTriangle className="w-4 h-4" />
               Ver alertas del equipo
-            </ButtonComponent>
+            </Button>
           </div>
-        </DrawerComponent>
+        </Drawer>
       )}
 
       {/* Geofence Modal */}
@@ -1117,9 +1065,9 @@ export function HomePage() {
                   })}
                 </p>
               </div>
-              <BadgeComponent variant={selectedNotification.type}>
+              <Badge variant={selectedNotification.type}>
                 {selectedNotification.type === 'crit' ? 'Crítico' : selectedNotification.type === 'warn' ? 'Advertencia' : 'Info'}
-              </BadgeComponent>
+              </Badge>
             </div>
 
             {/* Descripción */}
@@ -1212,15 +1160,15 @@ export function HomePage() {
 
             {/* Botones de acción */}
             <div className="border-t pt-4 flex gap-3">
-              <ButtonComponent
+              <Button
                 variant="outline"
                 onClick={() => setSelectedNotification(null)}
                 className="flex-1"
               >
                 Cerrar
-              </ButtonComponent>
+              </Button>
               {(selectedNotification.equipment_id || selectedNotification.asset_id || selectedNotification.geofence_id || selectedNotification.place_id) && (
-                <ButtonComponent
+                <Button
                   variant="primary"
                   onClick={() => {
                     setSelectedNotification(null);
@@ -1229,7 +1177,7 @@ export function HomePage() {
                   className="flex-1"
                 >
                   Ir al Recurso
-                </ButtonComponent>
+                </Button>
               )}
             </div>
           </div>
