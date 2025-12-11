@@ -37,7 +37,7 @@ export function AccountPage() {
   // Filtrar solo operadores del mismo cliente que el admin
   const operators = allUsers.filter(
     (u) =>
-      u.client_id === user?.client_id &&
+      String(u.client_id) === String(user?.client_id) &&
       (u.role === 'operator_admin' || u.role === 'operator_monitor')
   );
 
