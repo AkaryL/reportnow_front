@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../features/auth/hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../features/users/api';
+import { clientsApi } from '../features/clients/api';
 import { QUERY_KEYS } from '../lib/constants';
 import { Card } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
@@ -15,35 +16,30 @@ import { UserCircle, Mail, Building2, Shield, Calendar, Plus, Edit, Trash2, User
 import { formatDate } from '../lib/utils';
 import { useToast } from '../hooks/useToast';
 import { useConfirm } from '../hooks/useConfirm';
-import type { UserWithVehicles } from '../features/users/api';
+import type { User } from '../lib/types';
 
 export function AccountPage() {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserWithVehicles | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
   const confirmDialog = useConfirm();
 
   const isAdmin = user?.role === 'admin';
 
-  // Query para obtener usuarios del cliente (solo si es admin)
-  const { data: clientUsers = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users', 'client', user?.client_id],
-    queryFn: () => usersApi.getByClientId(user?.client_id!),
+  // Query para obtener operadores del cliente usando endpoint específico
+  // Este endpoint NO requiere permisos de superuser
+  const { data: operators = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['client-operators', user?.client_id],
+    queryFn: () => clientsApi.getOperators(user!.client_id!),
     enabled: isAdmin && !!user?.client_id,
   });
 
-  // Filtrar solo operadores del cliente
-  const operators = clientUsers.filter(
-    (u) => u.role === 'operator_admin' || u.role === 'operator_monitor'
-  );
-
   const createMutation = useMutation({
-    mutationFn: usersApi.create,
+    mutationFn: (data: any) => usersApi.create({ ...data, client_id: user?.client_id }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users', 'client', user?.client_id] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      queryClient.invalidateQueries({ queryKey: ['client-operators', user?.client_id] });
       setIsModalOpen(false);
       setSelectedUser(null);
       toast.success('Operador creado exitosamente');
@@ -56,8 +52,7 @@ export function AccountPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => usersApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users', 'client', user?.client_id] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      queryClient.invalidateQueries({ queryKey: ['client-operators', user?.client_id] });
       setIsModalOpen(false);
       setSelectedUser(null);
       toast.success('Operador actualizado exitosamente');
@@ -70,8 +65,7 @@ export function AccountPage() {
   const deleteMutation = useMutation({
     mutationFn: usersApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users', 'client', user?.client_id] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      queryClient.invalidateQueries({ queryKey: ['client-operators', user?.client_id] });
       toast.success('Operador eliminado exitosamente');
     },
     onError: (error: any) => {
@@ -87,7 +81,7 @@ export function AccountPage() {
     }
   };
 
-  const handleEdit = (operator: UserWithVehicles) => {
+  const handleEdit = (operator: User) => {
     setSelectedUser(operator);
     setIsModalOpen(true);
   };

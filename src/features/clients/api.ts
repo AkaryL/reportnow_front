@@ -1,4 +1,4 @@
-import type { Client, Vehicle, Geofence } from '../../lib/types';
+import type { Client, Vehicle, Geofence, User } from '../../lib/types';
 import apiClient from '../../lib/apiClient';
 
 // Normalizar cliente del backend para el frontend
@@ -99,5 +99,41 @@ export const clientsApi = {
 
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/clients/${id}`);
+  },
+
+  // Obtener operadores de un cliente específico
+  // Intenta múltiples estrategias para obtener los operadores
+  getOperators: async (clientId: string): Promise<User[]> => {
+    // Estrategia 1: Intentar endpoint específico /clients/{id}/operators
+    try {
+      const response = await apiClient.get<User[]>(`/clients/${clientId}/operators`);
+      return response.data;
+    } catch (error: any) {
+      // Si 404, intentar estrategia 2
+      if (error.response?.status === 404) {
+        console.warn('Endpoint /clients/{id}/operators no encontrado, intentando /users');
+      } else if (error.response?.status === 403) {
+        console.warn('Acceso denegado a /clients/{id}/operators');
+      } else {
+        throw error;
+      }
+    }
+
+    // Estrategia 2: Intentar /users con filtro client_id
+    try {
+      const response = await apiClient.get<User[]>('/users', {
+        params: { client_id: clientId }
+      });
+      // Filtrar solo operadores
+      return response.data.filter(
+        (u) => u.role === 'operator_admin' || u.role === 'operator_monitor'
+      );
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        console.warn('Acceso denegado a /users - el backend necesita un endpoint para operadores del cliente');
+        return [];
+      }
+      throw error;
+    }
   },
 };
