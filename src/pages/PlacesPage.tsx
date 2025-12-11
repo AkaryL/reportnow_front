@@ -50,6 +50,7 @@ export function PlacesPage() {
   const { user } = useAuth();
   const toast = useToast();
   const confirmDialog = useConfirm();
+  const isClient = user?.role === 'admin';
 
   const { data: places = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.PLACES,
@@ -199,33 +200,40 @@ export function PlacesPage() {
     return true;
   });
 
-  const stats = [
+  const allStats = [
     {
       label: 'Total Lugares',
       value: placesForStats.length,
       color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      showForClient: true,
     },
     {
       label: 'Activos',
       value: placesForStats.filter((p) => p.status === 'active').length,
       color: 'bg-ok-50 text-ok-700 dark:bg-ok-900/30 dark:text-ok-400',
+      showForClient: true,
     },
     {
       label: 'Inactivos',
       value: placesForStats.filter((p) => p.status === 'inactive').length,
       color: 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-white',
+      showForClient: true,
     },
     {
       label: 'Globales',
       value: placesForStats.filter((p) => p.is_global).length,
       color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+      showForClient: false,
     },
     {
       label: 'Del Cliente',
       value: placesForStats.filter((p) => !p.is_global).length,
       color: 'bg-info-50 text-info-700 dark:bg-info-900/30 dark:text-info-400',
+      showForClient: false,
     },
   ];
+
+  const stats = isClient ? allStats.filter(s => s.showForClient) : allStats;
 
   if (isLoading) {
     return (
@@ -249,7 +257,7 @@ export function PlacesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isClient ? 'lg:grid-cols-3' : 'lg:grid-cols-5'} gap-4`}>
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <div className="flex items-center justify-between">
@@ -291,19 +299,21 @@ export function PlacesPage() {
             <option value="inactive">Inactivos</option>
           </select>
 
-          {/* Type Filter */}
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">Todos los tipos</option>
-            <option value="global">Globales</option>
-            <option value="cliente">Del Cliente</option>
-          </select>
+          {/* Type Filter - solo para superuser */}
+          {!isClient && (
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">Todos los tipos</option>
+              <option value="global">Globales</option>
+              <option value="cliente">Del Cliente</option>
+            </select>
+          )}
 
           {/* Clear Filters */}
-          {(searchQuery || filterStatus !== 'all' || filterType !== 'all') && (
+          {(searchQuery || filterStatus !== 'all' || (!isClient && filterType !== 'all')) && (
             <Button
               variant="outline"
               onClick={() => {
@@ -428,6 +438,7 @@ export function PlacesPage() {
         onSubmit={handleSubmit}
         place={selectedPlace}
         isLoading={createMutation.isPending || updateMutation.isPending}
+        hideGlobal={isClient}
       />
 
       <ConfirmDialog

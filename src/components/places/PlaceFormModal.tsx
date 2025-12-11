@@ -11,9 +11,10 @@ interface PlaceFormModalProps {
   onSubmit: (data: any) => void;
   place?: Place | null;
   isLoading?: boolean;
+  hideGlobal?: boolean;
 }
 
-export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: PlaceFormModalProps) {
+export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading, hideGlobal }: PlaceFormModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     lat: '',
@@ -215,18 +216,20 @@ export function PlaceFormModal({ isOpen, onClose, onSubmit, place, isLoading }: 
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is_global"
-              checked={formData.is_global}
-              onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
-              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-            />
-            <label htmlFor="is_global" className="text-sm text-gray-700 dark:text-gray-300">
-              Lugar global (visible para todos los clientes)
-            </label>
-          </div>
+          {!hideGlobal && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_global"
+                checked={formData.is_global}
+                onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <label htmlFor="is_global" className="text-sm text-gray-700 dark:text-gray-300">
+                Lugar global (visible para todos los clientes)
+              </label>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <input
