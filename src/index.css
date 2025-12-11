@@ -503,9 +503,17 @@ html.dark .leaflet-bar {
   letter-spacing: -0.02em;
 }
 
+.dark .client-heading {
+  color: rgba(255, 255, 255, 0.95); /* white */
+}
+
 .client-subheading {
   color: rgba(75, 85, 99, 0.9); /* gray-600 medio */
   font-size: 0.875rem;
+}
+
+.dark .client-subheading {
+  color: rgba(156, 163, 175, 0.9); /* gray-400 */
 }
 
 /* Client view text */
@@ -513,12 +521,24 @@ html.dark .leaflet-bar {
   color: rgba(17, 24, 39, 0.95); /* gray-900 oscuro */
 }
 
+.dark .client-text-primary {
+  color: rgba(255, 255, 255, 0.95); /* white */
+}
+
 .client-text-secondary {
   color: rgba(75, 85, 99, 0.9); /* gray-600 medio */
 }
 
+.dark .client-text-secondary {
+  color: rgba(156, 163, 175, 0.9); /* gray-400 */
+}
+
 .client-text-tertiary {
   color: rgba(107, 114, 128, 0.7); /* gray-500 claro */
+}
+
+.dark .client-text-tertiary {
+  color: rgba(107, 114, 128, 0.8); /* gray-500 */
 }
 
 /* Buttons in client view */
@@ -554,6 +574,17 @@ html.dark .leaflet-bar {
 .client-btn-secondary:hover {
   background: rgba(229, 231, 235, 0.9); /* gray-200 */
   border-color: rgba(156, 163, 175, 0.9); /* gray-400 */
+}
+
+.dark .client-btn-secondary {
+  background: rgba(55, 65, 81, 0.8); /* gray-700 */
+  color: rgba(243, 244, 246, 0.95); /* gray-100 */
+  border-color: rgba(75, 85, 99, 0.8); /* gray-600 */
+}
+
+.dark .client-btn-secondary:hover {
+  background: rgba(75, 85, 99, 0.9); /* gray-600 */
+  border-color: rgba(107, 114, 128, 0.9); /* gray-500 */
 }
 
 /* Input fields in client view */
