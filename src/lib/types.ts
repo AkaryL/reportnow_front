@@ -277,6 +277,7 @@ export interface Geofence {
 
   // Configuración de eventos
   event_type: GeofenceEventType; // Solo entrada, Solo salida, Entrada/Salida
+  max_speed?: number; // Límite de velocidad en km/h (para event_type 'speed_limit')
 
   // Metadata
   notes?: string;

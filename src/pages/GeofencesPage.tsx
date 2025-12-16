@@ -103,7 +103,8 @@ export function GeofencesPage() {
     color: string;
     center: [number, number];
     radius: number | null;
-    alert_type: 'entry' | 'exit' | 'both';
+    alert_type: 'entry' | 'exit' | 'both' | 'speed_limit';
+    speed_limit?: number;
     creation_mode: 'address' | 'coordinates' | 'pin';
     polygon_coordinates?: { type: string; coordinates: number[][] } | null;
     is_global?: boolean;
@@ -121,6 +122,7 @@ export function GeofencesPage() {
         polygon_coordinates: geofenceData.polygon_coordinates || null,
         color: geofenceData.color,
         event_type: geofenceData.alert_type,
+        max_speed: geofenceData.speed_limit || null,
         is_global: geofenceData.is_global || false,
         client_id: geofenceData.client_id && geofenceData.client_id !== '' ? geofenceData.client_id : null,
       };

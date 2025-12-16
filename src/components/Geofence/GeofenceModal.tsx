@@ -84,8 +84,11 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         setAlertType(editingGeofence.alert_type);
       }
 
-      // Cargar límite de velocidad si existe
-      if (editingGeofence.speed_limit !== undefined && editingGeofence.speed_limit !== null) {
+      // Cargar límite de velocidad si existe (backend usa max_speed)
+      if (editingGeofence.max_speed !== undefined && editingGeofence.max_speed !== null) {
+        setSpeedLimit(String(editingGeofence.max_speed));
+      } else if (editingGeofence.speed_limit !== undefined && editingGeofence.speed_limit !== null) {
+        // Fallback para compatibilidad
         setSpeedLimit(String(editingGeofence.speed_limit));
       } else {
         setSpeedLimit('');
