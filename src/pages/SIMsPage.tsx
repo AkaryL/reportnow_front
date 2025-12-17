@@ -136,7 +136,9 @@ export function SIMsPage() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: simsApi.toggleStatus,
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'inactive' }) => {
+      return simsApi.update(id, { status });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SIMS });
       toast.success('Estado actualizado exitosamente');
@@ -147,10 +149,10 @@ export function SIMsPage() {
   });
 
   // Calcular el estado dinámico de una SIM basado en su equipo
-  const getSIMStatus = (sim: SIM): 'Active' | 'Inactive' => {
+  const getSIMStatus = (sim: SIM): 'active' | 'inactive' => {
     // Si no tiene equipo asignado, está disponible
     if (!sim.equipment_id && !sim.assigned_to_equipment_id) {
-      return 'Active';
+      return 'active';
     }
 
     // Tiene equipo asignado, buscar el estado del equipo
@@ -160,11 +162,11 @@ export function SIMsPage() {
     // El equipo siempre debe existir, pero por seguridad
     if (!equipment) {
       console.warn(`Equipo ${equipmentId} no encontrado para SIM ${sim.iccid}`);
-      return 'Active';
+      return 'active';
     }
 
     // El estado de la SIM refleja el estado del equipo
-    return equipment.status === 'Inactive' ? 'Inactive' : 'Active';
+    return equipment.status === 'inactive' ? 'inactive' : 'active';
   };
 
   // Helper para obtener el nombre del cliente
@@ -277,8 +279,9 @@ export function SIMsPage() {
     }
   };
 
-  const handleToggleStatus = (id: string) => {
-    toggleStatusMutation.mutate(id);
+  const handleToggleStatus = (sim: SIM) => {
+    const newStatus = sim.status === 'active' ? 'inactive' : 'active';
+    toggleStatusMutation.mutate({ id: sim.id, status: newStatus });
   };
 
   const getEquipmentIMEI = (simId: string) => {
@@ -345,13 +348,13 @@ export function SIMsPage() {
     },
     {
       label: 'Activas',
-      value: sims.filter((s) => getSIMStatus(s) === 'Active').length,
+      value: sims.filter((s) => getSIMStatus(s) === 'active').length,
       bgColor: 'bg-info-50 dark:bg-info-900/30',
       textColor: 'text-info-700 dark:text-info-400',
     },
     {
       label: 'Inactivas',
-      value: sims.filter((s) => getSIMStatus(s) === 'Inactive').length,
+      value: sims.filter((s) => getSIMStatus(s) === 'inactive').length,
       bgColor: 'bg-gray-100 dark:bg-gray-700',
       textColor: 'text-gray-700 dark:text-gray-300',
     },
@@ -391,7 +394,7 @@ export function SIMsPage() {
                 iccid: s.iccid,
                 phone: s.phone_number,
                 carrier: s.carrier,
-                plan: s.data_plan || '-',
+                plan: s.data_limit_mb ? `${s.data_limit_mb} MB` : '-',
                 status: s.status === 'active' ? 'Activa' : s.status === 'inactive' ? 'Inactiva' : 'Suspendida',
               })),
               filename: 'tarjetas_sim',

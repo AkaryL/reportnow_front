@@ -247,8 +247,8 @@ export function EquipmentDetailPage() {
 
   // Inferir estado del vehículo basándose en velocidad e ignición
   const inferStatus = (point: RoutePoint, index: number): string => {
-    // Si tiene un status válido (no null, no "simulated"), usarlo
-    if (point.status && point.status !== 'simulated' &&
+    // Si tiene un status válido, usarlo
+    if (point.status &&
         ['engine_on', 'moving', 'stopped', 'engine_off'].includes(point.status)) {
       return point.status;
     }
@@ -994,7 +994,8 @@ export function EquipmentDetailPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent ref={statsRef} className="p-6">
+        <CardContent className="p-6">
+          <div ref={statsRef}>
           {/* Filtros de Fecha para estadísticas */}
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-4">
@@ -1203,7 +1204,7 @@ export function EquipmentDetailPage() {
                           outerRadius={100}
                           paddingAngle={5}
                           dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }: any) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                           labelLine={false}
                         >
                           <Cell fill="#10b981" />
@@ -1556,6 +1557,7 @@ export function EquipmentDetailPage() {
               )}
             </div>
           )}
+          </div>
         </CardContent>
       </Card>
       )}

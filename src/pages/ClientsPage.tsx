@@ -149,7 +149,7 @@ export function ClientsPage() {
       message: `¿Deseas iniciar sesión como "${client.company_name}"? Tu sesión actual se cerrará.`,
       confirmText: 'Iniciar sesión',
       cancelText: 'Cancelar',
-      variant: 'primary',
+      variant: 'info',
     });
 
     if (confirmed) {

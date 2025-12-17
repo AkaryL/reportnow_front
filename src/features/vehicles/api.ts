@@ -130,4 +130,20 @@ export const vehiclesApi = {
     // TODO: Implement with /equipment-events
     return [];
   },
+
+  // Track endpoints
+  getTrackDates: async (id: string): Promise<string[]> => {
+    // TODO: Implement with backend track endpoints
+    return [];
+  },
+
+  generateWeekTracks: async (id: string): Promise<void> => {
+    // TODO: Implement with backend track generation
+    return;
+  },
+
+  getTrack: async (id: string, date: string): Promise<{ points: { lat: number; lng: number; ts?: string }[] }> => {
+    // TODO: Implement with backend track endpoints
+    return { points: [] };
+  },
 };

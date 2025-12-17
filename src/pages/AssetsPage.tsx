@@ -58,7 +58,7 @@ export function AssetsPage() {
 
   const { data: assets = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.ASSETS,
-    queryFn: assetsApi.getAll,
+    queryFn: () => assetsApi.getAll(),
   });
 
   const { data: drivers = [] } = useQuery({
@@ -297,7 +297,7 @@ export function AssetsPage() {
               data: filteredAssets.map(a => ({
                 name: a.name,
                 type: a.type,
-                identifier: a.type === 'vehiculo' ? (a as VehicleAsset).plates : a.type === 'cargo' ? (a as CargoAsset).tracking_code : '-',
+                identifier: a.type === 'vehiculo' ? (a as VehicleAsset).plate : a.type === 'cargo' ? (a as CargoAsset).tracking_number : '-',
                 status: a.status === 'active' ? 'Activo' : 'Inactivo',
               })),
               filename: 'activos',

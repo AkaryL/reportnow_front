@@ -256,9 +256,9 @@ export function VehicleDetailPage() {
                   min={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                   disabled={isGenerating}
                 />
-                {selectedDate && availableDates?.find(d => d.date === selectedDate) && (
+                {selectedDate && availableDates?.includes(selectedDate) && (
                   <p className={`text-xs mt-1 ${isClient ? 'client-text-tertiary' : 'text-gray-500'}`}>
-                    {availableDates.find(d => d.date === selectedDate)?.points} puntos registrados
+                    Fecha seleccionada
                   </p>
                 )}
                 {isGenerating && (
