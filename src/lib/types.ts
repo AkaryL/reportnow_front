@@ -248,8 +248,8 @@ export interface Place {
 }
 
 // ==================== Geocerca (Geofence) ====================
-export type GeofenceCreationMode = 'address' | 'coordinates';
-export type GeofenceEventType = 'entry' | 'exit' | 'both';
+export type GeofenceCreationMode = 'address' | 'coordinates' | 'pin';
+export type GeofenceEventType = 'entry' | 'exit' | 'both' | 'speed_limit';
 
 export interface Geofence {
   id: string;
@@ -276,14 +276,25 @@ export interface Geofence {
   policy?: string;
 
   // Configuración de eventos
-  event_type: GeofenceEventType; // Solo entrada, Solo salida, Entrada/Salida
+  event_type: GeofenceEventType; // Solo entrada, Solo salida, Entrada/Salida, Límite de velocidad
   max_speed?: number; // Límite de velocidad en km/h (para event_type 'speed_limit')
+
+  // Configuración de horarios
+  is_always_active: boolean; // Si es true, la geocerca está activa siempre (por defecto true)
+  active_days?: number[]; // Array de días activos [0-6] donde 0=Lunes, 6=Domingo
+  start_time?: string; // Hora de inicio en formato "HH:MM" (ej: "08:00")
+  end_time?: string; // Hora de fin en formato "HH:MM" (ej: "18:00")
 
   // Metadata
   notes?: string;
 
   // Cliente
   client_id: string; // Cliente propietario
+
+  // Asignación a assets y/o conductores específicos (lista vacía = aplica a todos)
+  asset_ids?: string[]; // IDs de los assets específicos (vacío = todos los assets del cliente)
+  driver_ids?: string[]; // IDs de los conductores específicos (vacío = todos los conductores del cliente)
+
   is_global?: boolean; // Si es visible para todos (solo superuser puede crear globales)
 
   created_at: string;

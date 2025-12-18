@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, MapPin, Search, Map } from 'lucide-react';
+import { X, MapPin, Search, Map, Clock, Calendar, Users, Car } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../features/auth/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { clientsApi } from '../../features/clients/api';
+import { assetsApi } from '../../features/assets/api';
+import { driversApi } from '../../features/drivers/api';
 import L from 'leaflet';
 import { PolygonDrawMap } from '../map/PolygonDrawMap';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -24,10 +26,29 @@ interface GeofenceModalProps {
     polygon_coordinates?: { type: string; coordinates: number[][] } | null;
     is_global?: boolean;
     client_id?: string;
+    // Configuración de horarios
+    is_always_active: boolean;
+    active_days?: number[];
+    start_time?: string;
+    end_time?: string;
+    // Asignación a assets y conductores (arrays)
+    asset_ids?: string[];
+    driver_ids?: string[];
   }) => void;
   defaultClientId?: string;
   editingGeofence?: any;
 }
+
+// Días de la semana
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Lun', fullLabel: 'Lunes' },
+  { value: 1, label: 'Mar', fullLabel: 'Martes' },
+  { value: 2, label: 'Mié', fullLabel: 'Miércoles' },
+  { value: 3, label: 'Jue', fullLabel: 'Jueves' },
+  { value: 4, label: 'Vie', fullLabel: 'Viernes' },
+  { value: 5, label: 'Sáb', fullLabel: 'Sábado' },
+  { value: 6, label: 'Dom', fullLabel: 'Domingo' },
+];
 
 export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editingGeofence }: GeofenceModalProps) {
   const { user } = useAuth();
@@ -47,6 +68,14 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
   const [selectedClientId, setSelectedClientId] = useState('');
   const [mapSelectedLocation, setMapSelectedLocation] = useState<[number, number] | null>(null);
   const [polygonCoordinates, setPolygonCoordinates] = useState<[number, number][]>([]);
+  // Estados para configuración de horarios
+  const [isAlwaysActive, setIsAlwaysActive] = useState(true);
+  const [activeDays, setActiveDays] = useState<number[]>([0, 1, 2, 3, 4]); // Lun-Vie por defecto
+  const [startTime, setStartTime] = useState('08:00');
+  const [endTime, setEndTime] = useState('18:00');
+  // Estados para asignación de assets y conductores (arrays para multi-select)
+  const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
+  const [selectedDriverIds, setSelectedDriverIds] = useState<string[]>([]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Circle | null>(null);
@@ -56,6 +85,30 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     queryKey: ['clients'],
     queryFn: () => clientsApi.getAll(),
     enabled: isOpen && user?.role === 'superuser',
+  });
+
+  // Determinar el client_id efectivo para cargar assets y drivers
+  const effectiveClientId = selectedClientId || defaultClientId || user?.client_id;
+
+  // Obtener assets del cliente
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets', effectiveClientId],
+    queryFn: () => effectiveClientId ? assetsApi.getByClient(effectiveClientId) : Promise.resolve([]),
+    enabled: isOpen && !!effectiveClientId,
+  });
+
+  // Obtener drivers del cliente
+  const { data: drivers = [] } = useQuery({
+    queryKey: ['drivers-for-geofence', effectiveClientId],
+    queryFn: async () => {
+      const allDrivers = await driversApi.getAll();
+      // Filtrar por cliente si hay uno seleccionado
+      if (effectiveClientId) {
+        return allDrivers.filter(d => d.client_id === effectiveClientId);
+      }
+      return allDrivers;
+    },
+    enabled: isOpen,
   });
 
   const isSuperuser = user?.role === 'superuser';
@@ -157,6 +210,44 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
         setAssignmentType('global');
         setSelectedClientId('');
       }
+
+      // Cargar configuración de horarios
+      if (editingGeofence.is_always_active !== undefined) {
+        setIsAlwaysActive(editingGeofence.is_always_active);
+      } else {
+        setIsAlwaysActive(true);
+      }
+
+      if (editingGeofence.active_days && Array.isArray(editingGeofence.active_days)) {
+        setActiveDays(editingGeofence.active_days);
+      } else {
+        setActiveDays([0, 1, 2, 3, 4]); // Lun-Vie por defecto
+      }
+
+      if (editingGeofence.start_time) {
+        setStartTime(editingGeofence.start_time);
+      } else {
+        setStartTime('08:00');
+      }
+
+      if (editingGeofence.end_time) {
+        setEndTime(editingGeofence.end_time);
+      } else {
+        setEndTime('18:00');
+      }
+
+      // Cargar asignación de assets y conductores (arrays)
+      if (editingGeofence.asset_ids && Array.isArray(editingGeofence.asset_ids)) {
+        setSelectedAssetIds(editingGeofence.asset_ids);
+      } else {
+        setSelectedAssetIds([]);
+      }
+
+      if (editingGeofence.driver_ids && Array.isArray(editingGeofence.driver_ids)) {
+        setSelectedDriverIds(editingGeofence.driver_ids);
+      } else {
+        setSelectedDriverIds([]);
+      }
     } else if (isOpen && !editingGeofence) {
       // Limpiar formulario al abrir para crear nueva geocerca
       setName('');
@@ -170,6 +261,14 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       setSelectedTab('address');
       setMapSelectedLocation(null);
       setPolygonCoordinates([]);
+      // Valores por defecto para horarios
+      setIsAlwaysActive(true);
+      setActiveDays([0, 1, 2, 3, 4]); // Lun-Vie
+      setStartTime('08:00');
+      setEndTime('18:00');
+      // Limpiar asignación de assets y conductores
+      setSelectedAssetIds([]);
+      setSelectedDriverIds([]);
 
       // Si hay defaultClientId, forzar asignación a cliente
       if (defaultClientId) {
@@ -444,6 +543,23 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
       geofenceData.is_global = false;
     }
 
+    // Configuración de horarios
+    geofenceData.is_always_active = isAlwaysActive;
+    if (!isAlwaysActive) {
+      // Solo incluir días y horarios si no está siempre activa
+      if (activeDays.length === 0) {
+        alert('Debes seleccionar al menos un día de la semana');
+        return;
+      }
+      geofenceData.active_days = activeDays;
+      geofenceData.start_time = startTime;
+      geofenceData.end_time = endTime;
+    }
+
+    // Asignación de assets y conductores (arrays)
+    geofenceData.asset_ids = selectedAssetIds.length > 0 ? selectedAssetIds : [];
+    geofenceData.driver_ids = selectedDriverIds.length > 0 ? selectedDriverIds : [];
+
     console.log("Si llegaaa", geofenceData);
     onSave(geofenceData);
 
@@ -462,6 +578,14 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     setSelectedTab('address');
     setMapSelectedLocation(null);
     setPolygonCoordinates([]);
+    // Limpiar horarios
+    setIsAlwaysActive(true);
+    setActiveDays([0, 1, 2, 3, 4]);
+    setStartTime('08:00');
+    setEndTime('18:00');
+    // Limpiar asignación de assets y conductores
+    setSelectedAssetIds([]);
+    setSelectedDriverIds([]);
 
     // Clean up map
     if (mapInstanceRef.current) {
@@ -488,6 +612,14 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
     setSelectedTab('address');
     setMapSelectedLocation(null);
     setPolygonCoordinates([]);
+    // Limpiar horarios
+    setIsAlwaysActive(true);
+    setActiveDays([0, 1, 2, 3, 4]);
+    setStartTime('08:00');
+    setEndTime('18:00');
+    // Limpiar asignación de assets y conductores
+    setSelectedAssetIds([]);
+    setSelectedDriverIds([]);
 
     // Clean up map
     if (mapInstanceRef.current) {
@@ -762,6 +894,211 @@ export function GeofenceModal({ isOpen, onClose, onSave, defaultClientId, editin
                 </div>
               )}
             </div>
+
+            {/* Configuración de Horarios */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Horario de activación
+                </label>
+              </div>
+
+              {/* Toggle Siempre activa */}
+              <div className="mb-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isAlwaysActive}
+                      onChange={(e) => setIsAlwaysActive(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-11 h-6 rounded-full transition-colors ${
+                      isAlwaysActive
+                        ? 'bg-blue-500 dark:bg-primary-600'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                    }`}>
+                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                        isAlwaysActive ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {isAlwaysActive ? 'Siempre activa (24/7)' : 'Programar horario'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Configuración de horario programado */}
+              {!isAlwaysActive && (
+                <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  {/* Selección de días */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Días activos
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {DAYS_OF_WEEK.map((day) => (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => {
+                            setActiveDays(prev =>
+                              prev.includes(day.value)
+                                ? prev.filter(d => d !== day.value)
+                                : [...prev, day.value].sort((a, b) => a - b)
+                            );
+                          }}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg border-2 transition-colors ${
+                            activeDays.includes(day.value)
+                              ? 'border-primary bg-primary text-white dark:border-primary-500 dark:bg-primary-600'
+                              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+                          }`}
+                          title={day.fullLabel}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                    {activeDays.length === 0 && (
+                      <p className="text-xs text-red-500 mt-1">
+                        Selecciona al menos un día
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Selección de horario */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Hora de inicio
+                      </label>
+                      <input
+                        id="startTime"
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Hora de fin
+                      </label>
+                      <input
+                        id="endTime"
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Resumen del horario */}
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-800 dark:text-blue-400">
+                    <strong>Horario configurado:</strong>{' '}
+                    {activeDays.length > 0
+                      ? `${activeDays.map(d => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(', ')} de ${startTime} a ${endTime}`
+                      : 'Sin días seleccionados'
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Asignación a Assets y Conductores (Multi-select) */}
+            {effectiveClientId && (
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Car className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Asignar a (opcional)
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Multi-select de Assets */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Activos
+                    </label>
+                    <div className="max-h-32 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700">
+                      {assets.length === 0 ? (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">Sin activos disponibles</p>
+                      ) : (
+                        assets.map((asset: any) => (
+                          <label key={asset.id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedAssetIds.includes(asset.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedAssetIds(prev => [...prev, asset.id]);
+                                } else {
+                                  setSelectedAssetIds(prev => prev.filter(id => id !== asset.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-primary rounded border-gray-300 dark:border-gray-600 focus:ring-primary/20"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                              {asset.name} {asset.plate ? `(${asset.plate})` : ''}
+                            </span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {selectedAssetIds.length > 0 && (
+                      <p className="text-xs text-primary mt-1">{selectedAssetIds.length} seleccionado(s)</p>
+                    )}
+                  </div>
+
+                  {/* Multi-select de Drivers */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <Users className="w-3 h-3 inline mr-1" />
+                      Conductores
+                    </label>
+                    <div className="max-h-32 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700">
+                      {drivers.length === 0 ? (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">Sin conductores disponibles</p>
+                      ) : (
+                        drivers.map((driver: any) => (
+                          <label key={driver.id} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedDriverIds.includes(driver.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedDriverIds(prev => [...prev, driver.id]);
+                                } else {
+                                  setSelectedDriverIds(prev => prev.filter(id => id !== driver.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-primary rounded border-gray-300 dark:border-gray-600 focus:ring-primary/20"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                              {driver.name}
+                            </span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {selectedDriverIds.length > 0 && (
+                      <p className="text-xs text-primary mt-1">{selectedDriverIds.length} seleccionado(s)</p>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Si no seleccionas ninguno, la geocerca aplicará a todos los activos y conductores del cliente.
+                </p>
+              </div>
+            )}
 
             {/* Asignación (solo para superuser y cuando no hay defaultClientId) */}
             {isSuperuser && !defaultClientId && (

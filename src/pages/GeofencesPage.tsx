@@ -109,6 +109,14 @@ export function GeofencesPage() {
     polygon_coordinates?: { type: string; coordinates: number[][] } | null;
     is_global?: boolean;
     client_id?: string;
+    // Configuración de horarios
+    is_always_active: boolean;
+    active_days?: number[];
+    start_time?: string;
+    end_time?: string;
+    // Asignación a assets y conductores (arrays)
+    asset_ids?: string[];
+    driver_ids?: string[];
   }) => {
     try {
       const [lat, lng] = geofenceData.center;
@@ -125,6 +133,14 @@ export function GeofencesPage() {
         max_speed: geofenceData.speed_limit || null,
         is_global: geofenceData.is_global || false,
         client_id: geofenceData.client_id && geofenceData.client_id !== '' ? geofenceData.client_id : null,
+        // Campos de horarios
+        is_always_active: geofenceData.is_always_active,
+        active_days: geofenceData.is_always_active ? null : geofenceData.active_days,
+        start_time: geofenceData.is_always_active ? null : geofenceData.start_time,
+        end_time: geofenceData.is_always_active ? null : geofenceData.end_time,
+        // Campos de asignación a assets y conductores (arrays)
+        asset_ids: geofenceData.asset_ids || [],
+        driver_ids: geofenceData.driver_ids || [],
       };
 
       // Si tiene ID es actualización, si no es creación
@@ -383,7 +399,7 @@ export function GeofencesPage() {
                           style={{ backgroundColor: geofence.color }}
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className={`font-semibold text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
+                          <h4 className={`font-semibold text-sm truncate ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'} max-w-[162px]`}>
                             {geofence.name}
                           </h4>
                           <div className="flex flex-col gap-1 mt-1">
