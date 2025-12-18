@@ -121,12 +121,15 @@ export function AdminProfilePage() {
     enabled: !!id,
   });
 
-  // Fetch activity stats
-  const { data: stats } = useQuery({
-    queryKey: QUERY_KEYS.ACTIVITY_STATS(id!),
-    queryFn: () => activityLogsApi.getStatsByUserId(id!),
-    enabled: !!id,
-  });
+  // Calculate stats from activity logs
+  const stats = {
+    total_activities: activityLogs.length,
+    by_type: activityLogs.reduce((acc, log) => {
+      acc[log.activity_type] = (acc[log.activity_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
+    recent_activity_ts: activityLogs.length > 0 ? activityLogs[0]?.ts : null,
+  };
 
   if (isLoadingAdmin || isLoadingLogs) {
     return (
@@ -280,7 +283,7 @@ export function AdminProfilePage() {
                         {ACTIVITY_TYPE_LABELS[type as ActivityType] || type}
                       </span>
                     </div>
-                    <Badge variant="default">{count} veces</Badge>
+                    <Badge variant="default">{count as number} veces</Badge>
                   </div>
                 );
               })}

@@ -246,11 +246,11 @@ export function DriversPage() {
                 { header: 'Estado', key: 'status' },
               ],
               data: filteredDrivers.map(d => ({
-                name: `${d.first_name} ${d.last_name}`,
+                name: d.name,
                 phone: d.phone || '-',
                 email: d.email || '-',
                 license: d.license_number || '-',
-                status: d.status === 'active' ? 'Activo' : 'Inactivo',
+                status: d.status === 'available' ? 'Disponible' : d.status === 'on_trip' ? 'En viaje' : 'Inactivo',
               })),
               filename: 'conductores',
               filters: filterStatus !== 'all' ? [{ label: 'Estado', value: filterStatus }] : undefined,

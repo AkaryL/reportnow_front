@@ -44,7 +44,7 @@ export function ReportsPage() {
 
   const { data: assets = [] } = useQuery({
     queryKey: QUERY_KEYS.ASSETS,
-    queryFn: assetsApi.getAll,
+    queryFn: () => assetsApi.getAll(),
   });
 
   const { data: geofences = [] } = useQuery({
@@ -229,14 +229,14 @@ export function ReportsPage() {
               asset: asset ? {
                 name: asset.name,
                 type: asset.type,
-                plate: asset.plate,
-                brand: asset.brand,
-                model: asset.model,
-                year: asset.year,
-                color: asset.color,
+                plate: asset.type === 'vehiculo' ? (asset as any).plate : undefined,
+                brand: asset.type === 'vehiculo' ? (asset as any).brand : undefined,
+                model: asset.type === 'vehiculo' ? (asset as any).model : undefined,
+                year: asset.type === 'vehiculo' ? (asset as any).year : undefined,
+                color: asset.type === 'vehiculo' ? (asset as any).color : undefined,
               } : undefined,
               notifications: eqNotifications.map(n => ({
-                title: n.title,
+                title: n.action,
                 description: n.description || '',
                 priority: n.priority,
                 ts: n.ts,
@@ -310,14 +310,14 @@ export function ReportsPage() {
             asset: asset ? {
               name: asset.name,
               type: asset.type,
-              plate: asset.plate,
-              brand: asset.brand,
-              model: asset.model,
-              year: asset.year,
-              color: asset.color,
+              plate: asset.type === 'vehiculo' ? (asset as any).plate : undefined,
+              brand: asset.type === 'vehiculo' ? (asset as any).brand : undefined,
+              model: asset.type === 'vehiculo' ? (asset as any).model : undefined,
+              year: asset.type === 'vehiculo' ? (asset as any).year : undefined,
+              color: asset.type === 'vehiculo' ? (asset as any).color : undefined,
             } : undefined,
             notifications: eqNotifications.map(n => ({
-              title: n.title,
+              title: n.action,
               description: n.description || '',
               priority: n.priority,
               ts: n.ts,
@@ -371,7 +371,7 @@ export function ReportsPage() {
             'Tel. Cliente': client?.contact_phone || 'N/A',
             Activo: asset?.name || 'Sin asignar',
             'Tipo Activo': asset?.type || 'N/A',
-            'Placa Activo': asset?.plate || 'N/A',
+            'Placa Activo': asset?.type === 'vehiculo' ? (asset as any).plate || 'N/A' : 'N/A',
             'Última Señal': eq.last_seen ? formatDate(eq.last_seen) : 'N/A',
             Latitud: eq.lat || 'N/A',
             Longitud: eq.lng || 'N/A',
@@ -502,13 +502,13 @@ export function ReportsPage() {
 
           if (isLite) {
             return {
-              Título: notif.title,
+              Título: notif.action,
               Prioridad: notif.priority,
               Fecha: formatDate(notif.ts),
             };
           }
           return {
-            Título: notif.title,
+            Título: notif.action,
             Descripción: notif.description,
             Prioridad: notif.priority,
             'Equipo IMEI': equipment?.imei || 'N/A',
@@ -539,7 +539,7 @@ export function ReportsPage() {
           filteredData.some((eq: any) => eq.id === n.equipment_id)
         ).map(n => ({
           Fecha: formatDate(n.ts),
-          Título: n.title,
+          Título: n.action,
           Descripción: n.description,
           Prioridad: n.priority,
           'Equipo': equipments.find(eq => eq.id === n.equipment_id)?.imei || 'N/A',
@@ -627,7 +627,7 @@ export function ReportsPage() {
         Estado: eq.status === 'active' ? 'Activo' : 'Inactivo',
         'Activo Asignado': asset?.name || 'Sin asignar',
         'Tipo de Activo': asset?.type || 'N/A',
-        'Placa del Activo': (asset && asset.type === 'vehicle' ? asset.plate : 'N/A') || 'N/A',
+        'Placa del Activo': (asset && asset.type === 'vehiculo' ? (asset as any).plate : 'N/A') || 'N/A',
         Cliente: client.company_name,
         'Email Cliente': client.email,
         'Teléfono Cliente': client.contact_phone,
@@ -703,7 +703,7 @@ export function ReportsPage() {
       return {
         'Fecha': formatDateOnly(notif.ts),
         'Hora': formatTimeOnly(notif.ts),
-        Título: notif.title,
+        Título: notif.action,
         Descripción: notif.description,
         Prioridad: notif.priority,
         'Equipo IMEI': equipment?.imei || 'N/A',
@@ -1097,7 +1097,7 @@ export function ReportsPage() {
                       )}
                       {selectedReport === 'notifications' && (
                         <>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.title}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.action}</td>
                           <td className="px-4 py-3 text-sm">
                             <Badge variant={item.priority === 'high' ? 'danger' : 'default'}>
                               {item.priority}

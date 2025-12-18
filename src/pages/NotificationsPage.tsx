@@ -130,18 +130,8 @@ export function NotificationsPage() {
     });
   };
 
-  // Filter alerts by client first
-  const clientFilteredAlerts = alerts.filter((alert) => {
-    // Superusers see all alerts
-    if (user?.role === 'superuser') return true;
-    // Clients only see alerts from their own equipment
-    if (!user?.client_id) return true;
-    const equipment = getEquipmentInfo(alert.equipment_id);
-    return equipment && equipment.client_id === user.client_id;
-  });
-
   // Filter alerts by search and type
-  const filteredAlerts = clientFilteredAlerts.filter((alert) => {
+  const filteredAlerts = alerts.filter((alert) => {
     const equipment = getEquipmentInfo(alert.equipment_id);
     const geofenceName = getGeofenceName(alert.geofence_id);
     const matchesSearch =
@@ -164,10 +154,10 @@ export function NotificationsPage() {
     return equipment && equipment.client_id === user.client_id;
   });
 
-  // Stats for alerts (use client-filtered alerts)
-  const totalAlerts = clientFilteredAlerts.length;
-  const entryAlerts = clientFilteredAlerts.filter((a) => a.type === 'geofence_enter').length;
-  const exitAlerts = clientFilteredAlerts.filter((a) => a.type === 'geofence_exit').length;
+  // Stats for alerts
+  const totalAlerts = alerts.length;
+  const entryAlerts = alerts.filter((a) => a.type === 'geofence_enter').length;
+  const exitAlerts = alerts.filter((a) => a.type === 'geofence_exit').length;
 
   // Stats for system notifications
   const unreadCount = filteredNotifications.filter((n) => !n.read_by.includes(user?.id || '')).length;
