@@ -3,7 +3,8 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
-import type { AssetType, Client, User } from '../../lib/types';
+import { VisibilitySelector } from '../ui/VisibilitySelector';
+import type { AssetType, Client, User, VisibilityType } from '../../lib/types';
 
 interface AssetFormModalProps {
   isOpen: boolean;
@@ -59,7 +60,14 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
     asset_type: '',
     equipment_id: '',
     category: '',
+    // Visibility
+    visibility: 'all' as VisibilityType,
+    assigned_user_ids: [] as string[],
   });
+
+  // Determinar si puede configurar visibilidad
+  const canSetVisibility = user?.role && ['admin', 'superuser', 'operator_admin'].includes(user.role);
+  const effectiveClientId = formData.client_id || clientId || user?.client_id;
 
   useEffect(() => {
     if (!isOpen) {
@@ -101,6 +109,8 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         asset_type: '',
         equipment_id: '',
         category: '',
+        visibility: 'all',
+        assigned_user_ids: [],
       });
     } else if (asset) {
       // Edit mode - load asset data
@@ -141,6 +151,8 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
         asset_type: '',
         equipment_id: '',
         category: '',
+        visibility: asset.visibility || 'all',
+        assigned_user_ids: asset.assigned_users?.map((u: any) => u.id) || [],
       };
 
       if (asset.type === 'vehiculo') {
@@ -181,6 +193,8 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
       photo_url: formData.photo_url || undefined,
       icon: formData.icon || undefined,
       notes: formData.notes || undefined,
+      visibility: formData.visibility,
+      assigned_user_ids: formData.visibility === 'assigned' ? formData.assigned_user_ids : undefined,
     };
 
     let payload: any;
@@ -607,6 +621,20 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, asset, clientId, isL
             </div>
           </div>
         </div>
+
+        {/* Visibility Selector */}
+        {canSetVisibility && (
+          <div className="border-t dark:border-gray-700 pt-4 mt-4">
+            <VisibilitySelector
+              visibility={formData.visibility}
+              assignedUserIds={formData.assigned_user_ids}
+              clientId={effectiveClientId}
+              onVisibilityChange={(v) => setFormData({ ...formData, visibility: v })}
+              onAssignedUsersChange={(ids) => setFormData({ ...formData, assigned_user_ids: ids })}
+              existingAssignedUsers={asset?.assigned_users}
+            />
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4 border-t dark:border-gray-700">

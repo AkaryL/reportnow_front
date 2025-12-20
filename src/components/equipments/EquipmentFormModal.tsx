@@ -5,7 +5,9 @@ import { QUERY_KEYS } from '../../lib/constants';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import type { Equipment } from '../../lib/types';
+import { VisibilitySelector } from '../ui/VisibilitySelector';
+import { useAuth } from '../../features/auth/hooks';
+import type { Equipment, VisibilityType } from '../../lib/types';
 
 interface EquipmentFormModalProps {
   isOpen: boolean;
@@ -13,9 +15,12 @@ interface EquipmentFormModalProps {
   onSubmit: (data: any) => void;
   equipment?: Equipment | null;
   isLoading?: boolean;
+  clientId?: string;
 }
 
-export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoading }: EquipmentFormModalProps) {
+export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoading, clientId }: EquipmentFormModalProps) {
+  const { user: currentUser } = useAuth();
+
   const [formData, setFormData] = useState({
     imei: '',
     serial: '',
@@ -27,6 +32,8 @@ export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoa
     purchase_date: '',
     warranty_expiry: '',
     notes: '',
+    visibility: 'all' as VisibilityType,
+    assigned_user_ids: [] as string[],
   });
 
   const { data: sims = [] } = useQuery({
@@ -47,6 +54,8 @@ export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoa
         purchase_date: equipment.purchase_date || '',
         warranty_expiry: equipment.warranty_expiry || '',
         notes: equipment.notes || '',
+        visibility: equipment.visibility || 'all',
+        assigned_user_ids: equipment.assigned_users?.map(u => u.id) || [],
       });
     } else {
       setFormData({
@@ -60,6 +69,8 @@ export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoa
         purchase_date: '',
         warranty_expiry: '',
         notes: '',
+        visibility: 'all',
+        assigned_user_ids: [],
       });
     }
   }, [equipment]);
@@ -68,6 +79,10 @@ export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoa
     e.preventDefault();
     onSubmit(formData);
   };
+
+  // Solo mostrar selector de visibilidad para roles que pueden crear equipos
+  const canSetVisibility = currentUser?.role && ['admin', 'superuser', 'operator_admin'].includes(currentUser.role);
+  const effectiveClientId = clientId || currentUser?.client_id;
 
   const availableSims = sims.filter(sim => !sim.equipment_id || sim.id === equipment?.sim_id);
 
@@ -220,6 +235,20 @@ export function EquipmentFormModal({ isOpen, onClose, onSubmit, equipment, isLoa
             placeholder="Notas adicionales sobre el equipo..."
           />
         </div>
+
+        {/* Selector de Visibilidad */}
+        {canSetVisibility && (
+          <div className="border-t border-gray-200 dark:border-gray-600 pt-4 mt-4">
+            <VisibilitySelector
+              visibility={formData.visibility}
+              assignedUserIds={formData.assigned_user_ids}
+              clientId={effectiveClientId}
+              onVisibilityChange={(v) => setFormData({ ...formData, visibility: v })}
+              onAssignedUsersChange={(ids) => setFormData({ ...formData, assigned_user_ids: ids })}
+              existingAssignedUsers={equipment?.assigned_users}
+            />
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4">
           <Button

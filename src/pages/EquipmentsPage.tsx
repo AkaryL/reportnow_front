@@ -133,10 +133,10 @@ export function EquipmentsPage() {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
-      equipment.imei.toLowerCase().includes(searchLower) ||
-      equipment.serial.toLowerCase().includes(searchLower) ||
-      equipment.brand.toLowerCase().includes(searchLower) ||
-      equipment.model.toLowerCase().includes(searchLower) ||
+      equipment.imei?.toLowerCase().includes(searchLower) ||
+      equipment.serial?.toLowerCase().includes(searchLower) ||
+      equipment.brand?.toLowerCase().includes(searchLower) ||
+      equipment.model?.toLowerCase().includes(searchLower) ||
       clientName.includes(searchLower) ||
       assetName.includes(searchLower);
 

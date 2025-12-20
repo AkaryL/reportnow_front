@@ -78,6 +78,15 @@ export interface SIM {
 // ==================== Equipo (GPS Device) ====================
 export type EquipmentStatus = 'active' | 'inactive' | 'available';
 export type VehicleLastStatus = 'engine_on' | 'moving' | 'stopped' | 'engine_off';
+export type VisibilityType = 'all' | 'owner_only' | 'assigned';
+
+// Usuario asignado (simplificado para respuestas)
+export interface AssignedUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+}
 
 export interface Equipment {
   id: string;
@@ -105,6 +114,11 @@ export interface Equipment {
   last_seen?: string; // ISO timestamp de última comunicación
   last_status?: VehicleLastStatus; // Estado operativo del vehículo (engine_on, moving, stopped, engine_off)
 
+  // Visibilidad y asignación de usuarios
+  visibility: VisibilityType; // all, owner_only, assigned
+  created_by?: string; // ID del usuario que creó el equipo
+  assigned_users?: AssignedUser[]; // Usuarios asignados (cuando visibility='assigned')
+
   // Metadatos
   purchase_date?: string;
   warranty_expiry?: string;
@@ -129,6 +143,12 @@ export interface AssetBase {
   icon?: string; // Ícono personalizado (opcional)
   notes?: string;
   status: AssetStatus;
+
+  // Visibilidad y asignación de usuarios
+  visibility: VisibilityType; // all, owner_only, assigned
+  created_by?: string; // ID del usuario que creó el activo
+  assigned_users?: AssignedUser[]; // Usuarios asignados (cuando visibility='assigned')
+
   created_at: string;
   updated_at?: string;
 }
