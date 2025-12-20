@@ -1,18 +1,20 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { toPng } from 'html-to-image';
 import {
   generateFullPDF,
   generateHistoryPDF,
   generateStatsPDF,
   type PDFGeneratorOptions,
+  type StatsPDFData,
 } from '../lib/pdfGenerator';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, Circle, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, Circle, Polygon, useMap } from 'react-leaflet';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { equipmentsApi } from '../features/equipments/api';
 import { vehicleHistoryApi } from '../features/vehicle-history/api';
-import type { RoutePoint } from '../features/vehicle-history/api';
+import type { RoutePoint, RouteStatsResponse } from '../features/vehicle-history/api';
 import { alertsApi } from '../features/alerts/api';
 import { driversApi } from '../features/drivers/api';
 import { QUERY_KEYS, EQUIPMENT_STATUS_CONFIG } from '../lib/constants';
@@ -49,7 +51,10 @@ import {
   LogOut,
   User,
   Phone,
-  Award
+  Award,
+  Square,
+  CheckSquare,
+  X
 } from 'lucide-react';
 import { formatRelativeTime, formatSpeed } from '../lib/utils';
 import type { Equipment } from '../lib/types';
@@ -100,11 +105,75 @@ export function EquipmentDetailPage() {
   const [endTime, setEndTime] = useState('23:59');
   const [showGeofences, setShowGeofences] = useState(false);
   const [activeTab, setActiveTab] = useState<'historial' | 'estadisticas'>('historial');
+  const [routesPage, setRoutesPage] = useState(1);
+  const routesPerPage = 10;
+  // Estado para el intervalo de ruta seleccionado en historial (null = mostrar todas)
+  const [selectedRouteInterval, setSelectedRouteInterval] = useState<number | null>(null);
+  // Estado para secciones seleccionadas en estadísticas (para PDF)
+  const [selectedStatsSections, setSelectedStatsSections] = useState<Set<string>>(new Set());
+
+  // Toggle para seleccionar/deseleccionar una sección de estadísticas
+  const toggleStatsSection = (sectionId: string) => {
+    setSelectedStatsSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  // Resetear página y intervalo cuando cambian las fechas
+  useEffect(() => {
+    setRoutesPage(1);
+    setSelectedRouteInterval(null);
+  }, [startDate, startTime, endDate, endTime]);
 
   // Refs para capturas de pantalla en PDFs
   const mapRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
+
+  // Refs para secciones de estadísticas individuales
+  const statsSummaryRef = useRef<HTMLDivElement>(null);
+  const statsSpeedChartRef = useRef<HTMLDivElement>(null);
+  const statsDistributionRef = useRef<HTMLDivElement>(null);
+  const statsMovementRef = useRef<HTMLDivElement>(null);
+  const statsAnalysisRef = useRef<HTMLDivElement>(null);
+  const statsPeriodRef = useRef<HTMLDivElement>(null);
+  const statsRankingRef = useRef<HTMLDivElement>(null);
+  const routesTableFullRef = useRef<HTMLDivElement>(null);
+
+  // Mapa de refs por sección para PDF selectivo
+  const sectionRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {
+    resumen: statsSummaryRef,
+    rutas: routesTableFullRef,
+    velocidad: statsSpeedChartRef,
+    distribucion: statsDistributionRef,
+    movimiento: statsMovementRef,
+    analisis: statsAnalysisRef,
+    periodo: statsPeriodRef,
+    ranking: statsRankingRef,
+  };
+
+  // Función para descargar imagen de una sección
+  const downloadSectionAsImage = useCallback(async (ref: React.RefObject<HTMLDivElement | null>, filename: string) => {
+    if (!ref.current) return;
+    try {
+      const dataUrl = await toPng(ref.current, {
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        pixelRatio: 2,
+      });
+      const link = document.createElement('a');
+      link.download = `${filename}-${format(new Date(), 'yyyy-MM-dd-HHmm')}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Error al generar imagen:', error);
+    }
+  }, [isDark]);
 
   // Obtener el equipo específico
   const { data: equipment, isLoading: isLoadingEquipment } = useQuery({
@@ -157,6 +226,16 @@ export function EquipmentDetailPage() {
     enabled: !!equipment?.imei,
   });
 
+  // Obtener estadísticas de rutas del equipo (también usado para intervalos en historial)
+  const { data: routeStatsData, isLoading: isLoadingRouteStats } = useQuery({
+    queryKey: ['vehicle-stats', 'routes', equipment?.imei, startDate, startTime, endDate, endTime],
+    queryFn: () => vehicleHistoryApi.getRouteStats(equipment!.imei, {
+      start_date: `${startDate}T${startTime}:00`,
+      end_date: `${endDate}T${endTime}:59`,
+    }),
+    enabled: !!equipment?.imei && (activeTab === 'estadisticas' || activeTab === 'historial'),
+  });
+
   // Obtener alertas del equipo
   const { data: equipmentAlerts = [] } = useQuery({
     queryKey: ['alerts', 'equipment', id],
@@ -207,15 +286,54 @@ export function EquipmentDetailPage() {
       .map(gf => gf!.name);
   };
 
-  // Calcular el centro del mapa
-  const mapCenter: [number, number] = routes && routes.length > 0 && routes[0].lat && routes[0].lon
-    ? [routes[0].lat, routes[0].lon]
-    : equipment?.lat && equipment?.lng
-      ? [equipment.lat, equipment.lng]
-      : [20.6897, -103.3918]; // Guadalajara por defecto
+  // Filtrar rutas según el intervalo seleccionado
+  const filteredRoutes = useMemo(() => {
+    if (selectedRouteInterval === null || !routeStatsData?.rutas) {
+      return routes;
+    }
+    const selectedRuta = routeStatsData.rutas.find(r => r.ruta === selectedRouteInterval);
+    if (!selectedRuta) {
+      return routes;
+    }
+    const startTime = new Date(selectedRuta.inicio).getTime();
+    const endTime = new Date(selectedRuta.fin).getTime();
+    return routes.filter(point => {
+      const pointTime = new Date(point.recv_time).getTime();
+      return pointTime >= startTime && pointTime <= endTime;
+    });
+  }, [routes, selectedRouteInterval, routeStatsData?.rutas]);
 
-  // Convertir rutas a coordenadas para la polilínea
-  const routeCoordinates: [number, number][] = routes
+  // Calcular el centro del mapa basado en las rutas filtradas
+  const mapCenter: [number, number] = useMemo(() => {
+    // Si hay rutas filtradas, centrar en el primer punto
+    if (filteredRoutes.length > 0 && filteredRoutes[0].lat && filteredRoutes[0].lon) {
+      return [filteredRoutes[0].lat, filteredRoutes[0].lon];
+    }
+    // Si hay rutas sin filtrar, usar el primer punto
+    if (routes.length > 0 && routes[0].lat && routes[0].lon) {
+      return [routes[0].lat, routes[0].lon];
+    }
+    // Usar ubicación del equipo
+    if (equipment?.lat && equipment?.lng) {
+      return [equipment.lat, equipment.lng];
+    }
+    // Default: Guadalajara
+    return [20.6897, -103.3918];
+  }, [filteredRoutes, routes, equipment?.lat, equipment?.lng]);
+
+  // Componente para controlar el mapa (centrar cuando cambia el intervalo)
+  const MapController = ({ center }: { center: [number, number] }) => {
+    const map = useMap();
+    useEffect(() => {
+      if (center) {
+        map.flyTo(center, 14, { duration: 0.5 });
+      }
+    }, [center, map]);
+    return null;
+  };
+
+  // Convertir rutas filtradas a coordenadas para la polilínea
+  const routeCoordinates: [number, number][] = filteredRoutes
     .filter(point => point.lat !== null && point.lon !== null)
     .map(point => [point.lat!, point.lon!]);
 
@@ -227,22 +345,22 @@ export function EquipmentDetailPage() {
     return '#ef4444'; // Rojo - rápido
   };
 
-  // Calcular estadísticas del recorrido
+  // Calcular estadísticas del recorrido (usando rutas filtradas)
   const routeStats = {
-    totalPoints: routes.length,
-    maxSpeed: routes.reduce((max, p) => Math.max(max, p.speed_kph || 0), 0),
-    avgSpeed: routes.length > 0
-      ? routes.reduce((sum, p) => sum + (p.speed_kph || 0), 0) / routes.filter(p => p.speed_kph).length
+    totalPoints: filteredRoutes.length,
+    maxSpeed: filteredRoutes.reduce((max, p) => Math.max(max, p.speed_kph || 0), 0),
+    avgSpeed: filteredRoutes.length > 0
+      ? filteredRoutes.reduce((sum, p) => sum + (p.speed_kph || 0), 0) / filteredRoutes.filter(p => p.speed_kph).length
       : 0,
-    stoppedPoints: routes.filter(p => !p.speed_kph || p.speed_kph === 0).length,
+    stoppedPoints: filteredRoutes.filter(p => !p.speed_kph || p.speed_kph === 0).length,
   };
 
-  // Configuración de estados del vehículo
+  // Configuración de estados del vehículo (con soporte dark mode)
   const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: typeof Power }> = {
-    engine_on: { label: 'Encendido de motor', color: 'text-green-600', bgColor: 'bg-green-100', icon: Power },
-    moving: { label: 'En movimiento', color: 'text-blue-600', bgColor: 'bg-blue-100', icon: Car },
-    stopped: { label: 'Detenido', color: 'text-amber-600', bgColor: 'bg-amber-100', icon: CircleStop },
-    engine_off: { label: 'Motor apagado', color: 'text-gray-600', bgColor: 'bg-gray-200', icon: PowerOff },
+    engine_on: { label: 'Encendido de motor', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/40', icon: Power },
+    moving: { label: 'En movimiento', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/40', icon: Car },
+    stopped: { label: 'Detenido', color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40', icon: CircleStop },
+    engine_off: { label: 'Motor apagado', color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-200 dark:bg-gray-700', icon: PowerOff },
   };
 
   // Inferir estado del vehículo basándose en velocidad e ignición
@@ -270,9 +388,9 @@ export function EquipmentDetailPage() {
     }
   };
 
-  // Agrupar estados consecutivos para el timeline
+  // Agrupar estados consecutivos para el timeline (usando rutas filtradas)
   const getStatusSegments = () => {
-    if (routes.length === 0) return [];
+    if (filteredRoutes.length === 0) return [];
 
     const segments: Array<{
       status: string;
@@ -284,13 +402,13 @@ export function EquipmentDetailPage() {
 
     let currentSegment: typeof segments[0] | null = null;
 
-    routes.forEach((point, index) => {
+    filteredRoutes.forEach((point, index) => {
       const status = inferStatus(point, index);
 
       if (!currentSegment || currentSegment.status !== status) {
         // Cerrar segmento anterior
         if (currentSegment) {
-          currentSegment.endTime = routes[index - 1].recv_time;
+          currentSegment.endTime = filteredRoutes[index - 1].recv_time;
           currentSegment.duration = new Date(currentSegment.endTime).getTime() - new Date(currentSegment.startTime).getTime();
           segments.push(currentSegment);
         }
@@ -309,7 +427,7 @@ export function EquipmentDetailPage() {
 
     // Cerrar último segmento
     if (currentSegment) {
-      currentSegment.endTime = routes[routes.length - 1].recv_time;
+      currentSegment.endTime = filteredRoutes[filteredRoutes.length - 1].recv_time;
       currentSegment.duration = new Date(currentSegment.endTime).getTime() - new Date(currentSegment.startTime).getTime();
       segments.push(currentSegment);
     }
@@ -332,6 +450,167 @@ export function EquipmentDetailPage() {
       return `${minutes}m ${seconds}s`;
     }
     return `${seconds}s`;
+  };
+
+  // Construir datos para PDF de estadísticas (generación nativa)
+  const buildStatsPDFData = (): StatsPDFData | undefined => {
+    if (!routeStatsData?.rutas || routeStatsData.rutas.length === 0) {
+      return undefined;
+    }
+
+    const rutas = routeStatsData.rutas;
+
+    // Calcular resumen
+    const totalRutas = routeStatsData.total_rutas || rutas.length;
+    const kmRecorridos = rutas.reduce((sum, r) => sum + r.km_recorridos, 0);
+    const velMaxima = rutas.reduce((max, r) => Math.max(max, r.velocidad_maxima), 0);
+    const velPromedio = rutas.length > 0
+      ? rutas.reduce((sum, r) => sum + r.velocidad_promedio, 0) / rutas.length
+      : 0;
+    const horasMarcha = rutas.reduce((sum, r) => sum + r.tiempo_marcha_horas, 0);
+    const horasRalenti = rutas.reduce((sum, r) => sum + r.tiempo_ralenti_horas, 0);
+    const horasTotales = rutas.reduce((sum, r) => sum + r.tiempo_total_horas, 0);
+    const puntosRegistrados = rutas.reduce((sum, r) => sum + r.puntos, 0);
+
+    // Calcular distribución de velocidad desde routes (usando speed_kph)
+    const speedDistribution = [
+      {
+        range: 'Detenido',
+        count: routes.filter(p => !p.speed_kph || p.speed_kph === 0).length,
+        color: '#6b7280'
+      },
+      {
+        range: '1-30',
+        count: routes.filter(p => p.speed_kph && p.speed_kph > 0 && p.speed_kph <= 30).length,
+        color: '#0ea5e9'
+      },
+      {
+        range: '31-60',
+        count: routes.filter(p => p.speed_kph && p.speed_kph > 30 && p.speed_kph <= 60).length,
+        color: '#10b981'
+      },
+      {
+        range: '61-80',
+        count: routes.filter(p => p.speed_kph && p.speed_kph > 60 && p.speed_kph <= 80).length,
+        color: '#f59e0b'
+      },
+      {
+        range: '>80',
+        count: routes.filter(p => p.speed_kph && p.speed_kph > 80).length,
+        color: '#ef4444'
+      },
+    ];
+
+    // Calcular estado de movimiento (igual que UI)
+    const movingPoints = routes.filter(p => p.speed_kph && p.speed_kph > 0).length;
+    const stoppedPoints = routes.filter(p => !p.speed_kph || p.speed_kph === 0).length;
+    const totalPoints = routes.length || 1;
+
+    const movementState = [
+      {
+        label: 'En movimiento',
+        value: movingPoints,
+        color: '#10b981',
+        percent: (movingPoints / totalPoints) * 100
+      },
+      {
+        label: 'Detenido',
+        value: stoppedPoints,
+        color: '#6b7280',
+        percent: (stoppedPoints / totalPoints) * 100
+      },
+    ];
+
+    // Calcular análisis detallado (igual que UI)
+    // Exceso de velocidad = > 60 km/h
+    const speedExcessPoints = routes.filter(p => p.speed_kph && p.speed_kph > 60).length;
+    // Alta velocidad = > 80 km/h
+    const highSpeedPoints = routes.filter(p => p.speed_kph && p.speed_kph > 80).length;
+
+    const analysis = {
+      movingPoints,
+      movingPercent: (movingPoints / totalPoints) * 100,
+      speedExcessPoints,
+      speedExcessPercent: (speedExcessPoints / totalPoints) * 100,
+      highSpeedPoints,
+      highSpeedPercent: (highSpeedPoints / totalPoints) * 100,
+      stoppedPoints: routeStats.stoppedPoints, // Usar el mismo valor que el UI
+      stoppedPercent: routes.length > 0 ? (routeStats.stoppedPoints / routes.length) * 100 : 0,
+    };
+
+    // Construir timeline de velocidad (samplear si hay muchos puntos, igual que UI)
+    const maxTimelinePoints = 100;
+    const step = Math.max(1, Math.floor(routes.length / maxTimelinePoints));
+    const speedTimeline = routes
+      .filter((_, i) => i % step === 0)
+      .map(point => ({
+        time: format(new Date(point.recv_time), 'HH:mm', { locale: es }),
+        speed: point.speed_kph || 0,
+      }));
+
+    // Período (usar routes directamente sin ordenar, igual que UI)
+    const period = {
+      firstRecord: routes.length > 0
+        ? format(new Date(routes[0].recv_time), 'dd/MM/yyyy HH:mm:ss', { locale: es })
+        : 'Sin datos',
+      lastRecord: routes.length > 0
+        ? format(new Date(routes[routes.length - 1].recv_time), 'dd/MM/yyyy HH:mm:ss', { locale: es })
+        : 'Sin datos',
+    };
+
+    // Ranking de conductores
+    const clientDrivers = drivers.filter(d => d.client_id === equipment?.client_id);
+    const currentDriver = equipment?.driver_id
+      ? drivers.find(d => d.id === equipment.driver_id)
+      : null;
+
+    const ranking = {
+      currentDriver: currentDriver ? {
+        name: currentDriver.name,
+        phone: currentDriver.phone,
+        licenseNumber: currentDriver.license_number,
+      } : null,
+      otherDrivers: clientDrivers
+        .filter(d => d.id !== equipment?.driver_id)
+        .slice(0, 4)
+        .map(d => ({
+          name: d.name,
+          status: d.status === 'available' ? 'Disponible' :
+                  d.status === 'on_route' ? 'En ruta' :
+                  d.status === 'off_duty' ? 'Fuera de servicio' : d.status,
+        })),
+    };
+
+    return {
+      summary: {
+        totalRutas,
+        kmRecorridos,
+        velMaxima,
+        velPromedio,
+        horasMarcha,
+        horasRalenti,
+        horasTotales,
+        puntosRegistrados,
+      },
+      rutas: rutas.map(r => ({
+        ruta: r.ruta,
+        inicio: format(new Date(r.inicio), 'dd/MM/yyyy HH:mm'),
+        fin: format(new Date(r.fin), 'dd/MM/yyyy HH:mm'),
+        km_recorridos: r.km_recorridos,
+        velocidad_maxima: r.velocidad_maxima,
+        velocidad_promedio: r.velocidad_promedio,
+        tiempo_marcha_horas: r.tiempo_marcha_horas,
+        tiempo_ralenti_horas: r.tiempo_ralenti_horas,
+        tiempo_total_horas: r.tiempo_total_horas,
+        puntos: r.puntos,
+      })),
+      speedTimeline,
+      speedDistribution,
+      movementState,
+      analysis,
+      period,
+      ranking,
+    };
   };
 
   // Preparar opciones para generación de PDF
@@ -375,6 +654,23 @@ export function EquipmentDetailPage() {
 
   const handleDownloadStats = async () => {
     const options = getPDFOptions();
+
+    // Construir datos para generación nativa del PDF
+    const statsData = buildStatsPDFData();
+    if (statsData) {
+      options.statsData = statsData;
+    }
+
+    // Convertir Set a array de secciones seleccionadas
+    const selectedSections = selectedStatsSections.size > 0
+      ? Array.from(selectedStatsSections)
+      : undefined; // undefined = todas las secciones
+
+    options.selectedSections = selectedSections;
+
+    // Pasar el tema actual para el PDF
+    options.darkMode = isDark;
+
     await generateStatsPDF(options);
   };
 
@@ -644,6 +940,46 @@ export function EquipmentDetailPage() {
             )}
           </div>
 
+          {/* Selector de intervalo de ruta */}
+          {routeStatsData?.rutas && routeStatsData.rutas.length > 0 && (
+            <div className="mb-4 flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Route className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ruta:</span>
+              </div>
+              <select
+                value={selectedRouteInterval ?? ''}
+                onChange={(e) => setSelectedRouteInterval(e.target.value === '' ? null : Number(e.target.value))}
+                className="flex-1 max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">
+                  Todas las rutas ({routeStatsData.rutas.length} rutas, {routes.length} puntos)
+                </option>
+                {routeStatsData.rutas.map((ruta) => (
+                  <option key={ruta.ruta} value={ruta.ruta}>
+                    Ruta {ruta.ruta}: {format(new Date(ruta.inicio), 'HH:mm', { locale: es })} - {format(new Date(ruta.fin), 'HH:mm', { locale: es })} | {ruta.km_recorridos.toFixed(1)} km | {ruta.puntos} pts
+                  </option>
+                ))}
+              </select>
+              {selectedRouteInterval !== null && (() => {
+                const selectedRuta = routeStatsData.rutas.find(r => r.ruta === selectedRouteInterval);
+                if (!selectedRuta) return null;
+                return (
+                  <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {selectedRuta.tiempo_total_horas.toFixed(1)}h
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Gauge className="w-3.5 h-3.5" />
+                      {selectedRuta.velocidad_promedio.toFixed(0)} km/h prom
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Mapa y Timeline */}
           <div className="flex gap-4 h-[500px]">
             {/* Mapa - 2/3 del ancho */}
@@ -667,6 +1003,9 @@ export function EquipmentDetailPage() {
                     url={isDark ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
                   />
 
+                  {/* Controlador para centrar el mapa al cambiar intervalo */}
+                  <MapController center={mapCenter} />
+
                   {/* Polilínea de la ruta */}
                   <Polyline
                     positions={routeCoordinates}
@@ -675,13 +1014,13 @@ export function EquipmentDetailPage() {
                     opacity={0.7}
                   />
 
-                  {/* Puntos de la ruta */}
-                  {routes.map((point, index) => {
+                  {/* Puntos de la ruta (filtrados por intervalo) */}
+                  {filteredRoutes.map((point, index) => {
                     if (!point.lat || !point.lon) return null;
 
                     const color = getPointColor(point.speed_kph);
                     const isFirst = index === 0;
-                    const isLast = index === routes.length - 1;
+                    const isLast = index === filteredRoutes.length - 1;
 
                     return (
                       <CircleMarker
@@ -877,7 +1216,7 @@ export function EquipmentDetailPage() {
                 ) : statusSegments.length > 0 ? (
                   <div className="relative">
                     {/* Línea vertical del timeline */}
-                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-600"></div>
 
                     {/* Segmentos del timeline */}
                     <div className="space-y-3">
@@ -888,24 +1227,24 @@ export function EquipmentDetailPage() {
                         return (
                           <div key={index} className="relative pl-10">
                             {/* Icono del estado */}
-                            <div className={`absolute left-0 w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center border-2 border-white shadow-sm`}>
+                            <div className={`absolute left-0 w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center border-2 border-white dark:border-gray-700 shadow-sm`}>
                               <Icon className={`w-4 h-4 ${config.color}`} />
                             </div>
 
                             {/* Contenido del segmento */}
-                            <div className={`p-2 rounded-lg ${config.bgColor} bg-opacity-30 border border-gray-100`}>
+                            <div className={`p-2 rounded-lg ${config.bgColor} bg-opacity-30 dark:bg-opacity-20 border border-gray-100 dark:border-gray-700`}>
                               <div className={`font-medium text-sm ${config.color}`}>
                                 {config.label}
                               </div>
-                              <div className="text-xs text-gray-600 mt-1">
+                              <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                                 {format(new Date(segment.startTime), 'HH:mm:ss', { locale: es })}
                                 {segment.duration > 0 && (
-                                  <span className="text-gray-400"> - {format(new Date(segment.endTime), 'HH:mm:ss', { locale: es })}</span>
+                                  <span className="text-gray-400 dark:text-gray-500"> - {format(new Date(segment.endTime), 'HH:mm:ss', { locale: es })}</span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                              <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 <span className="font-medium">{formatDuration(segment.duration)}</span>
-                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-400 dark:text-gray-500">•</span>
                                 <span>{segment.pointCount} punto{segment.pointCount !== 1 ? 's' : ''}</span>
                               </div>
                             </div>
@@ -984,14 +1323,34 @@ export function EquipmentDetailPage() {
               <BarChart3 className="w-5 h-5 text-primary" />
               Estadísticas del Equipo
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadStats}
-            >
-              <Download className="w-4 h-4" />
-              PDF Estadísticas
-            </Button>
+            <div className="flex items-center gap-3">
+              {selectedStatsSections.size > 0 && (
+                <>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {selectedStatsSections.size} seleccionado{selectedStatsSections.size > 1 ? 's' : ''}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedStatsSections(new Set())}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <X className="w-4 h-4" />
+                    Limpiar
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadStats}
+              >
+                <Download className="w-4 h-4" />
+                {selectedStatsSections.size > 0
+                  ? `PDF (${selectedStatsSections.size})`
+                  : 'PDF Completo'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -1044,7 +1403,7 @@ export function EquipmentDetailPage() {
             </div>
           </div>
 
-          {isLoadingRoutes ? (
+          {isLoadingRouteStats ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -1053,62 +1412,250 @@ export function EquipmentDetailPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Estadísticas principales */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{routes.length > 0 ? routeStats.totalPoints : 245}</p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">Puntos registrados</p>
-                </div>
-                <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-red-600 dark:text-red-400">{routes.length > 0 ? routeStats.maxSpeed.toFixed(0) : 78}</p>
-                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">Vel. máxima (km/h)</p>
-                </div>
-                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">{routes.length > 0 ? routeStats.avgSpeed.toFixed(0) : 42}</p>
-                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">Vel. promedio (km/h)</p>
-                </div>
-                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-gray-600 dark:text-gray-300">{routes.length > 0 ? routeStats.stoppedPoints : 38}</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-400 mt-1">Puntos detenido</p>
+              {/* Estadísticas principales desde el backend */}
+              <div className="relative">
+                <button
+                  onClick={() => toggleStatsSection('resumen')}
+                  className="absolute -top-1 -left-1 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title={selectedStatsSections.has('resumen') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                >
+                  {selectedStatsSections.has('resumen') ? (
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  )}
+                </button>
+                <div ref={statsSummaryRef} className={`space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors ${selectedStatsSections.has('resumen') ? 'border-primary' : 'border-transparent'}`}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{routeStatsData?.total_rutas || 0}</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">Total de rutas</p>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        {routeStatsData?.rutas?.reduce((sum, r) => sum + r.km_recorridos, 0).toFixed(1) || '0'}
+                      </p>
+                      <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">Km recorridos</p>
+                    </div>
+                    <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                        {routeStatsData?.rutas?.reduce((max, r) => Math.max(max, r.velocidad_maxima), 0).toFixed(0) || '0'}
+                      </p>
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">Vel. máxima (km/h)</p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {routeStatsData?.rutas && routeStatsData.rutas.length > 0
+                          ? (routeStatsData.rutas.reduce((sum, r) => sum + r.velocidad_promedio, 0) / routeStatsData.rutas.length).toFixed(0)
+                          : '0'}
+                      </p>
+                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">Vel. promedio (km/h)</p>
+                    </div>
+                  </div>
+
+                  {/* Segunda fila de estadísticas */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                        {routeStatsData?.rutas?.reduce((sum, r) => sum + r.tiempo_marcha_horas, 0).toFixed(1) || '0'}
+                      </p>
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">Horas en marcha</p>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                        {routeStatsData?.rutas?.reduce((sum, r) => sum + r.tiempo_ralenti_horas, 0).toFixed(1) || '0'}
+                      </p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Horas en ralentí</p>
+                    </div>
+                    <div className="bg-cyan-50 dark:bg-cyan-900/30 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">
+                        {routeStatsData?.rutas?.reduce((sum, r) => sum + r.tiempo_total_horas, 0).toFixed(1) || '0'}
+                      </p>
+                      <p className="text-sm text-cyan-700 dark:text-cyan-300 mt-1">Horas totales</p>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-gray-600 dark:text-gray-300">
+                        {routeStatsData?.rutas?.reduce((sum, r) => sum + r.puntos, 0) || 0}
+                      </p>
+                      <p className="text-sm text-gray-700 dark:text-gray-400 mt-1">Puntos registrados</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              {/* Tabla de rutas con paginación */}
+              {routeStatsData?.rutas && routeStatsData.rutas.length > 0 && (() => {
+                const totalPages = Math.ceil(routeStatsData.rutas.length / routesPerPage);
+                const startIndex = (routesPage - 1) * routesPerPage;
+                const paginatedRoutes = routeStatsData.rutas.slice(startIndex, startIndex + routesPerPage);
+
+                return (
+                  <>
+                    {/* Tabla oculta para captura de imagen (todas las rutas) */}
+                    <div className="absolute -left-[9999px]" aria-hidden="true">
+                      <div ref={routesTableFullRef} className="bg-white dark:bg-gray-800 rounded-lg p-4">
+                        <div className="mb-4 flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Route className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            Detalle de Rutas
+                          </h3>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {routeStatsData.rutas.length} rutas
+                          </span>
+                        </div>
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">#</th>
+                              <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Inicio</th>
+                              <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Fin</th>
+                              <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Km</th>
+                              <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Vel. Prom.</th>
+                              <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Vel. Máx.</th>
+                              <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Marcha</th>
+                              <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Ralentí</th>
+                              <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Puntos</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {routeStatsData.rutas.map((ruta) => (
+                              <tr key={ruta.ruta}>
+                                <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{ruta.ruta}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                  {format(new Date(ruta.inicio), 'dd/MM HH:mm', { locale: es })}
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                  {format(new Date(ruta.fin), 'dd/MM HH:mm', { locale: es })}
+                                </td>
+                                <td className="px-4 py-3 text-right text-gray-900 dark:text-white">{ruta.km_recorridos.toFixed(2)}</td>
+                                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{ruta.velocidad_promedio.toFixed(1)}</td>
+                                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{ruta.velocidad_maxima.toFixed(1)}</td>
+                                <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">{ruta.tiempo_marcha_horas.toFixed(2)}h</td>
+                                <td className="px-4 py-3 text-right text-amber-600 dark:text-amber-400">{ruta.tiempo_ralenti_horas.toFixed(2)}h</td>
+                                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{ruta.puntos}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Tabla visible con paginación */}
+                    <div className="relative">
+                      <button
+                        onClick={() => toggleStatsSection('rutas')}
+                        className="absolute -top-1 -left-1 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title={selectedStatsSections.has('rutas') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                      >
+                        {selectedStatsSections.has('rutas') ? (
+                          <CheckSquare className="w-5 h-5 text-primary" />
+                        ) : (
+                          <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                        )}
+                      </button>
+                      <div className={`bg-white dark:bg-gray-800 rounded-lg overflow-hidden border-2 transition-colors ${selectedStatsSections.has('rutas') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Route className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            Detalle de Rutas
+                          </h3>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {routeStatsData.rutas.length} rutas
+                          </span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                              <tr>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">#</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Inicio</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Fin</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Km</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Vel. Prom.</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Vel. Máx.</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Marcha</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Ralentí</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">Puntos</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                              {paginatedRoutes.map((ruta) => (
+                                <tr key={ruta.ruta} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                  <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{ruta.ruta}</td>
+                                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    {format(new Date(ruta.inicio), 'dd/MM HH:mm', { locale: es })}
+                                  </td>
+                                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    {format(new Date(ruta.fin), 'dd/MM HH:mm', { locale: es })}
+                                  </td>
+                                  <td className="px-4 py-3 text-right text-gray-900 dark:text-white">{ruta.km_recorridos.toFixed(2)}</td>
+                                  <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{ruta.velocidad_promedio.toFixed(1)}</td>
+                                  <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{ruta.velocidad_maxima.toFixed(1)}</td>
+                                  <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">{ruta.tiempo_marcha_horas.toFixed(2)}h</td>
+                                  <td className="px-4 py-3 text-right text-amber-600 dark:text-amber-400">{ruta.tiempo_ralenti_horas.toFixed(2)}h</td>
+                                  <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{ruta.puntos}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Paginación */}
+                        {totalPages > 1 && (
+                          <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              Mostrando {startIndex + 1}-{Math.min(startIndex + routesPerPage, routeStatsData.rutas.length)} de {routeStatsData.rutas.length}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setRoutesPage(p => Math.max(1, p - 1))}
+                                disabled={routesPage === 1}
+                                className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Anterior
+                              </button>
+                              <span className="text-sm text-gray-600 dark:text-gray-300">
+                                {routesPage} / {totalPages}
+                              </span>
+                              <button
+                                onClick={() => setRoutesPage(p => Math.min(totalPages, p + 1))}
+                                disabled={routesPage === totalPages}
+                                className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Siguiente
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
               {/* Gráfico de Velocidad en el Tiempo */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div ref={statsSpeedChartRef} className={`relative bg-white dark:bg-gray-800 rounded-lg p-6 border-2 transition-colors ${selectedStatsSections.has('velocidad') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                <button
+                  onClick={() => toggleStatsSection('velocidad')}
+                  className="absolute top-2 left-2 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title={selectedStatsSections.has('velocidad') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                >
+                  {selectedStatsSections.has('velocidad') ? (
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  )}
+                </button>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2 ml-8">
                   <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   Velocidad en el Tiempo
                 </h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
-                      data={routes.length > 0
-                        ? routes.filter((_, i) => i % Math.max(1, Math.floor(routes.length / 100)) === 0).map((point) => ({
+                      data={routes.filter((_, i) => i % Math.max(1, Math.floor(routes.length / 100)) === 0).map((point) => ({
                             time: format(new Date(point.recv_time), 'HH:mm', { locale: es }),
                             velocidad: point.speed_kph || 0,
                           }))
-                        : [
-                            { time: '08:00', velocidad: 0 },
-                            { time: '08:30', velocidad: 25 },
-                            { time: '09:00', velocidad: 45 },
-                            { time: '09:30', velocidad: 62 },
-                            { time: '10:00', velocidad: 55 },
-                            { time: '10:30', velocidad: 38 },
-                            { time: '11:00', velocidad: 0 },
-                            { time: '11:30', velocidad: 0 },
-                            { time: '12:00', velocidad: 42 },
-                            { time: '12:30', velocidad: 58 },
-                            { time: '13:00', velocidad: 72 },
-                            { time: '13:30', velocidad: 65 },
-                            { time: '14:00', velocidad: 48 },
-                            { time: '14:30', velocidad: 35 },
-                            { time: '15:00', velocidad: 0 },
-                            { time: '15:30', velocidad: 28 },
-                            { time: '16:00', velocidad: 52 },
-                            { time: '16:30', velocidad: 78 },
-                            { time: '17:00', velocidad: 45 },
-                            { time: '17:30', velocidad: 0 },
-                          ]
                       }
                       margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                     >
@@ -1134,25 +1681,28 @@ export function EquipmentDetailPage() {
               {/* Gráficos de Distribución */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico de Barras - Distribución de Velocidad */}
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución de Velocidad</h3>
+                <div ref={statsDistributionRef} className={`relative bg-white dark:bg-gray-800 rounded-lg p-6 border-2 transition-colors ${selectedStatsSections.has('distribucion') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                  <button
+                    onClick={() => toggleStatsSection('distribucion')}
+                    className="absolute top-2 left-2 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title={selectedStatsSections.has('distribucion') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                  >
+                    {selectedStatsSections.has('distribucion') ? (
+                      <CheckSquare className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    )}
+                  </button>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 ml-8">Distribución de Velocidad</h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={routes.length > 0
-                          ? [
+                        data={[
                               { name: 'Detenido', value: routes.filter(p => !p.speed_kph || p.speed_kph === 0).length, fill: '#6b7280' },
                               { name: '1-30', value: routes.filter(p => p.speed_kph && p.speed_kph > 0 && p.speed_kph <= 30).length, fill: '#0ea5e9' },
                               { name: '31-60', value: routes.filter(p => p.speed_kph && p.speed_kph > 30 && p.speed_kph <= 60).length, fill: '#10b981' },
                               { name: '61-80', value: routes.filter(p => p.speed_kph && p.speed_kph > 60 && p.speed_kph <= 80).length, fill: '#f59e0b' },
                               { name: '>80', value: routes.filter(p => p.speed_kph && p.speed_kph > 80).length, fill: '#ef4444' },
-                            ]
-                          : [
-                              { name: 'Detenido', value: 38, fill: '#6b7280' },
-                              { name: '1-30', value: 52, fill: '#0ea5e9' },
-                              { name: '31-60', value: 89, fill: '#10b981' },
-                              { name: '61-80', value: 48, fill: '#f59e0b' },
-                              { name: '>80', value: 18, fill: '#ef4444' },
                             ]
                         }
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -1182,20 +1732,26 @@ export function EquipmentDetailPage() {
                 </div>
 
                 {/* Gráfico de Pie - Estado de Movimiento */}
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Estado de Movimiento</h3>
+                <div ref={statsMovementRef} className={`relative bg-white dark:bg-gray-800 rounded-lg p-6 border-2 transition-colors ${selectedStatsSections.has('movimiento') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                  <button
+                    onClick={() => toggleStatsSection('movimiento')}
+                    className="absolute top-2 left-2 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title={selectedStatsSections.has('movimiento') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                  >
+                    {selectedStatsSections.has('movimiento') ? (
+                      <CheckSquare className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    )}
+                  </button>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 ml-8">Estado de Movimiento</h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={routes.length > 0
-                            ? [
+                          data={[
                                 { name: 'En movimiento', value: routes.filter(p => p.speed_kph && p.speed_kph > 0).length, fill: '#10b981' },
                                 { name: 'Detenido', value: routes.filter(p => !p.speed_kph || p.speed_kph === 0).length, fill: '#6b7280' },
-                              ]
-                            : [
-                                { name: 'En movimiento', value: 207, fill: '#10b981' },
-                                { name: 'Detenido', value: 38, fill: '#6b7280' },
                               ]
                           }
                           cx="50%"
@@ -1222,8 +1778,19 @@ export function EquipmentDetailPage() {
               </div>
 
               {/* Análisis de velocidad detallado */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div ref={statsAnalysisRef} className={`relative bg-white dark:bg-gray-800 rounded-lg p-6 border-2 transition-colors ${selectedStatsSections.has('analisis') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                <button
+                  onClick={() => toggleStatsSection('analisis')}
+                  className="absolute top-2 left-2 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title={selectedStatsSections.has('analisis') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                >
+                  {selectedStatsSections.has('analisis') ? (
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  )}
+                </button>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2 ml-8">
                   <Gauge className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   Análisis Detallado
                 </h3>
@@ -1231,53 +1798,64 @@ export function EquipmentDetailPage() {
                   <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Puntos en movimiento</p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 0).length : 207}
+                      {routes.filter(p => p.speed_kph && p.speed_kph > 0).length}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routes.filter(p => p.speed_kph && p.speed_kph > 0).length / routes.length) * 100).toFixed(1)
-                        : '84.5'}%
+                        : '0'}%
                     </p>
                   </div>
                   <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Exceso de velocidad</p>
                     <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                      {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 60).length : 66}
+                      {routes.filter(p => p.speed_kph && p.speed_kph > 60).length}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routes.filter(p => p.speed_kph && p.speed_kph > 60).length / routes.length) * 100).toFixed(1)
-                        : '26.9'}%
+                        : '0'}%
                     </p>
                   </div>
                   <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Alta velocidad (&gt;80)</p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                      {routes.length > 0 ? routes.filter(p => p.speed_kph && p.speed_kph > 80).length : 18}
+                      {routes.filter(p => p.speed_kph && p.speed_kph > 80).length}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routes.filter(p => p.speed_kph && p.speed_kph > 80).length / routes.length) * 100).toFixed(1)
-                        : '7.3'}%
+                        : '0'}%
                     </p>
                   </div>
                   <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Tiempo detenido</p>
                     <p className="text-2xl font-bold text-gray-600 dark:text-gray-300">
-                      {routes.length > 0 ? routeStats.stoppedPoints : 38}
+                      {routeStats.stoppedPoints}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {routes.length > 0
                         ? ((routeStats.stoppedPoints / routes.length) * 100).toFixed(1)
-                        : '15.5'}%
+                        : '0'}%
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Información del período */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div ref={statsPeriodRef} className={`relative bg-white dark:bg-gray-800 rounded-lg p-6 border-2 transition-colors ${selectedStatsSections.has('periodo') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                <button
+                  onClick={() => toggleStatsSection('periodo')}
+                  className="absolute top-2 left-2 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title={selectedStatsSections.has('periodo') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                >
+                  {selectedStatsSections.has('periodo') ? (
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  )}
+                </button>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2 ml-8">
                   <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   Información del Período
                 </h3>
@@ -1287,7 +1865,7 @@ export function EquipmentDetailPage() {
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {routes.length > 0
                         ? format(new Date(routes[0].recv_time), "dd/MM/yyyy HH:mm:ss", { locale: es })
-                        : format(new Date(dayBeforeYesterdayStr + 'T08:00:00'), "dd/MM/yyyy HH:mm:ss", { locale: es })}
+                        : 'Sin datos'}
                     </p>
                   </div>
                   <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -1295,15 +1873,26 @@ export function EquipmentDetailPage() {
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {routes.length > 0
                         ? format(new Date(routes[routes.length - 1].recv_time), "dd/MM/yyyy HH:mm:ss", { locale: es })
-                        : format(new Date(yesterdayStr + 'T17:30:00'), "dd/MM/yyyy HH:mm:ss", { locale: es })}
+                        : 'Sin datos'}
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Ranking de Conductores */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div ref={statsRankingRef} className={`relative bg-white dark:bg-gray-800 rounded-lg p-6 border-2 transition-colors ${selectedStatsSections.has('ranking') ? 'border-primary' : 'border-gray-200 dark:border-gray-700'}`}>
+                <button
+                  onClick={() => toggleStatsSection('ranking')}
+                  className="absolute top-2 left-2 z-10 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title={selectedStatsSections.has('ranking') ? 'Quitar del PDF' : 'Incluir en PDF'}
+                >
+                  {selectedStatsSections.has('ranking') ? (
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  )}
+                </button>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2 ml-8">
                   <Trophy className="w-5 h-5 text-yellow-500" />
                   Ranking de Conductores
                 </h3>
@@ -1548,10 +2137,10 @@ export function EquipmentDetailPage() {
                 })()}
               </div>
 
-              {routes.length === 0 && (
+              {routes.length === 0 && !routeStatsData?.rutas?.length && (
                 <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                   <p className="text-sm text-yellow-800 dark:text-yellow-400 text-center">
-                    Mostrando datos de ejemplo. Selecciona un período con datos reales del equipo para ver estadísticas actuales.
+                    No hay datos para el período seleccionado. Selecciona un rango de fechas diferente.
                   </p>
                 </div>
               )}

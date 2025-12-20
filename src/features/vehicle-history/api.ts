@@ -26,6 +26,26 @@ export interface RoutePoint {
   geofences_in: string[] | null;
 }
 
+export interface RouteStatsItem {
+  inicio: string;
+  fin: string;
+  tiempo_total_seg: number;
+  tiempo_total_horas: number;
+  km_recorridos: number;
+  velocidad_promedio: number;
+  velocidad_maxima: number;
+  tiempo_marcha_horas: number;
+  tiempo_ralenti_horas: number;
+  puntos: number;
+  ruta: number;
+}
+
+export interface RouteStatsResponse {
+  imei: string;
+  total_rutas: number;
+  rutas: RouteStatsItem[];
+}
+
 export interface VehicleHistoryPoint {
   id: number;
   imei: string;
@@ -91,6 +111,21 @@ export const vehicleHistoryApi = {
     const response = await apiClient.get<VehicleHistoryPoint[]>(
       `/vehicle-history/history/${imei}`,
       { params }
+    );
+    return response.data;
+  },
+
+  // Obtener estadísticas de rutas de un vehículo
+  getRouteStats: async (
+    imei: string,
+    params?: {
+      start_date?: string;
+      end_date?: string;
+    }
+  ): Promise<RouteStatsResponse> => {
+    const response = await apiClient.get<RouteStatsResponse>(
+      `/vehicles/stats/routes`,
+      { params: { imei, ...params } }
     );
     return response.data;
   },
