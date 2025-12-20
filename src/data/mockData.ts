@@ -753,7 +753,6 @@ export const mockDrivers: Driver[] = [
     address: 'Av. Vallarta 1234, Guadalajara',
     client_id: '1',
     created_at: new Date('2025-10-26').toISOString(),
-    visibility: 'all',
   },
   {
     id: 'drv2',
