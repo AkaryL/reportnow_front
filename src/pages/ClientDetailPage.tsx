@@ -239,6 +239,7 @@ export function ClientDetailPage() {
         },
         created_at: new Date().toISOString(),
         is_global: geofenceData.is_global || false,
+        is_always_active: true,
         client_id: geofenceData.client_id || id,
         creation_mode: 'coordinates' as const,
         event_type: 'both' as const,

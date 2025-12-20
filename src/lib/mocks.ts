@@ -353,6 +353,7 @@ export const mockGeofences: Geofence[] = [
     color: '#10b981',
     event_type: 'entry',
     client_id: 'c1',
+    is_always_active: true,
     created_at: new Date(Date.now() - 86400000).toISOString(),
   },
   {
@@ -369,6 +370,7 @@ export const mockGeofences: Geofence[] = [
     color: '#f59e0b',
     event_type: 'exit',
     client_id: 'c1',
+    is_always_active: true,
     created_at: new Date(Date.now() - 172800000).toISOString(),
   },
   {
@@ -385,6 +387,7 @@ export const mockGeofences: Geofence[] = [
     color: '#ef4444',
     event_type: 'both',
     client_id: 'c2',
+    is_always_active: true,
     created_at: new Date(Date.now() - 259200000).toISOString(),
   },
   {
@@ -397,6 +400,7 @@ export const mockGeofences: Geofence[] = [
     color: '#10b981',
     event_type: 'entry',
     client_id: 'c1',
+    is_always_active: true,
     created_at: new Date(Date.now() - 345600000).toISOString(),
   },
   {
@@ -409,6 +413,7 @@ export const mockGeofences: Geofence[] = [
     color: '#f59e0b',
     event_type: 'exit',
     client_id: 'c3',
+    is_always_active: true,
     created_at: new Date(Date.now() - 432000000).toISOString(),
   },
 ];

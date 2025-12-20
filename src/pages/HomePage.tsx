@@ -346,6 +346,7 @@ export function HomePage() {
         color: geofenceData.color,
         event_type: 'both' as const,
         client_id: user?.client_id || '',
+        is_always_active: true,
         created_at: new Date().toISOString(),
       };
 

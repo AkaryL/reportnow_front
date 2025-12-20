@@ -467,6 +467,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 45,
     last_seen: new Date(Date.now() - 1000 * 60 * 1).toISOString(), // 1 min ago
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq2',
@@ -484,6 +485,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 180,
     last_seen: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq3',
@@ -501,6 +503,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 270,
     last_seen: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq4',
@@ -518,6 +521,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 90,
     last_seen: new Date(Date.now() - 1000 * 60 * 1).toISOString(),
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq5',
@@ -535,6 +539,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 120,
     last_seen: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq6',
@@ -552,6 +557,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 0,
     last_seen: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 min - offline
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq7',
@@ -569,6 +575,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 45,
     last_seen: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq8',
@@ -586,6 +593,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 135,
     last_seen: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq9',
@@ -602,6 +610,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 0,
     last_seen: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), // 30 days ago
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq10',
@@ -619,6 +628,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 90,
     last_seen: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq11',
@@ -636,6 +646,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 225,
     last_seen: new Date(Date.now() - 1000 * 60 * 1).toISOString(),
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq12',
@@ -652,6 +663,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 180,
     last_seen: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   // Equipos Cliente 4 - Transportes Suspendidos (status inactive)
   {
@@ -670,6 +682,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 0,
     last_seen: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(), // 60 days ago
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq14',
@@ -687,6 +700,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 0,
     last_seen: new Date(Date.now() - 1000 * 60 * 60 * 24 * 55).toISOString(), // 55 days ago
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq15',
@@ -704,6 +718,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 0,
     last_seen: new Date(Date.now() - 1000 * 60 * 60 * 24 * 50).toISOString(), // 50 days ago
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'eq16',
@@ -720,6 +735,7 @@ export const mockEquipments: Equipment[] = [
     bearing: 0,
     last_seen: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(), // 45 days ago
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
 ];
 
@@ -737,6 +753,7 @@ export const mockDrivers: Driver[] = [
     address: 'Av. Vallarta 1234, Guadalajara',
     client_id: '1',
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'drv2',
@@ -825,6 +842,7 @@ export const mockAssets: Asset[] = [
     driver_id: 'drv1',
     status: 'active',
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset2',
@@ -842,6 +860,7 @@ export const mockAssets: Asset[] = [
     driver_id: 'drv2',
     status: 'active',
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset3',
@@ -859,6 +878,7 @@ export const mockAssets: Asset[] = [
     driver_id: 'drv3',
     status: 'active',
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset4',
@@ -875,6 +895,7 @@ export const mockAssets: Asset[] = [
     color: 'Negro',
     status: 'active',
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
   // Contenedores
   {
@@ -891,6 +912,7 @@ export const mockAssets: Asset[] = [
     seal_number: 'SL-20251026-001',
     status: 'active',
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset6',
@@ -906,6 +928,7 @@ export const mockAssets: Asset[] = [
     seal_number: 'SL-20251027-002',
     status: 'active',
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
   // Carga
   {
@@ -921,6 +944,7 @@ export const mockAssets: Asset[] = [
     value: 85000,
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset8',
@@ -935,6 +959,7 @@ export const mockAssets: Asset[] = [
     value: 42000,
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   // Persona
   {
@@ -950,6 +975,7 @@ export const mockAssets: Asset[] = [
     emergency_phone: '+52 33 9876 5432',
     status: 'active',
     created_at: new Date('2025-10-25').toISOString(),
+    visibility: 'all',
   },
   // Otro
   {
@@ -962,6 +988,7 @@ export const mockAssets: Asset[] = [
     notes: 'Remolque plataforma 53 pies',
     status: 'active',
     created_at: new Date('2025-10-26').toISOString(),
+    visibility: 'all',
   },
 
   // ==================== CLIENTE 2: Express Jalisco (10 activos) ====================
@@ -982,6 +1009,7 @@ export const mockAssets: Asset[] = [
     driver_id: 'drv4',
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset12',
@@ -998,6 +1026,7 @@ export const mockAssets: Asset[] = [
     color: 'Blanco',
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset13',
@@ -1014,6 +1043,7 @@ export const mockAssets: Asset[] = [
     color: 'Gris Oscuro',
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   // Contenedores
   {
@@ -1030,6 +1060,7 @@ export const mockAssets: Asset[] = [
     seal_number: 'SL-EXP-20251028-001',
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset15',
@@ -1044,6 +1075,7 @@ export const mockAssets: Asset[] = [
     size_ft: 20,
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   // Carga
   {
@@ -1059,6 +1091,7 @@ export const mockAssets: Asset[] = [
     value: 52000,
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset17',
@@ -1073,6 +1106,7 @@ export const mockAssets: Asset[] = [
     value: 125000,
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   // Persona
   {
@@ -1088,6 +1122,7 @@ export const mockAssets: Asset[] = [
     emergency_phone: '+52 33 8765 4321',
     status: 'active',
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
   // Otro
   {
@@ -1100,6 +1135,7 @@ export const mockAssets: Asset[] = [
     notes: 'Montacargas Toyota 5000 lbs',
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset20',
@@ -1112,6 +1148,7 @@ export const mockAssets: Asset[] = [
     notes: 'Remolque caja seca 48 pies',
     status: 'inactive',
     created_at: new Date('2025-10-27').toISOString(),
+    visibility: 'all',
   },
 
   // ==================== CLIENTE 3: Logística Zapopan (10 activos) ====================
@@ -1131,6 +1168,7 @@ export const mockAssets: Asset[] = [
     color: 'Rojo',
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset22',
@@ -1147,6 +1185,7 @@ export const mockAssets: Asset[] = [
     color: 'Negro',
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset23',
@@ -1163,6 +1202,7 @@ export const mockAssets: Asset[] = [
     color: 'Blanco',
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   // Contenedores
   {
@@ -1179,6 +1219,7 @@ export const mockAssets: Asset[] = [
     seal_number: 'SL-ZPN-20251029-001',
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset25',
@@ -1193,6 +1234,7 @@ export const mockAssets: Asset[] = [
     size_ft: 40,
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   // Carga
   {
@@ -1208,6 +1250,7 @@ export const mockAssets: Asset[] = [
     value: 95000,
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset27',
@@ -1222,6 +1265,7 @@ export const mockAssets: Asset[] = [
     value: 68000,
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   // Persona
   {
@@ -1237,6 +1281,7 @@ export const mockAssets: Asset[] = [
     emergency_phone: '+52 33 7654 3210',
     status: 'active',
     created_at: new Date('2025-10-28').toISOString(),
+    visibility: 'all',
   },
   // Otro
   {
@@ -1249,6 +1294,7 @@ export const mockAssets: Asset[] = [
     notes: 'Grúa telescópica 25 toneladas',
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset30',
@@ -1260,6 +1306,7 @@ export const mockAssets: Asset[] = [
     notes: 'Remolque plataforma baja 48 pies',
     status: 'active',
     created_at: new Date('2025-10-29').toISOString(),
+    visibility: 'all',
   },
 
   // ==================== CLIENTE 4: Transportes Suspendidos (10 activos) ====================
@@ -1279,6 +1326,7 @@ export const mockAssets: Asset[] = [
     color: 'Azul Marino',
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset32',
@@ -1295,6 +1343,7 @@ export const mockAssets: Asset[] = [
     color: 'Gris Plata',
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset33',
@@ -1311,6 +1360,7 @@ export const mockAssets: Asset[] = [
     color: 'Blanco',
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   // Contenedores
   {
@@ -1326,6 +1376,7 @@ export const mockAssets: Asset[] = [
     size_ft: 20,
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset35',
@@ -1340,6 +1391,7 @@ export const mockAssets: Asset[] = [
     size_ft: 40,
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   // Carga
   {
@@ -1355,6 +1407,7 @@ export const mockAssets: Asset[] = [
     value: 35000,
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset37',
@@ -1369,6 +1422,7 @@ export const mockAssets: Asset[] = [
     value: 48000,
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   // Persona
   {
@@ -1384,6 +1438,7 @@ export const mockAssets: Asset[] = [
     emergency_phone: '+52 33 5432 1098',
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   // Otro
   {
@@ -1396,6 +1451,7 @@ export const mockAssets: Asset[] = [
     notes: 'Remolque caja seca 53 pies - En resguardo',
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
   {
     id: 'asset40',
@@ -1407,6 +1463,7 @@ export const mockAssets: Asset[] = [
     notes: 'Montacargas Cat 8000 lbs - Fuera de servicio',
     status: 'inactive',
     created_at: new Date('2025-10-01').toISOString(),
+    visibility: 'all',
   },
 ];
 
@@ -1510,6 +1567,7 @@ export const mockGeofences: Geofence[] = [
     notes: 'Zona de operación principal',
     client_id: '1',
     is_global: false,
+    is_always_active: true,
     created_at: new Date('2025-10-26').toISOString(),
   },
   // Geocerca poligonal (por coordenadas)
@@ -1529,6 +1587,7 @@ export const mockGeofences: Geofence[] = [
     notes: 'Zona industrial autorizada',
     client_id: '1',
     is_global: false,
+    is_always_active: true,
     created_at: new Date('2025-10-27').toISOString(),
   },
   // Geocerca restringida
@@ -1544,6 +1603,7 @@ export const mockGeofences: Geofence[] = [
     notes: 'Zona no autorizada para vehículos',
     client_id: '1',
     is_global: false,
+    is_always_active: true,
     created_at: new Date('2025-10-27').toISOString(),
   },
 ];

@@ -576,8 +576,8 @@ export function EquipmentDetailPage() {
         .map(d => ({
           name: d.name,
           status: d.status === 'available' ? 'Disponible' :
-                  d.status === 'on_route' ? 'En ruta' :
-                  d.status === 'off_duty' ? 'Fuera de servicio' : d.status,
+                  d.status === 'on_trip' ? 'En viaje' :
+                  d.status === 'inactive' ? 'Inactivo' : d.status,
         })),
     };
 
