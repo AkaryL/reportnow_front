@@ -2,7 +2,7 @@ import type { VehicleStatus, NotificationType, UserRole, EquipmentStatus, AssetT
 
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'ReportNow';
 export const API_URL = import.meta.env.VITE_API_URL || 'https://reportnow-back-d5gz.onrender.com/api/v1';
-export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://72.62.129.125:8000/ws';
 export const MAP_STYLE = import.meta.env.VITE_MAP_STYLE || 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 // Local Storage Keys

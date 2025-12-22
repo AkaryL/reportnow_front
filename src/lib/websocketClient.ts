@@ -52,7 +52,7 @@ class WebSocketClient {
     }
 
     this.isIntentionalClose = false;
-    const wsUrl = `${WS_URL}/ws?token=${encodeURIComponent(token)}`;
+    const wsUrl = `${WS_URL}?token=${encodeURIComponent(token)}`;
 
     try {
       this.ws = new WebSocket(wsUrl);
