@@ -23,7 +23,7 @@ export function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'activo' | 'inactivo'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const confirmDialog = useConfirm();
@@ -103,7 +103,7 @@ export function ClientsPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'activo' | 'inactivo' }) =>
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
       clientsApi.updateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
@@ -156,15 +156,15 @@ export function ClientsPage() {
   };
 
   const handleToggleStatus = async (client: Client) => {
-    const newStatus = client.status === 'activo' ? 'inactivo' : 'activo';
-    const actionText = newStatus === 'activo' ? 'activar' : 'desactivar';
+    const newStatus = client.status === 'active' ? 'inactive' : 'active';
+    const actionText = newStatus === 'active' ? 'activar' : 'desactivar';
 
     const confirmed = await confirmDialog.confirm({
-      title: `${newStatus === 'activo' ? 'Activar' : 'Desactivar'} Cliente`,
+      title: `${newStatus === 'active' ? 'Activar' : 'Desactivar'} Cliente`,
       message: `¿Estás seguro de que deseas ${actionText} al cliente "${client.company_name}"?`,
-      confirmText: newStatus === 'activo' ? 'Activar' : 'Desactivar',
+      confirmText: newStatus === 'active' ? 'Activar' : 'Desactivar',
       cancelText: 'Cancelar',
-      variant: newStatus === 'activo' ? 'info' : 'warning',
+      variant: newStatus === 'active' ? 'info' : 'warning',
     });
 
     if (confirmed) {
@@ -228,8 +228,8 @@ export function ClientsPage() {
     // Filtro de estatus
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'activo' && client.status === 'activo') ||
-      (statusFilter === 'inactivo' && client.status === 'inactivo');
+      (statusFilter === 'active' && client.status === 'active') ||
+      (statusFilter === 'inactive' && client.status === 'inactive');
 
     return matchesSearch && matchesStatus;
   });
@@ -269,7 +269,7 @@ export function ClientsPage() {
                 contact: c.contact_name,
                 email: c.email,
                 phone: c.phone || '-',
-                status: c.status === 'activo' ? 'Activo' : 'Inactivo',
+                status: c.status === 'active' ? 'Activo' : 'Inactivo',
               })),
               filename: 'clientes',
               filters: statusFilter !== 'all' ? [{ label: 'Estado', value: statusFilter }] : undefined,
@@ -313,16 +313,16 @@ export function ClientsPage() {
                   Todos
                 </Button>
                 <Button
-                  variant={statusFilter === 'activo' ? 'primary' : 'outline'}
+                  variant={statusFilter === 'active' ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('activo')}
+                  onClick={() => setStatusFilter('active')}
                 >
                   Activos
                 </Button>
                 <Button
-                  variant={statusFilter === 'inactivo' ? 'primary' : 'outline'}
+                  variant={statusFilter === 'inactive' ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('inactivo')}
+                  onClick={() => setStatusFilter('inactive')}
                 >
                   Inactivos
                 </Button>
@@ -420,8 +420,8 @@ export function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={client.status === 'activo' ? 'success' : 'warning'}>
-                        {client.status === 'activo' ? 'Activo' : 'Inactivo'}
+                      <Badge variant={client.status === 'active' ? 'success' : 'warning'}>
+                        {client.status === 'active' ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -492,8 +492,8 @@ export function ClientsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleToggleStatus(client)}
-                          className={client.status === 'activo' ? 'text-warning-600 hover:text-warning-700' : 'text-ok-600 hover:text-ok-700'}
-                          title={client.status === 'activo' ? 'Desactivar cliente' : 'Activar cliente'}
+                          className={client.status === 'active' ? 'text-warning-600 hover:text-warning-700' : 'text-ok-600 hover:text-ok-700'}
+                          title={client.status === 'active' ? 'Desactivar cliente' : 'Activar cliente'}
                         >
                           <Power className="w-4 h-4" />
                         </Button>

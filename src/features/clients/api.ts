@@ -41,7 +41,7 @@ export const clientsApi = {
       authorized_phones: data.authorized_phones || [data.contact_phone || data.phone],
       authorized_emails: data.authorized_emails || [data.email],
       equipment_quota: data.equipment_quota ?? 0,
-      status: data.status || 'activo',
+      status: data.status || 'active',
       assigned_equipments: data.assigned_equipments || data.equipment_ids || [],
     };
 
@@ -101,7 +101,7 @@ export const clientsApi = {
     await apiClient.delete(`/clients/${id}`);
   },
 
-  updateStatus: async (id: string, status: 'activo' | 'inactivo'): Promise<void> => {
+  updateStatus: async (id: string, status: 'active' | 'inactive'): Promise<void> => {
     await apiClient.patch(`/clients/${id}/status?status=${status}`);
   },
 
