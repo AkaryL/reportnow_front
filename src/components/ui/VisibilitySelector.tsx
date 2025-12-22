@@ -27,15 +27,29 @@ export function VisibilitySelector({
 
   // Obtener usuarios del cliente
   const effectiveClientId = clientId || currentUser?.client_id;
+  const canSeeAllUsers = currentUser?.role === 'superuser' || currentUser?.role === 'admin';
 
-  const { data: clientUsers = [] } = useQuery({
-    queryKey: ['users', 'client', effectiveClientId],
-    queryFn: () => effectiveClientId ? usersApi.getByClientId(effectiveClientId) : Promise.resolve([]),
-    enabled: !!effectiveClientId && visibility === 'assigned',
+  // Si es superuser/admin, obtener todos los usuarios y filtrar por client_id
+  // Si no, usar el endpoint con filtro
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => usersApi.getAll(),
+    enabled: canSeeAllUsers && visibility === 'assigned',
   });
 
-  // Filtrar usuarios que no son el actual
-  const selectableUsers = clientUsers.filter(u => u.id !== currentUser?.id);
+  const { data: clientUsersFromApi = [] } = useQuery({
+    queryKey: ['users', 'client', effectiveClientId],
+    queryFn: () => effectiveClientId ? usersApi.getByClientId(effectiveClientId) : Promise.resolve([]),
+    enabled: !canSeeAllUsers && !!effectiveClientId && visibility === 'assigned',
+  });
+
+  // Combinar: si es superuser/admin, filtrar todos por client_id, si no usar los del API
+  const clientUsers = canSeeAllUsers
+    ? allUsers.filter(u => u.client_id === effectiveClientId)
+    : clientUsersFromApi;
+
+  // Todos los usuarios del cliente (incluyendo el actual)
+  const selectableUsers = clientUsers;
 
   const handleUserToggle = (userId: string) => {
     if (assignedUserIds.includes(userId)) {
@@ -167,7 +181,13 @@ export function VisibilitySelector({
                       {user.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {user.email} - {user.role === 'operator_admin' ? 'Administrador' : 'Monitor'}
+                      {user.email} - {
+                        user.role === 'superuser' ? 'Superusuario' :
+                        user.role === 'admin' ? 'Administrador' :
+                        user.role === 'operator_admin' ? 'Operador Admin' :
+                        user.role === 'operator_monitor' ? 'Operador Monitor' :
+                        user.role
+                      }
                     </p>
                   </div>
                 </label>

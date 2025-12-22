@@ -101,6 +101,10 @@ export const clientsApi = {
     await apiClient.delete(`/clients/${id}`);
   },
 
+  updateStatus: async (id: string, status: 'activo' | 'inactivo'): Promise<void> => {
+    await apiClient.patch(`/clients/${id}/status?status=${status}`);
+  },
+
   // Obtener operadores de un cliente específico
   // Intenta múltiples estrategias para obtener los operadores
   getOperators: async (clientId: string): Promise<User[]> => {

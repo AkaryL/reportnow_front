@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2, Radio, Users, Info, Search, Filter, LogIn, Download } from 'lucide-react';
+import { Eye, Mail, Phone, Plus, Building2, Edit, Trash2, Radio, Users, Info, Search, Filter, LogIn, Download, Power } from 'lucide-react';
 import { generateListPDF } from '../lib/pdfGenerator';
 import { formatDate } from '../lib/utils';
 import { ClientFormModal } from '../components/clients/ClientFormModal';
@@ -23,7 +23,7 @@ export function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'activo' | 'inactivo'>('all');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const confirmDialog = useConfirm();
@@ -102,6 +102,18 @@ export function ClientsPage() {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'activo' | 'inactivo' }) =>
+      clientsApi.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
+      toast.success('Estatus del cliente actualizado');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al cambiar el estatus');
+    },
+  });
+
   const handleCreateClient = () => {
     setSelectedClient(null);
     setIsModalOpen(true);
@@ -141,6 +153,23 @@ export function ClientsPage() {
 
   const handleViewClient = (id: string) => {
     navigate(`/clientes/${id}`);
+  };
+
+  const handleToggleStatus = async (client: Client) => {
+    const newStatus = client.status === 'activo' ? 'inactivo' : 'activo';
+    const actionText = newStatus === 'activo' ? 'activar' : 'desactivar';
+
+    const confirmed = await confirmDialog.confirm({
+      title: `${newStatus === 'activo' ? 'Activar' : 'Desactivar'} Cliente`,
+      message: `¿Estás seguro de que deseas ${actionText} al cliente "${client.company_name}"?`,
+      confirmText: newStatus === 'activo' ? 'Activar' : 'Desactivar',
+      cancelText: 'Cancelar',
+      variant: newStatus === 'activo' ? 'info' : 'warning',
+    });
+
+    if (confirmed) {
+      statusMutation.mutate({ id: client.id, status: newStatus });
+    }
   };
 
   const handleLoginAsClient = async (client: Client) => {
@@ -199,8 +228,8 @@ export function ClientsPage() {
     // Filtro de estatus
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'active' && client.status === 'active') ||
-      (statusFilter === 'suspended' && client.status === 'suspended');
+      (statusFilter === 'activo' && client.status === 'activo') ||
+      (statusFilter === 'inactivo' && client.status === 'inactivo');
 
     return matchesSearch && matchesStatus;
   });
@@ -240,7 +269,7 @@ export function ClientsPage() {
                 contact: c.contact_name,
                 email: c.email,
                 phone: c.phone || '-',
-                status: c.status === 'active' ? 'Activo' : 'Suspendido',
+                status: c.status === 'activo' ? 'Activo' : 'Inactivo',
               })),
               filename: 'clientes',
               filters: statusFilter !== 'all' ? [{ label: 'Estado', value: statusFilter }] : undefined,
@@ -284,18 +313,18 @@ export function ClientsPage() {
                   Todos
                 </Button>
                 <Button
-                  variant={statusFilter === 'active' ? 'primary' : 'outline'}
+                  variant={statusFilter === 'activo' ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('active')}
+                  onClick={() => setStatusFilter('activo')}
                 >
                   Activos
                 </Button>
                 <Button
-                  variant={statusFilter === 'suspended' ? 'primary' : 'outline'}
+                  variant={statusFilter === 'inactivo' ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('suspended')}
+                  onClick={() => setStatusFilter('inactivo')}
                 >
-                  Suspendidos
+                  Inactivos
                 </Button>
               </div>
             </div>
@@ -391,8 +420,8 @@ export function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={client.status === 'active' ? 'success' : 'warning'}>
-                        {client.status === 'active' ? 'Activo' : 'Suspendido'}
+                      <Badge variant={client.status === 'activo' ? 'success' : 'warning'}>
+                        {client.status === 'activo' ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -458,6 +487,15 @@ export function ClientsPage() {
                           onClick={() => handleEditClient(client)}
                         >
                           <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(client)}
+                          className={client.status === 'activo' ? 'text-warning-600 hover:text-warning-700' : 'text-ok-600 hover:text-ok-700'}
+                          title={client.status === 'activo' ? 'Desactivar cliente' : 'Activar cliente'}
+                        >
+                          <Power className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
