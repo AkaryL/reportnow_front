@@ -22,6 +22,16 @@ export interface NotificationSettingCreate {
   enabled: boolean;
 }
 
+export interface ClientConfig {
+  speed_limit: number;
+  route_interval: number;
+}
+
+export interface ClientConfigUpdate {
+  speed_limit?: number;
+  route_interval?: number;
+}
+
 export const settingsApi = {
   // Obtener todos los tipos de alerta
   getAlertTypes: async (): Promise<AlertType[]> => {
@@ -46,6 +56,18 @@ export const settingsApi = {
     const response = await apiClient.post<{ ok: boolean; count: number }>('/settings/notification-settings/bulk', {
       settings
     });
+    return response.data;
+  },
+
+  // Obtener configuración del cliente
+  getClientConfig: async (): Promise<ClientConfig> => {
+    const response = await apiClient.get<ClientConfig>('/settings/client-config');
+    return response.data;
+  },
+
+  // Actualizar configuración del cliente
+  updateClientConfig: async (data: ClientConfigUpdate): Promise<ClientConfig> => {
+    const response = await apiClient.put<ClientConfig>('/settings/client-config', data);
     return response.data;
   },
 };

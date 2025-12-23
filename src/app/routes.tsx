@@ -179,9 +179,9 @@ export function AppRoutes() {
             }
           />
 
-          {/* Configuración de Notificaciones - Solo para admin de organización */}
+          {/* Configuración - Solo para admin de organización */}
           <Route
-            path={ROUTES.NOTIFICATION_SETTINGS}
+            path={ROUTES.SETTINGS}
             element={
               <RequireRole allowedRoles={['operator_admin', 'admin', 'superuser']}>
                 <NotificationSettingsPage />

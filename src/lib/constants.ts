@@ -321,7 +321,7 @@ export const ROUTES = {
   USERS: '/usuarios',
   ACCOUNT: '/mi-cuenta',
   ROUTE_SIMULATION: '/simulacion-ruta',
-  NOTIFICATION_SETTINGS: '/configuracion-notificaciones',
+  SETTINGS: '/configuracion',
 } as const;
 
 // Query Keys

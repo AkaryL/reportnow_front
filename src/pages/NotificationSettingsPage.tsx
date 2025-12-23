@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../features/auth/hooks';
-import { settingsApi, AlertType, NotificationSetting, NotificationSettingCreate } from '../features/settings/api';
+import { settingsApi, AlertType, NotificationSetting, NotificationSettingCreate, ClientConfig } from '../features/settings/api';
 import { Card } from '../components/ui/Card';
 import { ClientCard } from '../components/ui/ClientCard';
 import { Button } from '../components/ui/Button';
-import { Bell, Mail, MessageSquare, Smartphone, Save, Check } from 'lucide-react';
+import { Bell, Mail, MessageSquare, Smartphone, Save, Check, Gauge, Clock, Settings } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 
 type Channel = 'sms' | 'email' | 'whatsapp';
@@ -24,8 +24,12 @@ export function NotificationSettingsPage() {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<SettingsState>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [speedLimit, setSpeedLimit] = useState<number>(80);
+  const [routeInterval, setRouteInterval] = useState<number>(600);
+  const [hasConfigChanges, setHasConfigChanges] = useState(false);
 
   const isClient = user?.role === 'operator_admin' || user?.role === 'admin';
+  const isOperatorAdmin = user?.role === 'operator_admin';
   const CardComponent = isClient ? ClientCard : Card;
 
   // Obtener tipos de alerta
@@ -39,6 +43,22 @@ export function NotificationSettingsPage() {
     queryKey: ['notification-settings'],
     queryFn: settingsApi.getNotificationSettings,
   });
+
+  // Obtener configuración del cliente
+  const { data: clientConfig, isLoading: isLoadingClientConfig } = useQuery({
+    queryKey: ['client-config'],
+    queryFn: settingsApi.getClientConfig,
+    enabled: !!user?.client_id,
+  });
+
+  // Inicializar configuración del cliente
+  useEffect(() => {
+    if (clientConfig) {
+      setSpeedLimit(clientConfig.speed_limit);
+      setRouteInterval(clientConfig.route_interval);
+      setHasConfigChanges(false);
+    }
+  }, [clientConfig]);
 
   // Inicializar estado cuando se cargan los datos
   useEffect(() => {
@@ -66,13 +86,26 @@ export function NotificationSettingsPage() {
     }
   }, [alertTypes, currentSettings]);
 
-  // Mutación para guardar
+  // Mutación para guardar notificaciones
   const saveMutation = useMutation({
     mutationFn: settingsApi.saveNotificationSettingsBulk,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
-      toast.success('Configuración guardada exitosamente');
+      toast.success('Configuración de notificaciones guardada');
       setHasChanges(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al guardar la configuración');
+    },
+  });
+
+  // Mutación para guardar configuración del cliente
+  const saveConfigMutation = useMutation({
+    mutationFn: settingsApi.updateClientConfig,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-config'] });
+      toast.success('Configuración guardada exitosamente');
+      setHasConfigChanges(false);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Error al guardar la configuración');
@@ -134,7 +167,24 @@ export function NotificationSettingsPage() {
     setHasChanges(true);
   };
 
-  const isLoading = isLoadingAlertTypes || isLoadingSettings;
+  const handleSaveConfig = () => {
+    saveConfigMutation.mutate({
+      speed_limit: speedLimit,
+      route_interval: routeInterval,
+    });
+  };
+
+  const handleSpeedLimitChange = (value: number) => {
+    setSpeedLimit(value);
+    setHasConfigChanges(true);
+  };
+
+  const handleRouteIntervalChange = (value: number) => {
+    setRouteInterval(value);
+    setHasConfigChanges(true);
+  };
+
+  const isLoading = isLoadingAlertTypes || isLoadingSettings || isLoadingClientConfig;
 
   if (isLoading) {
     return (
@@ -156,8 +206,116 @@ export function NotificationSettingsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className={`text-2xl font-bold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>
-            Configuración de Notificaciones
+            Configuración
           </h1>
+          <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
+            Administra la configuración de tu organización
+          </p>
+        </div>
+      </div>
+
+      {/* Configuración del Cliente - Solo para operator_admin */}
+      {isOperatorAdmin && (
+        <CardComponent className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className={`p-2 rounded-lg ${isClient ? 'bg-cyan-500/20' : 'bg-primary/10'}`}>
+              <Settings className={`w-5 h-5 ${isClient ? 'text-cyan-400' : 'text-primary'}`} />
+            </div>
+            <div>
+              <h2 className={`text-lg font-semibold ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
+                Configuración General
+              </h2>
+              <p className={`text-sm ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
+                Parámetros generales de tu organización
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Límite de velocidad */}
+            <div className={`p-4 rounded-lg ${isClient ? 'bg-white/5' : 'bg-gray-50 dark:bg-gray-800'}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <Gauge className={`w-5 h-5 ${isClient ? 'text-orange-400' : 'text-orange-500'}`} />
+                <label className={`font-medium ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
+                  Límite de Velocidad
+                </label>
+              </div>
+              <p className={`text-sm mb-3 ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
+                Velocidad máxima permitida para generar alertas (km/h)
+              </p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={speedLimit}
+                  onChange={(e) => handleSpeedLimitChange(Number(e.target.value))}
+                  min={1}
+                  max={200}
+                  className={`w-24 px-3 py-2 rounded-lg border ${
+                    isClient
+                      ? 'bg-white/10 border-white/20 text-white'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                  }`}
+                />
+                <span className={isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}>km/h</span>
+              </div>
+            </div>
+
+            {/* Tiempo para cortar rutas */}
+            <div className={`p-4 rounded-lg ${isClient ? 'bg-white/5' : 'bg-gray-50 dark:bg-gray-800'}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <Clock className={`w-5 h-5 ${isClient ? 'text-blue-400' : 'text-blue-500'}`} />
+                <label className={`font-medium ${isClient ? 'client-text-primary' : 'text-gray-900 dark:text-white'}`}>
+                  Tiempo para Cortar Rutas
+                </label>
+              </div>
+              <p className={`text-sm mb-3 ${isClient ? 'client-text-tertiary' : 'text-gray-500 dark:text-gray-400'}`}>
+                Intervalo de inactividad para separar rutas (segundos)
+              </p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={routeInterval}
+                  onChange={(e) => handleRouteIntervalChange(Number(e.target.value))}
+                  min={60}
+                  max={3600}
+                  className={`w-24 px-3 py-2 rounded-lg border ${
+                    isClient
+                      ? 'bg-white/10 border-white/20 text-white'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                  }`}
+                />
+                <span className={isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}>
+                  segundos ({Math.floor(routeInterval / 60)} min)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Botón guardar configuración */}
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="primary"
+              onClick={handleSaveConfig}
+              disabled={!hasConfigChanges || saveConfigMutation.isPending}
+              className="flex items-center gap-2"
+            >
+              {saveConfigMutation.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Guardar Configuración
+            </Button>
+          </div>
+        </CardComponent>
+      )}
+
+      {/* Sección de Notificaciones */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className={`text-xl font-semibold ${isClient ? 'client-heading' : 'text-gray-900 dark:text-white'}`}>
+            Notificaciones
+          </h2>
           <p className={`mt-1 ${isClient ? 'client-text-secondary' : 'text-gray-600 dark:text-gray-400'}`}>
             Selecciona qué tipos de alertas deseas recibir y por qué canales
           </p>
@@ -173,7 +331,7 @@ export function NotificationSettingsPage() {
           ) : (
             <Save className="w-4 h-4" />
           )}
-          Guardar Cambios
+          Guardar Notificaciones
         </Button>
       </div>
 
