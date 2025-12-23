@@ -19,6 +19,7 @@ import {
   Box,
   User,
   CreditCard,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
@@ -35,6 +36,7 @@ const navigation = [
   { name: 'Usuarios', href: ROUTES.USERS, icon: Shield, roles: ['superuser'] },
   { name: 'Reportes', href: ROUTES.REPORTS, icon: FileText, roles: ['superuser', 'admin', 'operator_admin'] },
   { name: 'Notificaciones', href: ROUTES.NOTIFICATIONS, icon: Bell, roles: ['superuser', 'admin', 'operator_admin', 'operator_monitor'] },
+  { name: 'Config. Alertas', href: ROUTES.NOTIFICATION_SETTINGS, icon: Settings, roles: ['superuser', 'admin', 'operator_admin'] },
   { name: 'Mi Cuenta', href: ROUTES.ACCOUNT, icon: UserCircle, roles: ['admin', 'operator_admin', 'operator_monitor'] },
 ];
 

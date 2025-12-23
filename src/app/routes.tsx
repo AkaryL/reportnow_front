@@ -24,6 +24,7 @@ const PlacesPage = lazy(() => import('../pages/PlacesPage').then(m => ({ default
 const SIMsPage = lazy(() => import('../pages/SIMsPage').then(m => ({ default: m.SIMsPage })));
 const VehicleHistoryPage = lazy(() => import('../pages/VehicleHistoryPage'));
 const RouteSimulationPage = lazy(() => import('../pages/RouteSimulationPage').then(m => ({ default: m.RouteSimulationPage })));
+const NotificationSettingsPage = lazy(() => import('../pages/NotificationSettingsPage').then(m => ({ default: m.NotificationSettingsPage })));
 
 // Loading spinner component
 function PageLoader() {
@@ -174,6 +175,16 @@ export function AppRoutes() {
             element={
               <RequireRole allowedRoles={['superuser']}>
                 <RouteSimulationPage />
+              </RequireRole>
+            }
+          />
+
+          {/* Configuración de Notificaciones - Solo para admin de organización */}
+          <Route
+            path={ROUTES.NOTIFICATION_SETTINGS}
+            element={
+              <RequireRole allowedRoles={['operator_admin', 'admin', 'superuser']}>
+                <NotificationSettingsPage />
               </RequireRole>
             }
           />
